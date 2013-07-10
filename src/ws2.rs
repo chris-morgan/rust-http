@@ -1,19 +1,28 @@
 extern mod extra;
 
-use librusthttpserver::server::{Server, HandlerFunc};
+use librusthttpserver::server::{Server, Config};
 use librusthttpserver::response::ResponseWriter;
+use std::rt::io::net::ip::Ipv4;
 use std::rt::io::Writer;
-use std::rt;
 
 #[path = "librusthttpserver/mod.rs"]
 mod librusthttpserver;
 
-fn handler(mut r: ResponseWriter) {
-	r.write(bytes!("Ooh! Wow!"));
+struct MyServer;
+
+impl Server for MyServer {
+	pub fn get_config(&self) -> Config {
+		Config {
+			bind_address: Ipv4(127, 0, 0, 1, 8001),
+		}
+	}
+
+	fn handle_request(&self, mut r: ResponseWriter) {
+		r.write(bytes!("Ooh! Wow!"));
+	}
 }
 
 fn main() {
-	let hf = HandlerFunc(handler);
-	let server = Server::new(extra::net::ip::v4::parse_addr("0.0.0.0"), 8001, &hf);
-	println(fmt!("Serve finished: %?", server.serve_wait()));
+    debug!("main");
+	println(fmt!("Serve finished: %?", MyServer.serve_forever()));
 }

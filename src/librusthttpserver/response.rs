@@ -2,6 +2,8 @@ use std::hashmap::HashMap;
 //use headers::Headers;
 use std::rt;
 
+use std::rt::io::net::tcp::TcpStream;
+
 mod status;
 mod headers;
 
@@ -77,7 +79,7 @@ impl Response {
 
 pub struct ResponseWriter {
     // The place to write to (typically a TCP stream, rt::io::net::tcp::TcpStream)
-    priv writer: ~rt::io::Writer,
+    priv writer: TcpStream,
     priv headers_written: bool,
     headers: ~headers::Headers,
     status: status::Status,
@@ -85,7 +87,7 @@ pub struct ResponseWriter {
 
 impl ResponseWriter {
     /// Create a `ResponseWriter` writing to the specified location
-    pub fn new(writer: ~rt::io::Writer) -> ResponseWriter {
+    pub fn new(writer: TcpStream) -> ResponseWriter {
         ResponseWriter {
             writer: writer,
             headers_written: false,
@@ -138,11 +140,11 @@ impl rt::io::Writer for ResponseWriter {
         if (!self.headers_written) {
             self.write_headers();
         }
-        self.writer.write(buf)
+        self.writer.write(buf);
     }
 
     pub fn flush(&mut self) {
-        self.writer.flush()
+        self.writer.flush();
     }
 
 }
