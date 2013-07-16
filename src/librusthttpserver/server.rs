@@ -4,23 +4,36 @@ extern mod extra;
 
 use std::option::Option;
 use std::rt::io::{Listener};
-use std::rt::io::net::tcp::{TcpListener, TcpStream};
 use std::rt::io::net::ip::IpAddr;
 use std::rt::io::{io_error, IoError};
 
+/* *
+pub use std::rt::io::net::tcp::{TcpListener, TcpStream};
+/*/
+pub use TcpListener = super::adapter::ExtraNetTcpListener;
+pub use TcpStream = super::adapter::ExtraNetTcpStream;
+/**/
+
+use super::request::{RequestBuffer, Request};
 use super::response::ResponseWriter;
-//use self::adapter::WriterRtWriterAdapter;
 
-mod adapter;
-
-// TODO: specifying inheritance like this doesn't work with kinds at present :-(
-pub trait Server: Send {
-
-	pub fn handle_request(&self, r: ResponseWriter) -> ();
+// TODO: when mozilla/rust#7661 is resolved, assuming also that specifying inheritance of kinds for
+// the trait works:
+// - Scrap ServerUtil (including any using it into the local scope)
+// - Change "trait Server" to "trait Server: Send"
+// - Shift the serve_forever method into Server
+pub trait Server {
+	pub fn handle_request(&self, request: Request, response: ResponseWriter) -> ();
 
 	// XXX: this could also be implemented on the serve methods
 	pub fn get_config(&self) -> Config;
+}
 
+pub trait ServerUtil {
+    pub fn serve_forever(self);
+}
+
+impl<T: Send + Server> ServerUtil for T {
 	/**
 	 * Attempt to bind to the address and port and start serving forever.
 	 *
@@ -60,12 +73,24 @@ pub trait Server: Send {
                         },
                         Some(stream) => {
                             debug!("accepted connection, got %?", stream);
-                            //let stream = Cell::new(stream.get());
-                            //do spawn {
-                            //let stream = stream.take();
-                            self.handle_request(ResponseWriter::new(stream));
-                            // Sorry, only single-threaded at present: blocked on mozilla/rust#7661
-                            //}
+                            let stream = ::std::cell::Cell::new(stream);
+                            do spawn {
+                                let mut stream = ~stream.take();
+                                //RequestBuffer::new(stream);
+                                let request = Request::get(~RequestBuffer::new(stream));
+                                let mut response = ResponseWriter::new(*stream);
+                                match request {
+                                    Ok(request) => {
+                                        self.handle_request(request, response);
+                                        // Sorry, only single-threaded at present:
+                                        // blocked on mozilla/rust#7661
+                                    },
+                                    Err(status) => {
+                                        response.status = status;
+                                        response.write_headers();
+                                    },
+                                }
+                            }
                         }
                     }
                 }

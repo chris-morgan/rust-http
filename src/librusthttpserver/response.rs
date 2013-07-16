@@ -1,11 +1,14 @@
-use std::hashmap::HashMap;
+use extra::treemap::TreeMap;
 //use headers::Headers;
 use std::rt;
 
-use std::rt::io::net::tcp::TcpStream;
+//use std::rt::io::net::tcp::TcpStream;
+//use TcpStream = super::adapter::ExtraNetTcpStream;
+// Use whatever server is using at present
+use TcpStream = super::server::TcpStream;
 
-mod status;
-mod headers;
+use super::status;
+use super::headers;
 
 /**
  * The HTTP version tag which will be used for the response.
@@ -35,7 +38,7 @@ macro_rules! bfmt (
  * - `status` - A status code for the response. For now only used for the first lne of the response.
  * /
 pub struct Response {
-    headers: ~HashMap<~str, ~str>,
+    headers: ~TreeMap<~str, ~str>,
     status: status::Status,
 }
 
@@ -43,7 +46,7 @@ impl Response {
 
     fn init(@mut self) {
         // Default to text/html
-        //self.headers = ~HashMap<~str, ~str>::new();
+        //self.headers = ~TreeMap<~str, ~str>::new();
         self.set_header(~"Content-Type", ~"text/html");
     }
 
@@ -92,7 +95,7 @@ impl ResponseWriter {
             writer: writer,
             headers_written: false,
             //headers: headers::Headers::new(),
-            headers: ~HashMap::new(),
+            headers: ~TreeMap::new(),
             status: status::Ok,
         }
     }

@@ -1,6 +1,6 @@
 //! Types and utilities for working with headers in HTTP requests and responses.
 //!
-//! Notably, HTTP headers are case insensitive; headers are represented as a `HashMap`, and so there
+//! Notably, HTTP headers are case insensitive; headers are represented as a `TreeMap`, and so there
 //! is, at present, scope for mistakes in providing multiple values for a header under different
 //! cases. You should, of course, avoid this.
 //!
@@ -15,7 +15,7 @@
 
 use std::vec;
 use std::ascii::Ascii;
-use std::hashmap::HashMap;
+use extra::treemap::TreeMap;
 
 /// Normalise an HTTP header name.
 ///
@@ -36,13 +36,14 @@ use std::hashmap::HashMap;
 pub fn normalise_header_name(name: &str) -> ~str {
     let mut result: ~[Ascii] = vec::with_capacity(name.len());
     let mut capitalise = true;
-    for name.iter().enumerate().advance |(i, c)| {
-        result[i] = match capitalise {
+    for name.iter().advance |c| {
+        let c = match capitalise {
             true => c.to_ascii().to_upper(),
             false => c.to_ascii().to_lower(),
         };
+        result.push(c);
         // ASCII 45 is '-': in that case, capitalise the next char
-        capitalise = result[i].to_byte() == 45;
+        capitalise = c.to_byte() == 45;
     }
     result.to_str_ascii()
 }
@@ -70,14 +71,20 @@ pub fn comma_join(values: &[&str]) -> ~str {
     values.connect(", ")
 }
 
-pub type Headers = HashMap<~str, ~str>;
+pub type Headers = TreeMap<~str, ~str>;
+
+/*impl Headers {
+    fn new() -> ~Headers {
+        ~Headers(*TreeMap::new::<~str, ~str>())
+    }
+}*/
 
 /* In the interests simplicity of implementation, I think we'll leave the automatic normalisation
  * out for the present. Theoretically better for performance, too, unless it causes mistakes...
 
 /// Headers
 pub struct Headers {
-    priv map: HashMap<~str, ~[~str]>,
+    priv map: TreeMap<~str, ~[~str]>,
 }
 
 impl Headers {
@@ -116,7 +123,7 @@ impl Headers {
         self.map.insert(name, values);
     }
 
-    pub fn iter<'a>(&'a self) -> HashMapIterator<'a, K, V> {
+    pub fn iter<'a>(&'a self) -> TreeMapIterator<'a, K, V> {
         self.map.iter().transform(|(name, values)| {
             let mut concatonated = "";
             for values.iter().advance |hunk| {
@@ -126,7 +133,7 @@ impl Headers {
         })
     }
 
-    pub fn iter_vec<'a>(&'a self) -> HashMapIterator<'a, K, V> {
+    pub fn iter_vec<'a>(&'a self) -> TreeMapIterator<'a, K, V> {
         self.map.iter()
     }
 }
