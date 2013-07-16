@@ -7,12 +7,13 @@ use std::rt::io::{Listener};
 use std::rt::io::net::ip::IpAddr;
 use std::rt::io::{io_error, IoError};
 
-/* *
+#[cfg(newrt)]
 pub use std::rt::io::net::tcp::{TcpListener, TcpStream};
-/*/
+
+#[cfg(not(newrt))]
 pub use TcpListener = super::adapter::ExtraNetTcpListener;
+#[cfg(not(newrt))]
 pub use TcpStream = super::adapter::ExtraNetTcpStream;
-/**/
 
 use super::request::{RequestBuffer, Request};
 use super::response::ResponseWriter;
