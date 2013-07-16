@@ -1,0 +1,4 @@
+~$
+^src/ws\d$
+^src/obsolete_ws.rs$
+^src/librusthttpserver/librusthttpserver-20af9b1d3441fe5a-.*\.so$
