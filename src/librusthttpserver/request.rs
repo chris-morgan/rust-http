@@ -14,6 +14,7 @@ pub struct RequestBuffer<'self> {
     priv stream: &'self mut TcpStream,
     priv bytes: ~[u8],
     priv peeked_byte: Option<u8>,
+    priv read_buf: [u8, ..1],
 }
 
 static SIZE: uint = 1024;
@@ -24,6 +25,7 @@ impl<'self> RequestBuffer<'self> {
             stream: stream,
             bytes: ~[0u8, ..SIZE],
             peeked_byte: None,
+            read_buf: [0u8],
         }
     }
 
@@ -41,10 +43,9 @@ impl<'self> RequestBuffer<'self> {
                 Some(byte)
             },
             None => {
-                let mut buf = ~[0];
-                match self.stream.read(buf) {
+                match self.stream.read(self.read_buf) {
                     None => return None,
-                    Some(1) => Some(buf[0]),
+                    Some(1) => Some(self.read_buf[0]),
                     Some(i) => fail!("TcpStream.read() returned %u!?", i),
                 }
             },
