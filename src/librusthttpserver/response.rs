@@ -1,6 +1,7 @@
 use extra::treemap::TreeMap;
 //use headers::Headers;
 use std::rt;
+use std::rt::io::Writer;
 
 //use std::rt::io::net::tcp::TcpStream;
 //use TcpStream = super::adapter::ExtraNetTcpStream;
