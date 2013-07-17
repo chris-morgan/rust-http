@@ -6,11 +6,16 @@ RUST_NEWRT=0
 RUST_NEWRT=1
 RUSTFLAGS=-Z debug-info -O --cfg newrt
 
+lrhs_so=librusthttpserver/librusthttpserver-20af9b1d3441fe5a-0.1-pre.so
 .PHONY: librusthttpserver
 
-librusthttpserver: librusthttpserver-20af9b1d3441fe5a-0.1-pre.so
+librusthttpserver: $(lrhs_so)
 
-librusthttpserver-20af9b1d3441fe5a-0.1-pre.so:
+librusthttpserver/status.rs: librusthttpserver/generate_status.py
+	cd librusthttpserver; python2 generate_status.py
+
+
+$(lrhs_so): librusthttpserver/adapter.rs librusthttpserver/headers.rs librusthttpserver/methods.rs librusthttpserver/mod.rs librusthttpserver/request.rs librusthttpserver/response.rs librusthttpserver/rfc2616.rs librusthttpserver/rusthttpserver.rs librusthttpserver/server.rs librusthttpserver/status.rs
 	cd librusthttpserver; $(RUSTC) $(RUSTFLAGS) rusthttpserver.rs
 
 %: %.rs librusthttpserver
