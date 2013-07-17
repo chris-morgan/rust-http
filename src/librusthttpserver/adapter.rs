@@ -2,7 +2,7 @@
 //! This code will be rendered obsolete before Rust 1.0.
 
 use std::comm::{Port, Chan, SharedChan};
-use std::{io, rt, task, vec};
+use std::{rt, task, vec};
 use extra::{net, uv_iotask};
 
 static READ_SIZE : uint = 1024;
