@@ -6,29 +6,40 @@ use rusthttpserver::request::Request;
 use rusthttpserver::response::ResponseWriter;
 use std::rt::io::net::ip::Ipv4;
 use std::rt::io::Writer;
+use extra::time;
+
+use rusthttpserver::server::{Config, Server, ServerUtil};
+use rusthttpserver::rfc2616::format_http_time;
 
 /// A copy of a request from Apache's default thingummy
-fn apache_fake_handler(_r: Request, mut w: ResponseWriter) {
-    w.headers.insert(~"Date", ~"Tue, 16 Jul 2013 03:43:34 GMT");
-    w.headers.insert(~"Server", ~"Apache/2.2.22 (Ubuntu)");
-    w.headers.insert(~"Last-Modified", ~"Thu, 05 May 2011 11:46:42 GMT");
-    w.headers.insert(~"ETag", ~"\"501b29-b1-4a285ed47404a\"");
-    w.headers.insert(~"Accept-Ranges", ~"bytes");
-    w.headers.insert(~"Content-Length", ~"177");
-    w.headers.insert(~"Vary", ~"Accept-Encoding");
-    w.headers.insert(~"Content-Type", ~"text/html");
-    w.headers.insert(~"X-Pad", ~"avoid browser bug");
+struct ApacheFakeServer;
+impl Server for ApacheFakeServer {
+    fn get_config(&self) -> Config {
+        Config { bind_address: Ipv4(127, 0, 0, 1, 8001) }
+    }
 
-    w.write(bytes!("<html><body><h1>It works!</h1>
+    fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
+        w.headers.insert(~"Date", format_http_time(time::now_utc()));
+        w.headers.insert(~"Server", ~"Apache/2.2.22 (Ubuntu)");
+        w.headers.insert(~"Last-Modified", ~"Thu, 05 May 2011 11:46:42 GMT");
+        w.headers.insert(~"ETag", ~"\"501b29-b1-4a285ed47404a\"");
+        w.headers.insert(~"Accept-Ranges", ~"bytes");
+        w.headers.insert(~"Content-Length", ~"177");
+        w.headers.insert(~"Vary", ~"Accept-Encoding");
+        w.headers.insert(~"Content-Type", ~"text/html");
+        w.headers.insert(~"X-Pad", ~"avoid browser bug");
+
+        w.write(bytes!("<html><body><h1>It works!</h1>
 <p>This is the default web page for this server.</p>
 <p>The web server software is running but no content has been added, yet.</p>
 </body></html>\n"));
+    }
 }
 
 fn main() {
-    serve_forever(Ipv4(127, 0, 0, 1, 8001), apache_fake_handler);
+    ApacheFakeServer.serve_forever();
 
-    do serve_forever(Ipv4(127, 0, 0, 1, 8001)) |r, mut w| {
+    do serve_forever(Ipv4(127, 0, 0, 1, 8001)) |r, w| {
         w.headers.insert(~"Content-Type", ~"text/html");
         w.headers.insert(~"Server", ~"Rust Thingummy/0.0-pre");
         w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>"));
@@ -70,7 +81,7 @@ fn main() {
         w.write(bytes!("</tbody></table>"));
     }
 
-    do serve_forever(Ipv4(127, 0, 0, 1, 8001)) |_r, mut w| {
+    do serve_forever(Ipv4(127, 0, 0, 1, 8001)) |_r, w| {
         w.headers.insert(~"Content-Length", ~"15");
         w.headers.insert(~"Content-Type", ~"text/plain; charset=UTF-8");
         w.headers.insert(~"Server", ~"Example");
