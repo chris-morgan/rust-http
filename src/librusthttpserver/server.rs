@@ -2,9 +2,12 @@
 
 extern mod extra;
 
+use std::comm::SharedChan;
+use std::task::spawn_with;
 use std::rt::io::Listener;
 use std::rt::io::net::ip::{IpAddr, Ipv4};
 use std::rt::io::io_error;
+use extra::time::precise_time_ns;
 
 #[cfg(newrt)]
 pub use std::rt::io::net::tcp::{TcpListener, TcpStream};
@@ -35,6 +38,38 @@ pub trait ServerUtil {
     pub fn serve_forever(self);
 }
 
+static PERF_DUMP_FREQUENCY : u64 = 10_000;
+
+/// Simple function to dump out perf stats every `PERF_DUMP_FREQUENCY` requests
+fn perf_dumper(perf_po: Port<(u64, u64, u64, u64, u64)>) {
+    // Total durations
+    let mut td_spawn = 0u64;
+    let mut td_request = 0u64;
+    let mut td_response = 0u64;
+    let mut td_handle = 0u64;
+    let mut td_total = 0u64;
+    let mut i = 0u64;
+    loop {
+        let data = perf_po.recv();
+        let (start, spawned, request_made, response_made, finished) = data;
+        td_spawn += spawned - start;
+        td_request += request_made - spawned;
+        td_response += response_made - request_made;
+        td_handle += finished - response_made;
+        td_total += finished - start;
+        i += 1;
+        if i % PERF_DUMP_FREQUENCY == 0 {
+            println("");
+            printfln!("%? requests made thus far. Current means:", i);
+            printfln!("- Total:               100%%, %12?", td_total / i);
+            printfln!("- Spawn:               %3?%%, %12?", 100 * td_spawn / td_total, td_spawn / i);
+            printfln!("- Load request:        %3?%%, %12?", 100 * td_request / td_total, td_request / i);
+            printfln!("- Initialise response: %3?%%, %12?", 100 * td_response / td_total, td_response / i);
+            printfln!("- Handle:              %3?%%, %12?", 100 * td_handle / td_total, td_handle / i);
+        }
+    }
+}
+
 impl<T: Send + Server> ServerUtil for T {
 	/**
 	 * Attempt to bind to the address and port and start serving forever.
@@ -46,6 +81,9 @@ impl<T: Send + Server> ServerUtil for T {
         debug!("About to bind to %?", config.bind_address);
         let mut optlistener = TcpListener::bind(config.bind_address);
         debug!("Bind attempt completed");
+        let (perf_po, perf_ch) = stream();
+        let perf_ch = SharedChan::new(perf_ch);
+        spawn_with(perf_po, perf_dumper);
         match optlistener {
             None => {
                 debug!("listen failed :-(");
@@ -63,6 +101,7 @@ impl<T: Send + Server> ServerUtil for T {
                         listener.accept()
                     });
 
+                    let time_start = precise_time_ns();
                     if optstream.is_none() {
                         debug!("accept failed: %?", error);
                         // Question: is this the correct thing to do? We should probably be more
@@ -73,12 +112,16 @@ impl<T: Send + Server> ServerUtil for T {
                         loop;
                     }
                     let stream = ::std::cell::Cell::new(optstream.unwrap());
+                    let child_perf_ch = perf_ch.clone();
                     do spawn {
                         let mut stream = ~stream.take();
                         debug!("accepted connection, got %?", stream);
                         //RequestBuffer::new(stream);
+                        let time_spawned = precise_time_ns();
                         let request = Request::get(~RequestBuffer::new(stream));
+                        let time_request_made = precise_time_ns();
                         let mut response = ~ResponseWriter::new(*stream);
+                        let time_response_made = precise_time_ns();
                         match request {
                             Ok(request) => {
                                 self.handle_request(request, response);
@@ -90,6 +133,8 @@ impl<T: Send + Server> ServerUtil for T {
                                 response.write_headers();
                             },
                         }
+                        let time_finished = precise_time_ns();
+                        child_perf_ch.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
                     }
                 }
             }
