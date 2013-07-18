@@ -319,7 +319,7 @@ mod tests {
 impl Request {
 
     /// Get a response from an open socket.
-    pub fn get(buffer: &mut RequestBuffer) -> Result<Request, status::Status> {
+    pub fn get(buffer: &mut RequestBuffer) -> Result<~Request, status::Status> {
 
         let (method, path, version) = match parse_request_line(buffer.read_crlf_line()) {
             Some(vals) => vals,
@@ -352,7 +352,7 @@ impl Request {
             None => close_connection,
         };
 
-        Ok(Request {
+        Ok(~Request {
             //host: socket.get_peer_addr(),
             headers: ~headers,
             body: ~"",

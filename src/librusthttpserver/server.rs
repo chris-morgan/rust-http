@@ -23,7 +23,7 @@ use super::response::ResponseWriter;
 // - Change "trait Server" to "trait Server: Send"
 // - Shift the serve_forever method into Server
 pub trait Server {
-	pub fn handle_request(&self, request: Request, response: ResponseWriter) -> ();
+	pub fn handle_request(&self, request: &Request, response: &mut ResponseWriter) -> ();
 
 	// XXX: this could also be implemented on the serve methods
 	pub fn get_config(&self) -> Config;
@@ -62,6 +62,7 @@ impl<T: Send + Server> ServerUtil for T {
                     }).in(|| {
                         listener.accept()
                     });
+
                     if optstream.is_none() {
                         debug!("accept failed: %?", error);
                         // Question: is this the correct thing to do? We should probably be more
@@ -77,7 +78,7 @@ impl<T: Send + Server> ServerUtil for T {
                         debug!("accepted connection, got %?", stream);
                         //RequestBuffer::new(stream);
                         let request = Request::get(~RequestBuffer::new(stream));
-                        let mut response = ResponseWriter::new(*stream);
+                        let mut response = ~ResponseWriter::new(*stream);
                         match request {
                             Ok(request) => {
                                 self.handle_request(request, response);
@@ -107,12 +108,12 @@ pub struct Config {
 /// A simple `Server`-implementing class, allowing code to be written in an imperative style.
 pub struct SimpleServer {
     config: Config,
-    handler: ~fn(Request, ResponseWriter),
+    handler: ~fn(&Request, &mut ResponseWriter),
 }
 
 impl SimpleServer {
     /// Create a new `SimpleServer` instance with the provided members.
-    pub fn new(config: Config, handler: ~fn(Request, ResponseWriter)) -> SimpleServer {
+    pub fn new(config: Config, handler: ~fn(&Request, &mut ResponseWriter)) -> SimpleServer {
         SimpleServer {
             config: config,
             handler: handler,
@@ -123,7 +124,7 @@ impl SimpleServer {
 impl Server for SimpleServer {
     /// Handles a request by passing it on to the structure's handler function.
     #[inline]
-	pub fn handle_request(&self, request: Request, response: ResponseWriter) {
+	pub fn handle_request(&self, request: &Request, response: &mut ResponseWriter) {
         (self.handler)(request, response);
     }
 
@@ -153,7 +154,7 @@ impl Server for SimpleServer {
 /// The signature of this method is liable to change if `Config` gets more members.
 // Please, pretty please, don't correct the word "wresponse".
 #[inline]
-pub fn serve_forever(ip_addr: IpAddr, handler: ~fn(Request, ResponseWriter)) {
+pub fn serve_forever(ip_addr: IpAddr, handler: ~fn(&Request, &mut ResponseWriter)) {
     SimpleServer::new(Config { bind_address: ip_addr }, handler).serve_forever();
 }
 
