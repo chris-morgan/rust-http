@@ -9,23 +9,39 @@ use super::headers::{Headers, normalise_header_name};
 
 pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeader }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-pub struct RequestBuffer<'self> {
-    priv stream: &'self mut TcpStream,
-    priv bytes: ~[u8],
-    priv peeked_byte: Option<u8>,
-    priv read_buf: [u8, ..1],
-}
+/// Line/header can't be more than 4KB long (note that with the compacting of LWS the actual source
+/// data could be longer than 4KB)
+static MAX_LINE_LEN: uint = 0x1000;
 
-static SIZE: uint = 1024;
+/// Moderately arbitrary figure: read in 64KB chunks. GET requests should never be this large.
+static BUF_SIZE: uint = 0x10000;  // Let's try 64KB chunks
+
+pub struct RequestBuffer<'self> {
+    /// The socket connection to read from
+    priv stream: &'self mut TcpStream,
+
+    /// A working space for 
+    priv line_bytes: ~[u8],
+
+    /// Header reading takes the first byte of the next line in its search for linear white space;
+    /// clearly, we mustn't lose it...
+    priv peeked_byte: Option<u8>,
+
+    /// A buffer because TcpStream.read() is SLOW.
+    priv read_buf: [u8, .. BUF_SIZE],
+    priv read_buf_pos: uint,
+    priv read_buf_max: uint,
+}
 
 impl<'self> RequestBuffer<'self> {
     pub fn new<'a> (stream: &'a mut TcpStream) -> RequestBuffer<'a> {
         RequestBuffer {
             stream: stream,
-            bytes: ~[0u8, ..SIZE],
+            line_bytes: ~[0u8, .. MAX_LINE_LEN],
             peeked_byte: None,
-            read_buf: [0u8],
+            read_buf: [0u8, .. BUF_SIZE],
+            read_buf_pos: 0u,
+            read_buf_max: 0u,
         }
     }
 
@@ -36,17 +52,31 @@ impl<'self> RequestBuffer<'self> {
         }
     }*/
 
-    pub fn read_byte(&mut self) -> Option<u8> {
+    #[inline]
+    fn read_byte(&mut self) -> Option<u8> {
         match self.peeked_byte {
             Some(byte) => {
                 self.peeked_byte = None;
                 Some(byte)
             },
             None => {
-                match self.stream.read(self.read_buf) {
-                    None => return None,
-                    Some(1) => Some(self.read_buf[0]),
-                    Some(i) => fail!("TcpStream.read() returned %u!?", i),
+                if self.read_buf_pos == self.read_buf_max {
+                    match self.stream.read(self.read_buf) {
+                        // Not sure if Some(0) can happen. Hope not!
+                        None | Some(0) => {
+                            self.read_buf_pos = 0;
+                            self.read_buf_max = 0;
+                            None
+                        },
+                        Some(i) => {
+                            self.read_buf_pos = 1;
+                            self.read_buf_max = i;
+                            Some(self.read_buf[0])
+                        },
+                    }
+                } else {
+                    self.read_buf_pos += 1;
+                    Some(self.read_buf[self.read_buf_pos - 1])
                 }
             },
         }
@@ -54,7 +84,7 @@ impl<'self> RequestBuffer<'self> {
 
     /// Read a line ending in CRLF
     pub fn read_crlf_line(&mut self) -> ~str {
-        self.bytes.clear();
+        self.line_bytes.clear();
 
         enum State { Normal, GotCR };
         let mut state = Normal;
@@ -70,18 +100,18 @@ impl<'self> RequestBuffer<'self> {
                         break;
                     },
                     GotCR => {
-                        self.bytes.push(CR);
-                        self.bytes.push(b);
+                        self.line_bytes.push(CR);
+                        self.line_bytes.push(b);
                         Normal
                     },
                     Normal => {
-                        self.bytes.push(b);
+                        self.line_bytes.push(b);
                         Normal
                     }
                 }
             };
         }
-        str::from_bytes(self.bytes)
+        str::from_bytes(self.line_bytes)
     }
 
     /// Read a header (name, value) pair.
@@ -103,7 +133,7 @@ impl<'self> RequestBuffer<'self> {
         let mut state = Normal;
         let mut in_name = true;
         let mut header_name = ~"";
-        self.bytes.clear();
+        self.line_bytes.clear();
 
         loop {
             state = match self.read_byte() {
@@ -119,11 +149,11 @@ impl<'self> RequestBuffer<'self> {
                         // As above, don't worry about trailing whitespace.
                         // Found the colon, so switch across to value.
                         in_name = false;
-                        header_name = str::from_bytes(self.bytes);
-                        self.bytes.clear();
+                        header_name = str::from_bytes(self.line_bytes);
+                        self.line_bytes.clear();
                         Normal
                     },
-                    GotCR if b == LF && in_name && self.bytes.len() == 0 => {
+                    GotCR if b == LF && in_name && self.line_bytes.len() == 0 => {
                         return Err(EndOfHeaders);
                     },
                     GotCR if b == LF => {
@@ -131,8 +161,8 @@ impl<'self> RequestBuffer<'self> {
                     },
                     GotCR => {
                         // False alarm, CR without LF
-                        self.bytes.push(CR);
-                        self.bytes.push(b);
+                        self.line_bytes.push(CR);
+                        self.line_bytes.push(b);
                         Normal
                     },
                     GotCRLF if b == SP || b == HT => {
@@ -156,20 +186,20 @@ impl<'self> RequestBuffer<'self> {
                     CompactingLWS => {
                         // End of LWS, compact it down to a single space, unless it's at the start
                         // (saves a trim_left() call later)
-                        if self.bytes.len() > 0 {
-                            self.bytes.push(SP);
+                        if self.line_bytes.len() > 0 {
+                            self.line_bytes.push(SP);
                         }
-                        self.bytes.push(b);
+                        self.line_bytes.push(b);
                         Normal
                     },
                     Normal => {
-                        self.bytes.push(b);
+                        self.line_bytes.push(b);
                         Normal
                     }
                 },
             };
         }
-        return Ok((header_name, str::from_bytes(self.bytes)));
+        return Ok((header_name, str::from_bytes(self.line_bytes)));
     }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
