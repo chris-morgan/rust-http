@@ -186,7 +186,7 @@ pub fn is_separator(o: u8) -> bool {
  *    not required to use these formats for user presentation, request
  *    logging, etc.
  */
-pub fn parse_http_date(value: &str) -> Option<Tm> {
+pub fn parse_http_time(value: &str) -> Option<Tm> {
     // XXX: %Z actually ignores any timezone other than UTC. Probably not a good idea?
     match strptime(value, "%a, %d, %b %Y %T %Z") {  // RFC 822, updated by RFC 1123
         Ok(time) => return Some(time),
@@ -204,7 +204,7 @@ pub fn parse_http_date(value: &str) -> Option<Tm> {
     }
 }
 
-pub fn format_http_date(value: Tm) -> ~str {
+pub fn format_http_time(value: Tm) -> ~str {
     value.to_utc().strftime("%a, %d %b %Y %T GMT")
 }
 
@@ -275,21 +275,21 @@ mod test {
         tm_nsec: 0
     });
 
-    /// Test `parse_http_date` with an RFC 822 date (updated by RFC 1123)
+    /// Test `parse_http_time` with an RFC 822 time (updated by RFC 1123)
     #[test]
-    fn test_parse_http_date_rfc822() {
-        assert_eq!(parse_http_date("Sun, 06 Nov 1994 08:49:37 GMT"), sample_tm);
+    fn test_parse_http_time_rfc822() {
+        assert_eq!(parse_http_time("Sun, 06 Nov 1994 08:49:37 GMT"), sample_tm);
     }
 
-    /// Test `parse_http_date` with an RFC 850 date (obsoleted by RFC 1036)
+    /// Test `parse_http_time` with an RFC 850 time (obsoleted by RFC 1036)
     #[test]
-    fn test_parse_http_date_rfc822() {
-        assert_eq!(parse_http_date("Sunday, 06-Nov-94 08:49:37 GMT"), sample_tm);
+    fn test_parse_http_time_rfc822() {
+        assert_eq!(parse_http_time("Sunday, 06-Nov-94 08:49:37 GMT"), sample_tm);
     }
 
-    /// Test `parse_http_date` with the ANSI C's asctime() format
+    /// Test `parse_http_time` with the ANSI C's asctime() format
     #[test]
-    fn test_parse_http_date_asctime() {
-        assert_eq!(parse_http_date("Sun Nov  6 08:49:37 1994"), sample_tm);
+    fn test_parse_http_time_asctime() {
+        assert_eq!(parse_http_time("Sun Nov  6 08:49:37 1994"), sample_tm);
     }
 }
