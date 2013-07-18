@@ -1,6 +1,7 @@
 # These are taken from http://en.wikipedia.org/wiki/List_of_HTTP_Status_Codes.
 # Last updated on 2013-07-04
 # Entries from third-party vendors not standardised upon are not included.
+# If not specified otherwise, they are defined in RFC 2616.
 
 from collections import namedtuple
 
