@@ -78,17 +78,17 @@ pub enum Status {
     NotExtended,  // RFC 2774
     NetworkAuthenticationRequired,  // RFC 6585
 
-    UnregisteredStatusCode(u8, ~str),
+    UnregisteredStatusCode(u16, ~str),
 }
 
 impl Status {
 
-    pub fn new(code: u8, reason: ~str) -> Status {
+    pub fn new(code: u16, reason: ~str) -> Status {
         UnregisteredStatusCode(code, reason)
     }
 
     /// Get the status code
-    pub fn code(&self) -> u8 {
+    pub fn code(&self) -> u16 {
         match *self {
 
             // 1xx Informational
