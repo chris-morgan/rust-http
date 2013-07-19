@@ -1,7 +1,7 @@
 RUST=rust
 RUSTC=rustc
 #RUSTFLAGS=-Z debug-info -O
-RUSTFLAGS=
+RUSTFLAGS=-O
 VERSION=0.1-pre
 
 lrhs_so=librusthttpserver/librusthttpserver-20af9b1d3441fe5a-$(VERSION).so
