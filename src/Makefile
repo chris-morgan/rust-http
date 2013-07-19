@@ -10,7 +10,7 @@ librusthttpserver/status.rs: librusthttpserver/generate_status.py
 	cd librusthttpserver; python2 generate_status.py
 
 
-$(lrhs_so): librusthttpserver/headers.rs librusthttpserver/methods.rs librusthttpserver/mod.rs librusthttpserver/request.rs librusthttpserver/response.rs librusthttpserver/rfc2616.rs librusthttpserver/rusthttpserver.rs librusthttpserver/server.rs librusthttpserver/status.rs
+$(lrhs_so): librusthttpserver/headers.rs librusthttpserver/methods.rs librusthttpserver/request.rs librusthttpserver/response.rs librusthttpserver/rfc2616.rs librusthttpserver/rusthttpserver.rs librusthttpserver/server.rs librusthttpserver/status.rs
 	cd librusthttpserver; $(RUSTC) $(RUSTFLAGS) rusthttpserver.rs
 
 %:: %.rs $(lrhs_so)
