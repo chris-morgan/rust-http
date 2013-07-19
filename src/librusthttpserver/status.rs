@@ -245,7 +245,7 @@ impl Status {
             NotExtended                   => ~"Not Extended",
             NetworkAuthenticationRequired => ~"Network Authentication Required",
 
-            UnregisteredStatusCode(_, ref reason) => copy *reason,
+            UnregisteredStatusCode(_, ref reason) => (*reason).clone(),
         }
     }
 }

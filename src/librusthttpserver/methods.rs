@@ -27,7 +27,7 @@ impl ToStr for Method {
             Options                   => ~"OPTIONS",
             Connect                   => ~"CONNECT",
             Patch                     => ~"PATCH",
-            UnregisteredMethod(ref s) => copy *s,
+            UnregisteredMethod(ref s) => (*s).clone(),
         }
     }
 }

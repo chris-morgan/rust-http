@@ -168,7 +168,7 @@ impl Status {
             else:
                 out.write('\n            // %s\n' % entry)
         out.write('''
-            UnregisteredStatusCode(_, ref reason) => copy *reason,
+            UnregisteredStatusCode(_, ref reason) => (*reason).clone(),
         }
     }
 }
