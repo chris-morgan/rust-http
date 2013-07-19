@@ -61,7 +61,7 @@ impl ExtraNetTcpListener {
                                                 },
                                                 Some(Read(len)) => {
                                                     //let mut buf = vec::with_capacity(len);
-                                                    let mut buf = vec::from_elem(len, 0);
+                                                    let mut buf = vec::from_elem(len, 0u8);
                                                     let size = sockbuf.read(buf, len);
                                                     //let mut buf = ~[0u8, ..READ_SIZE];
                                                     //let size = sockbuf.read(buf, READ_SIZE);
