@@ -5,17 +5,11 @@ extern mod extra;
 use std::comm::SharedChan;
 use std::task::spawn_with;
 use std::rt::io::Listener;
-use std::rt::io::net::ip::{IpAddr, Ipv4};
+use std::rt::io::net::ip::IpAddr;
 use std::rt::io::io_error;
 use extra::time::precise_time_ns;
 
-#[cfg(newrt)]
-pub use std::rt::io::net::tcp::{TcpListener, TcpStream};
-
-#[cfg(not(newrt))]
-pub use TcpListener = super::adapter::ExtraNetTcpListener;
-#[cfg(not(newrt))]
-pub use TcpStream = super::adapter::ExtraNetTcpStream;
+use std::rt::io::net::tcp::TcpListener;
 
 use super::request::{RequestBuffer, Request};
 use super::response::ResponseWriter;
@@ -70,7 +64,7 @@ fn perf_dumper(perf_po: Port<(u64, u64, u64, u64, u64)>) {
     }
 }
 
-impl<T: Send + Server> ServerUtil for T {
+impl<T: Send + Clone + Server> ServerUtil for T {
 	/**
 	 * Attempt to bind to the address and port and start serving forever.
 	 *
@@ -113,6 +107,7 @@ impl<T: Send + Server> ServerUtil for T {
                     }
                     let stream = ::std::cell::Cell::new(optstream.unwrap());
                     let child_perf_ch = perf_ch.clone();
+                    let child_self = self.clone();
                     do spawn {
                         let mut stream = ~stream.take();
                         debug!("accepted connection, got %?", stream);
@@ -124,7 +119,7 @@ impl<T: Send + Server> ServerUtil for T {
                         let time_response_made = precise_time_ns();
                         match request {
                             Ok(request) => {
-                                self.handle_request(request, response);
+                                child_self.handle_request(request, response);
                                 // Sorry, only single-threaded at present:
                                 // blocked on mozilla/rust#7661
                             },
@@ -149,6 +144,9 @@ impl<T: Send + Server> ServerUtil for T {
 pub struct Config {
 	bind_address: IpAddr,
 }
+
+/* Sorry, but Rust isn't ready for this yet; SimpleServer can't be made Clone just yet. (For
+ * starters, ~fn() isn't cloneable.)
 
 /// A simple `Server`-implementing class, allowing code to be written in an imperative style.
 pub struct SimpleServer {
@@ -207,3 +205,4 @@ pub fn serve_forever(ip_addr: IpAddr, handler: ~fn(&Request, &mut ResponseWriter
 /// Not recommended at present as this server is not hardened against the sort of traffic you may
 /// encounter on the Internet and is vulnerable to various DoS attacks. Sit it behind a gateway.
 static PUBLIC: IpAddr = Ipv4(0, 0, 0, 0, 80);
+*/

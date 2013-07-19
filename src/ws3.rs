@@ -1,7 +1,7 @@
 extern mod extra;
 extern mod rusthttpserver;
 
-use rusthttpserver::server::serve_forever;
+//use rusthttpserver::server::serve_forever;
 use rusthttpserver::request::Request;
 use rusthttpserver::response::ResponseWriter;
 use std::rt::io::net::ip::Ipv4;
@@ -12,6 +12,7 @@ use rusthttpserver::server::{Config, Server, ServerUtil};
 use rusthttpserver::rfc2616::format_http_time;
 
 /// A copy of a request from Apache's default thingummy
+#[deriving(Clone)]
 struct ApacheFakeServer;
 impl Server for ApacheFakeServer {
     fn get_config(&self) -> Config {
@@ -39,6 +40,7 @@ impl Server for ApacheFakeServer {
 fn main() {
     ApacheFakeServer.serve_forever();
 
+    /*
     do serve_forever(Ipv4(127, 0, 0, 1, 8001)) |r, w| {
         w.headers.insert(~"Content-Type", ~"text/html");
         w.headers.insert(~"Server", ~"Rust Thingummy/0.0-pre");
@@ -88,4 +90,5 @@ fn main() {
         w.headers.insert(~"Date", ~"Wed, 17 Apr 2013 12:00:00 GMT");
         w.write(bytes!("Hello, World!"));
     }
+    */
 }

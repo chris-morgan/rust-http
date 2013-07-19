@@ -3,10 +3,7 @@ use extra::treemap::TreeMap;
 use std::rt;
 use std::rt::io::Writer;
 
-//use std::rt::io::net::tcp::TcpStream;
-//use TcpStream = super::adapter::ExtraNetTcpStream;
-// Use whatever server is using at present
-use TcpStream = super::server::TcpStream;
+use std::rt::io::net::tcp::TcpStream;
 
 use super::status;
 use super::headers;

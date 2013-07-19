@@ -1,7 +1,7 @@
 use extra::treemap::TreeMap;
 use super::methods::Method;
 use super::status;
-use super::server::TcpStream;
+use std::rt::io::net::tcp::TcpStream;
 use std::rt::io::Reader;
 use std::{str, uint};
 use super::rfc2616::{CR, LF, SP, HT, COLON};

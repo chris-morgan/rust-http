@@ -12,7 +12,6 @@
 
 extern mod extra;
 
-pub mod adapter;
 pub mod server;
 pub mod methods;
 pub mod status;
