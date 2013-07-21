@@ -54,12 +54,12 @@ fn perf_dumper(perf_po: Port<(u64, u64, u64, u64, u64)>) {
         i += 1;
         if i % PERF_DUMP_FREQUENCY == 0 {
             println("");
-            printfln!("%? requests made thus far. Current means:", i);
-            printfln!("- Total:               100%%, %12?", td_total / i);
-            printfln!("- Spawn:               %3?%%, %12?", 100 * td_spawn / td_total, td_spawn / i);
-            printfln!("- Load request:        %3?%%, %12?", 100 * td_request / td_total, td_request / i);
-            printfln!("- Initialise response: %3?%%, %12?", 100 * td_response / td_total, td_response / i);
-            printfln!("- Handle:              %3?%%, %12?", 100 * td_handle / td_total, td_handle / i);
+            println(fmt!("%? requests made thus far. Current means:", i));
+            println(fmt!("- Total:               100%%, %12?", td_total / i));
+            println(fmt!("- Spawn:               %3?%%, %12?", 100 * td_spawn / td_total, td_spawn / i));
+            println(fmt!("- Load request:        %3?%%, %12?", 100 * td_request / td_total, td_request / i));
+            println(fmt!("- Initialise response: %3?%%, %12?", 100 * td_response / td_total, td_response / i));
+            println(fmt!("- Handle:              %3?%%, %12?", 100 * td_handle / td_total, td_handle / i));
         }
     }
 }
