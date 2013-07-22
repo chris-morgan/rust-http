@@ -1,4 +1,5 @@
 use extra::treemap::TreeMap;
+use extra::net::url::Url;
 use super::methods::Method;
 use super::status;
 use std::rt::io::net::tcp::TcpStream;
@@ -210,7 +211,7 @@ impl<'self> RequestBuffer<'self> {
 /// * `headers`: The headers of the request
 /// * `body`: The body of the request as a string
 /// * `method`: The method of the request
-/// * `path`: The path of the request
+/// * `request_uri`: The URI of the request
 /// * `close_connection`: whether the connection should be closed (or kept open waiting for more requests)
 /// * `version`: The HTTP version
 pub struct Request {
@@ -218,35 +219,75 @@ pub struct Request {
     headers: ~Headers,
     body: ~str,
     method: Method,
-    path: ~str,
+    request_uri: RequestUri,
     close_connection: bool,
     version: (uint, uint)
 }
 
+pub enum RequestUri {
+    /// 'The asterisk "*" means that the request does not apply to a particular resource, but to the
+    /// server itself, and is only allowed when the method used does not necessarily apply to a
+    /// resource. One example would be "OPTIONS * HTTP/1.1" '
+    Star,
+
+    /// 'The absoluteURI form is REQUIRED when the request is being made to a proxy. The proxy is
+    /// requested to forward the request or service it from a valid cache, and return the response.
+    /// Note that the proxy MAY forward the request on to another proxy or directly to the server
+    /// specified by the absoluteURI. In order to avoid request loops, a proxy MUST be able to
+    /// recognize all of its server names, including any aliases, local variations, and the numeric
+    /// IP address. An example Request-Line would be:
+    /// "GET http://www.w3.org/pub/WWW/TheProject.html HTTP/1.1"'
+    AbsoluteUri(Url),
+
+    /// 'To allow for transition to absoluteURIs in all requests in future versions of HTTP, all
+    /// HTTP/1.1 servers MUST accept the absoluteURI form in requests, even though HTTP/1.1 clients
+    /// will only generate them in requests to proxies.'
+    ///
+    /// TODO: this shouldn't be a string; it should be further parsed. `extra::net::url` has some
+    /// stuff which might help, but isn't public.
+    AbsolutePath(~str),
+
+    /// 'The authority form is only used by the CONNECT method (CONNECT).'
+    ///
+    /// TODO: this shouldn't be a string; it should be further parsed. `extra::net::url` has some
+    /// stuff which might help, but isn't public.
+    Authority(~str),
+}
+
+impl FromStr for RequestUri {
+    /// Interpret a RFC2616 Request-URI
+    pub fn from_str(request_uri: &str) -> Option<RequestUri> {
+        if request_uri == "*" {
+            Some(Star)
+        } else if request_uri.starts_with("/") {
+            Some(AbsolutePath(request_uri.to_owned()))
+        } else if request_uri.contains("/") {
+            // An authority can't have a slash in it
+            match FromStr::from_str::<Url>(request_uri) {
+                Some(url) => Some(AbsoluteUri(url)),
+                None => None,
+            }
+        } else {
+            // TODO: parse authority with extra::net::url
+            Some(Authority(request_uri.to_owned()))
+        }
+    }
+}
+
 /// Parse an HTTP request line into its parts.
 ///
-/// `parse_request_line("GET /foo HTTP/1.1") == Ok((methods::GET, "/foo", (1, 1)))`
-fn parse_request_line(line: ~str) -> Option<(Method, ~str, (uint, uint))> {
-    // TODO: this probably isn't compliant
-    /* * /let words : ~[&str] = line.word_iter().collect();
-    if words.len() != 3 {
-        return None;
-    }
-    let method = Method::from_str_or_new(words[0]);
-    let path = words[1].to_owned();
-    let http_version = parse_http_version(words[2]);
-    match http_version {
-        None => None,
-        Some(v) => Some((method, path, v)),
-    }
-    /*/
+/// `parse_request_line("GET /foo HTTP/1.1") == Ok((methods::GET, AbsolutePath("/foo"), (1, 1)))`
+fn parse_request_line(line: ~str) -> Option<(Method, RequestUri, (uint, uint))> {
     let mut words = line.word_iter();
     let method = match words.next() {
         Some(s) => Method::from_str_or_new(s),
         None => return None,
     };
-    let path = match words.next() {
-        Some(s) => s.to_owned(),
+    let request_uri = match words.next() {
+        Some(s) => match FromStr::from_str::<RequestUri>(s) {
+            Some(r) => r,
+            None => return None,
+        },
         None => return None,
     };
     let http_version = match words.next() {
@@ -254,10 +295,9 @@ fn parse_request_line(line: ~str) -> Option<(Method, ~str, (uint, uint))> {
         None => return None,
     };
     match (words.next(), http_version) {
-        (None, Some(v)) => Some((method, path, v)),
+        (None, Some(v)) => Some((method, request_uri, v)),
         _ => None,  // More words or invalid HTTP version
     }
-    /**/
 }
 
 /// Parse an HTTP version string into the two X.Y parts.
@@ -309,9 +349,12 @@ mod tests {
 
     #[test]
     fn test_parse_request_line() {
-        assert_eq!(parse_request_line(~"GET /foo HTTP/1.1"), Ok((methods::GET, "/foo", (1, 1))));
-        assert_eq!(parse_request_line(~"POST / HTTP/1.0"), Ok((methods::POST, "/", (1, 0))));
-        assert_eq!(parse_request_line(~"POST / HTTP/2.0"), Err(()));
+        assert_eq!(parse_request_line(~"GET /foo HTTP/1.1"),
+            Ok((methods::GET, AbsolutePath("/foo"), (1, 1))));
+        assert_eq!(parse_request_line(~"POST / HTTP/1.0"),
+            Ok((methods::POST, AbsolutePath("/"), (1, 0))));
+        assert_eq!(parse_request_line(~"POST / HTTP/2.0"),
+            Err(()));
     }
 }
 
@@ -321,7 +364,7 @@ impl Request {
     /// Get a response from an open socket.
     pub fn get(buffer: &mut RequestBuffer) -> Result<~Request, status::Status> {
 
-        let (method, path, version) = match parse_request_line(buffer.read_crlf_line()) {
+        let (method, request_uri, version) = match parse_request_line(buffer.read_crlf_line()) {
             Some(vals) => vals,
             None => return Err(status::BadRequest),
         };
@@ -358,7 +401,7 @@ impl Request {
             body: ~"",
             //body: str::connect_slices(lines, "\r\n"),
             method: method,
-            path: path.to_owned(),
+            request_uri: request_uri,
             close_connection: close_connection,
             version: version
         })

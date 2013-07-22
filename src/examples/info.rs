@@ -30,11 +30,11 @@ impl Server for InfoServer {
         w.write(bytes!("<h1>Request</h1>"));
         let s = fmt!("<dl>
             <dt>Method</dt><dd>%s</dd>
-            <dt>Path</dt><dd>%s</dd>
+            <dt>Request URI</dt><dd>%?</dd>
             <dt>HTTP version</dt><dd>%?</dd>
             <dt>Close connection</dt><dd>%?</dd></dl>",
             r.method.to_str(),
-            r.path,
+            r.request_uri,
             r.version,
             r.close_connection);
         w.write(s.as_bytes().to_owned());
