@@ -1,7 +1,4 @@
-/**
- * An HTTP method.
- */
-
+/// HTTP methods
 pub enum Method {
     Get,
     Head,
@@ -16,6 +13,7 @@ pub enum Method {
 }
 
 impl ToStr for Method {
+    /// Get the proper name of a method, e.g. `Get.to_str() == ~"GET"`
     fn to_str(&self) -> ~str {
         match *self {
             Get                       => ~"GET",
@@ -32,7 +30,8 @@ impl ToStr for Method {
     }
 }
 
-/** Normalise an HTTP method name into capital letters.
+/**
+ * Normalise an HTTP method name into capital letters.
  *
  * IMPORTANT: ensure that method.is_ascii() is true before calling this,
  * or things will probably blow up in an uncomfortable sort of way
