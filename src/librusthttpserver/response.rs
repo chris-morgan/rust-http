@@ -48,9 +48,16 @@ impl ResponseWriter {
         self.write(cbytes);
     }
 
+    /// Write the Status-Line and headers of the response, if we have not already done so.
+    pub fn try_write_headers(&mut self) {
+        if !self.headers_written {
+            self.write_headers();
+        }
+    }
+
     /// Write the Status-Line and headers of the response, in preparation for writing the body.
     ///
-    /// If the headers have already been written, this will fail.
+    /// If the headers have already been written, this will fail. See also `try_write_headers`.
     pub fn write_headers(&mut self) {
         // This marks the beginning of the response (RFC2616 §6)
         if self.headers_written {

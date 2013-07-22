@@ -120,8 +120,8 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                         match request {
                             Ok(request) => {
                                 child_self.handle_request(request, response);
-                                // Sorry, only single-threaded at present:
-                                // blocked on mozilla/rust#7661
+                                // Ensure that we actually do send a response:
+                                response.try_write_headers();
                             },
                             Err(status) => {
                                 response.status = status;
