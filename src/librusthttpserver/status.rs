@@ -78,14 +78,10 @@ pub enum Status {
     NotExtended,  // RFC 2774
     NetworkAuthenticationRequired,  // RFC 6585
 
-    UnregisteredStatusCode(u16, ~str),
+    UnregisteredStatus(u16, ~str),
 }
 
 impl Status {
-
-    pub fn new(code: u16, reason: ~str) -> Status {
-        UnregisteredStatusCode(code, reason)
-    }
 
     /// Get the status code
     pub fn code(&self) -> u16 {
@@ -164,7 +160,7 @@ impl Status {
             NotExtended                   => 510,
             NetworkAuthenticationRequired => 511,
 
-            UnregisteredStatusCode(code, _) => code,
+            UnregisteredStatus(code, _)   => code,
         }
     }
 
@@ -245,7 +241,7 @@ impl Status {
             NotExtended                   => ~"Not Extended",
             NetworkAuthenticationRequired => ~"Network Authentication Required",
 
-            UnregisteredStatusCode(_, ref reason) => (*reason).clone(),
+            UnregisteredStatus(_, ref reason) => (*reason).clone(),
         }
     }
 }

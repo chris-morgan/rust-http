@@ -135,14 +135,10 @@ pub enum Status {
                 out.write('\n    // %s\n' % entry)
 
         out.write('''
-    UnregisteredStatusCode(u16, ~str),
+    UnregisteredStatus(u16, ~str),
 }
 
 impl Status {
-
-    pub fn new(code: u16, reason: ~str) -> Status {
-        UnregisteredStatusCode(code, reason)
-    }
 
     /// Get the status code
     pub fn code(&self) -> u16 {
@@ -154,7 +150,7 @@ impl Status {
             else:
                 out.write('\n            // %s\n' % entry)
         out.write('''
-            UnregisteredStatusCode(code, _) => code,
+            UnregisteredStatus(code, _)   => code,
         }
     }
 
@@ -168,7 +164,7 @@ impl Status {
             else:
                 out.write('\n            // %s\n' % entry)
         out.write('''
-            UnregisteredStatusCode(_, ref reason) => (*reason).clone(),
+            UnregisteredStatus(_, ref reason) => (*reason).clone(),
         }
     }
 }
