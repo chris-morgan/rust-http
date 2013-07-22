@@ -1,6 +1,6 @@
 use extra::treemap::TreeMap;
 use extra::net::url::Url;
-use super::methods::Method;
+use super::methods::{Method, Options};
 use super::status;
 use std::rt::io::net::tcp::TcpStream;
 use std::rt::io::Reader;
@@ -362,49 +362,57 @@ mod tests {
 impl Request {
 
     /// Get a response from an open socket.
-    pub fn get(buffer: &mut RequestBuffer) -> Result<~Request, status::Status> {
+    pub fn get(buffer: &mut RequestBuffer) -> (~Request, Result<(), status::Status>) {
+
+        // Start out with dummy values
+        let mut request = ~Request {
+            //host: socket.get_peer_addr(),
+            headers: ~TreeMap::new(),
+            body: ~"",
+            method: Options,
+            request_uri: Star,
+            close_connection: true,
+            version: (0, 0),
+        };
 
         let (method, request_uri, version) = match parse_request_line(buffer.read_crlf_line()) {
             Some(vals) => vals,
-            None => return Err(status::BadRequest),
+            None => return (request, Err(status::BadRequest)),
         };
+        request.method = method;
+        request.request_uri = request_uri;
+        request.version = version;
 
-        let close_connection = match version {
+        request.close_connection = match version {
             (1, 0) => true,
             (1, 1) => false,
-            _ => return Err(status::HttpVersionNotSupported),
+            _ => return (request, Err(status::HttpVersionNotSupported)),
         };
-
-        let mut headers = TreeMap::new();
 
         loop {
             match buffer.read_header_line() {
                 Err(EndOfFile) => fail!("client disconnected, nowhere to send response"),
                 Err(EndOfHeaders) => break,
-                Err(MalformedHeader) => return Err(status::BadRequest),
-                Ok((name, value)) => { headers.insert(normalise_header_name(name), value); },
+                Err(MalformedHeader) => {
+                    request.close_connection = true;
+                    return (request, Err(status::BadRequest));
+                },
+                Ok((name, value)) => {
+                    request.headers.insert(normalise_header_name(name), value);
+                },
             }
         }
 
-        let close_connection = match headers.find(&~"Connection") {
+        request.close_connection = match request.headers.find(&~"Connection") {
             Some(s) => match s.to_ascii().to_lower().to_str_ascii() {
                 ~"close" => true,
                 ~"keep-alive" => false,
-                _ => close_connection,
+                _ => request.close_connection,
             },
-            None => close_connection,
+            None => request.close_connection,
         };
 
-        Ok(~Request {
-            //host: socket.get_peer_addr(),
-            headers: ~headers,
-            body: ~"",
-            //body: str::connect_slices(lines, "\r\n"),
-            method: method,
-            request_uri: request_uri,
-            close_connection: close_connection,
-            version: version
-        })
+        (request, Ok(()))
     }
 }
 /**/

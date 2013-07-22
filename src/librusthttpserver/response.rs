@@ -5,6 +5,7 @@ use std::rt::io::Writer;
 
 use std::rt::io::net::tcp::TcpStream;
 
+use super::request;
 use super::status;
 use super::headers;
 
@@ -18,20 +19,22 @@ use super::headers;
 static RESPONSE_HTTP_VERSION: &'static str = "HTTP/1.1";
 // Maybe we could provide a response interface
 
-pub struct ResponseWriter {
+pub struct ResponseWriter<'self> {
     // The place to write to (typically a TCP stream, rt::io::net::tcp::TcpStream)
     priv writer: TcpStream,
     priv headers_written: bool,
+    request: &'self request::Request,
     headers: ~headers::Headers,
     status: status::Status,
 }
 
-impl ResponseWriter {
+impl<'self> ResponseWriter<'self> {
     /// Create a `ResponseWriter` writing to the specified location
-    pub fn new(writer: TcpStream) -> ResponseWriter {
+    pub fn new(writer: TcpStream, request: &'self request::Request) -> ResponseWriter<'self> {
         ResponseWriter {
             writer: writer,
             headers_written: false,
+            request: request,
             //headers: headers::Headers::new(),
             headers: ~TreeMap::new(),
             status: status::Ok,
@@ -82,7 +85,7 @@ impl ResponseWriter {
     }
 }
 
-impl rt::io::Writer for ResponseWriter {
+impl<'self> rt::io::Writer for ResponseWriter<'self> {
 
     pub fn write(&mut self, buf: &[u8]) {
         if (!self.headers_written) {

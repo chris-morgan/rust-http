@@ -113,18 +113,22 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                         debug!("accepted connection, got %?", stream);
                         //RequestBuffer::new(stream);
                         let time_spawned = precise_time_ns();
-                        let request = Request::get(~RequestBuffer::new(stream));
+                        let (request, err_status) = Request::get(~RequestBuffer::new(stream));
                         let time_request_made = precise_time_ns();
-                        let mut response = ~ResponseWriter::new(*stream);
+                        let mut response = ~ResponseWriter::new(*stream, request);
                         let time_response_made = precise_time_ns();
-                        match request {
-                            Ok(request) => {
+                        match err_status {
+                            Ok(()) => {
                                 child_self.handle_request(request, response);
                                 // Ensure that we actually do send a response:
                                 response.try_write_headers();
                             },
                             Err(status) => {
+                                // Uh oh, it's a response that I as a server cannot cope with.
+                                // No good user-agent should have caused this, so for the moment at
+                                // least I am content to send no body in the response.
                                 response.status = status;
+                                response.headers.insert(~"Content-Length", ~"0");
                                 response.write_headers();
                             },
                         }
