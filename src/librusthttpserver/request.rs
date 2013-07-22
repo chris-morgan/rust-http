@@ -29,7 +29,7 @@ pub struct RequestBuffer<'self> {
     priv peeked_byte: Option<u8>,
 
     /// A buffer because TcpStream.read() is SLOW.
-    priv read_buf: [u8, .. BUF_SIZE],
+    priv read_buf: [u8, ..BUF_SIZE],
     priv read_buf_pos: uint,
     priv read_buf_max: uint,
 }
@@ -38,20 +38,13 @@ impl<'self> RequestBuffer<'self> {
     pub fn new<'a> (stream: &'a mut TcpStream) -> RequestBuffer<'a> {
         RequestBuffer {
             stream: stream,
-            line_bytes: ~[0u8, .. MAX_LINE_LEN],
+            line_bytes: ~[0u8, ..MAX_LINE_LEN],
             peeked_byte: None,
-            read_buf: [0u8, .. BUF_SIZE],
+            read_buf: [0u8, ..BUF_SIZE],
             read_buf_pos: 0u,
             read_buf_max: 0u,
         }
     }
-
-    /*pub fn peek_byte(&mut self) -> Option<u8> {
-        if self.peeked_byte.is_some() {
-            fail!("Already called peek_byte() without having called read_byte()");
-            // ... sorry, VERY nasty quick hack.
-        }
-    }*/
 
     #[inline]
     fn read_byte(&mut self) -> Option<u8> {
@@ -203,27 +196,33 @@ impl<'self> RequestBuffer<'self> {
         return Ok((header_name, str::from_bytes(self.line_bytes)));
     }
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// A HTTP request.
-///
-/// * `host`: The originating IP of the request
-/// * `headers`: The headers of the request
-/// * `body`: The body of the request as a string
-/// * `method`: The method of the request
-/// * `request_uri`: The URI of the request
-/// * `close_connection`: whether the connection should be closed (or kept open waiting for more requests)
-/// * `version`: The HTTP version
+/// An HTTP request sent to the server.
 pub struct Request {
+    /// TODO: the originating IP of the request?
     //host: ip::IpAddr,
+
+    /// The headers sent with the request.
     headers: ~Headers,
+
+    /// The body of the request; empty for such methods as GET.
     body: ~str,
+
+    /// The HTTP method for the request.
     method: Method,
+
+    /// The URI that was requested.
     request_uri: RequestUri,
+
+    /// Whether to close the TCP connection when the request has been served.
+    /// The alternative is keeping the connection open and waiting for another request.
     close_connection: bool,
+
+    /// The HTTP version number; typically `(1, 1)` or, less commonly, `(1, 0)`.
     version: (uint, uint)
 }
 
+/// The URI (Request-URI in RFC 2616) as specified in the Status-Line of an HTTP request
 #[deriving(Eq)]
 pub enum RequestUri {
     /// 'The asterisk "*" means that the request does not apply to a particular resource, but to the
@@ -358,7 +357,6 @@ fn test_parse_request_line() {
         Some((Post, AbsolutePath(~"/"), (2, 0))));
 }
 
-/**/
 impl Request {
 
     /// Get a response from an open socket.
@@ -415,8 +413,6 @@ impl Request {
         (request, Ok(()))
     }
 }
-/**/
-
 
 
 
