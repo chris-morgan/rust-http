@@ -13,7 +13,7 @@
 extern mod extra;
 
 pub mod server;
-pub mod methods;
+pub mod method;
 pub mod status;
 pub mod headers;
 pub mod response;

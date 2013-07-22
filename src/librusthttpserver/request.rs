@@ -1,6 +1,6 @@
 use extra::treemap::TreeMap;
 use extra::net::url::Url;
-use super::methods::{Method, Options};
+use super::method::{Method, Options};
 use super::status;
 use std::rt::io::net::tcp::TcpStream;
 use std::rt::io::Reader;
@@ -276,7 +276,7 @@ impl FromStr for RequestUri {
 
 /// Parse an HTTP request line into its parts.
 ///
-/// `parse_request_line("GET /foo HTTP/1.1") == Ok((methods::GET, AbsolutePath("/foo"), (1, 1)))`
+/// `parse_request_line("GET /foo HTTP/1.1") == Ok((method::Get, AbsolutePath("/foo"), (1, 1)))`
 fn parse_request_line(line: ~str) -> Option<(Method, RequestUri, (uint, uint))> {
     let mut words = line.word_iter();
     let method = match words.next() {
@@ -350,9 +350,9 @@ mod tests {
     #[test]
     fn test_parse_request_line() {
         assert_eq!(parse_request_line(~"GET /foo HTTP/1.1"),
-            Ok((methods::GET, AbsolutePath("/foo"), (1, 1))));
+            Ok((method::Get, AbsolutePath("/foo"), (1, 1))));
         assert_eq!(parse_request_line(~"POST / HTTP/1.0"),
-            Ok((methods::POST, AbsolutePath("/"), (1, 0))));
+            Ok((method::Post, AbsolutePath("/"), (1, 0))));
         assert_eq!(parse_request_line(~"POST / HTTP/2.0"),
             Err(()));
     }
