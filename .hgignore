@@ -1,3 +1,4 @@
 ~$
+^src/librusthttpserver/rusthttpserver$
 ^src/librusthttpserver/librusthttpserver-20af9b1d3441fe5a-.*\.so$
 ^src/examples/[^.]+$

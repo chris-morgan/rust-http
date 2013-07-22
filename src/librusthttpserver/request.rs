@@ -224,6 +224,7 @@ pub struct Request {
     version: (uint, uint)
 }
 
+#[deriving(Eq)]
 pub enum RequestUri {
     /// 'The asterisk "*" means that the request does not apply to a particular resource, but to the
     /// server itself, and is only allowed when the method used does not necessarily apply to a
@@ -277,7 +278,7 @@ impl FromStr for RequestUri {
 /// Parse an HTTP request line into its parts.
 ///
 /// `parse_request_line("GET /foo HTTP/1.1") == Ok((method::Get, AbsolutePath("/foo"), (1, 1)))`
-fn parse_request_line(line: ~str) -> Option<(Method, RequestUri, (uint, uint))> {
+fn parse_request_line(line: &str) -> Option<(Method, RequestUri, (uint, uint))> {
     let mut words = line.word_iter();
     let method = match words.next() {
         Some(s) => Method::from_str_or_new(s),
@@ -310,12 +311,12 @@ fn parse_request_line(line: ~str) -> Option<(Method, RequestUri, (uint, uint))> 
 /// assert_eq!(parse_http_version(~"HTTP/2.0"), Some((2, 0)))
 /// ~~~
 fn parse_http_version(version: &str) -> Option<(uint, uint)> {
-    match version {
+    match version.to_ascii().to_upper().to_str_ascii() {
         // These two are efficiency shortcuts; they're expected to be all that we ever receive,
         // but naturally we mustn't let it crash on other inputs.
-        "HTTP/1.0" => Some((1, 0)),
-        "HTTP/1.1" => Some((1, 1)),
-        v if v.starts_with("HTTP/") => {
+        ~"HTTP/1.0" => Some((1, 0)),
+        ~"HTTP/1.1" => Some((1, 1)),
+        ref v if v.starts_with("HTTP/") => {
             // This commented-out variant would fail! if given non-integers
             //let ints: ~[uint] = v.slice_from(5).split_iter('.').map(
             //    |&num| uint::from_str_radix(num, 10).get()).collect();
@@ -336,26 +337,25 @@ fn parse_http_version(version: &str) -> Option<(uint, uint)> {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// Now why should these go in a separate module? Especially when we're testing private methods...
+#[test]
+fn test_parse_http_version() {
+    assert_eq!(parse_http_version("http/1.1"), Some((1, 1)));
+    assert_eq!(parse_http_version("hTTp/1.1"), Some((1, 1)));
+    assert_eq!(parse_http_version("HTTP/1.1"), Some((1, 1)));
+    assert_eq!(parse_http_version("HTTP/1.0"), Some((1, 0)));
+    assert_eq!(parse_http_version("HTTP/2.34"), Some((2, 34)));
+}
 
-    #[test]
-    fn test_parse_http_version() {
-        assert_eq!(parse_http_version(~"HTTP/1.1"), Ok((1, 1)));
-        assert_eq!(parse_http_version(~"HTTP/1.0"), Ok((1, 0)));
-        assert_eq!(parse_http_version(~"HTTP/2.0"), Err(()));
-    }
-
-    #[test]
-    fn test_parse_request_line() {
-        assert_eq!(parse_request_line(~"GET /foo HTTP/1.1"),
-            Ok((method::Get, AbsolutePath("/foo"), (1, 1))));
-        assert_eq!(parse_request_line(~"POST / HTTP/1.0"),
-            Ok((method::Post, AbsolutePath("/"), (1, 0))));
-        assert_eq!(parse_request_line(~"POST / HTTP/2.0"),
-            Err(()));
-    }
+#[test]
+fn test_parse_request_line() {
+    use super::method::{Get, Post};
+    assert_eq!(parse_request_line("GET /foo HTTP/1.1"),
+        Some((Get, AbsolutePath(~"/foo"), (1, 1))));
+    assert_eq!(parse_request_line("POST / http/1.0"),
+        Some((Post, AbsolutePath(~"/"), (1, 0))));
+    assert_eq!(parse_request_line("POST / HTTP/2.0"),
+        Some((Post, AbsolutePath(~"/"), (2, 0))));
 }
 
 /**/

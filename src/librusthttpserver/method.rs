@@ -1,4 +1,5 @@
 /// HTTP methods
+#[deriving(Eq)]
 pub enum Method {
     Get,
     Head,

@@ -123,6 +123,7 @@ def main():
 use std::num::IntConvertible;
 
 /// HTTP status code
+#[deriving(Eq)]
 pub enum Status {
 ''')
         for entry in data:

@@ -188,7 +188,7 @@ pub fn is_separator(o: u8) -> bool {
  */
 pub fn parse_http_time(value: &str) -> Option<Tm> {
     // XXX: %Z actually ignores any timezone other than UTC. Probably not a good idea?
-    match strptime(value, "%a, %d, %b %Y %T %Z") {  // RFC 822, updated by RFC 1123
+    match strptime(value, "%a, %d %b %Y %T %Z") {  // RFC 822, updated by RFC 1123
         Ok(time) => return Some(time),
         Err(*) => ()
     }
@@ -260,36 +260,41 @@ pub enum TransferCodingValueToken {
 
 #[cfg(test)]
 mod test {
-    static sample_tm: Option<Tm> = Some(Tm {
-        tm_sec: 37,
-        tm_min: 49,
-        tm_hour: 8,
-        tm_mday: 6,
-        tm_mon: 10,
-        tm_year: 94,
-        tm_wday: 0,
-        tm_yday: 0,
-        tm_isdst: 0,
-        tm_gmtoff: 0,
-        tm_zone: ~"",
-        tm_nsec: 0
-    });
+    use super::*;
+    use extra::time::Tm;
+
+    fn sample_tm(zone: ~str) -> Option<Tm> {
+        Some(Tm {
+            tm_sec: 37,
+            tm_min: 49,
+            tm_hour: 8,
+            tm_mday: 6,
+            tm_mon: 10,
+            tm_year: 94,
+            tm_wday: 0,
+            tm_yday: 0,
+            tm_isdst: 0,
+            tm_gmtoff: 0,
+            tm_zone: zone,
+            tm_nsec: 0
+        })
+    }
 
     /// Test `parse_http_time` with an RFC 822 time (updated by RFC 1123)
     #[test]
     fn test_parse_http_time_rfc822() {
-        assert_eq!(parse_http_time("Sun, 06 Nov 1994 08:49:37 GMT"), sample_tm);
+        assert_eq!(parse_http_time("Sun, 06 Nov 1994 08:49:37 GMT"), sample_tm(~"UTC"));
     }
 
     /// Test `parse_http_time` with an RFC 850 time (obsoleted by RFC 1036)
     #[test]
-    fn test_parse_http_time_rfc822() {
-        assert_eq!(parse_http_time("Sunday, 06-Nov-94 08:49:37 GMT"), sample_tm);
+    fn test_parse_http_time_rfc850() {
+        assert_eq!(parse_http_time("Sunday, 06-Nov-94 08:49:37 GMT"), sample_tm(~"UTC"));
     }
 
     /// Test `parse_http_time` with the ANSI C's asctime() format
     #[test]
     fn test_parse_http_time_asctime() {
-        assert_eq!(parse_http_time("Sun Nov  6 08:49:37 1994"), sample_tm);
+        assert_eq!(parse_http_time("Sun Nov  6 08:49:37 1994"), sample_tm(~""));
     }
 }

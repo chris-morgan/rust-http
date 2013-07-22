@@ -141,6 +141,8 @@ impl Headers {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
     #[test]
     #[should_fail]
     fn test_normalise_header_name_fail() {
@@ -149,15 +151,15 @@ mod test {
 
     #[test]
     fn test_normalise_header_name() {
-        assert_eq!(normalise_header_name("foo-bar"), "Foo-Bar");
-        assert_eq!(normalise_header_name("FOO-BAR"), "Foo-Bar");
+        assert_eq!(normalise_header_name("foo-bar"), ~"Foo-Bar");
+        assert_eq!(normalise_header_name("FOO-BAR"), ~"Foo-Bar");
     }
 
     #[test]
     fn test_comma_split() {
-        assert_eq!(comma_split("foo"), [~"foo"]);
-        assert_eq!(comma_split("foo,bar"), [~"foo", ~"bar"]);
-        assert_eq!(comma_split(" foo;q=0.8 , bar/* "), [~"foo;q=0.8 ", ~"bar/* "]);
+        assert_eq!(comma_split("foo"), ~[~"foo"]);
+        assert_eq!(comma_split("foo,bar"), ~[~"foo", ~"bar"]);
+        assert_eq!(comma_split(" foo;q=0.8 , bar/* "), ~[~"foo;q=0.8 ", ~"bar/* "]);
     }
 
     #[test]

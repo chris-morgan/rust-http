@@ -3,6 +3,7 @@
 use std::num::IntConvertible;
 
 /// HTTP status code
+#[deriving(Eq)]
 pub enum Status {
 
     // 1xx Informational
