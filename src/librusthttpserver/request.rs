@@ -1,5 +1,5 @@
 use extra::treemap::TreeMap;
-use extra::net::url::Url;
+use extra::url::Url;
 use super::method::{Method, Options};
 use super::status;
 use std::rt::io::net::tcp::TcpStream;
