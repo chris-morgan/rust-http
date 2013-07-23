@@ -12,6 +12,7 @@
 
 extern mod extra;
 
+pub mod buffer;
 pub mod server;
 pub mod method;
 pub mod status;

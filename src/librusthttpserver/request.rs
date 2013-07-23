@@ -4,9 +4,11 @@ use super::method::{Method, Options};
 use super::status;
 use std::rt::io::net::tcp::TcpStream;
 use std::rt::io::Reader;
+use std::rt::io::extensions::ReaderUtil;
 use std::{str, uint, u16};
 use super::rfc2616::{CR, LF, SP, HT, COLON};
 use super::headers::{Headers, normalise_header_name};
+use super::buffer::BufferedReader;
 
 pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeader }
 
@@ -19,60 +21,17 @@ static BUF_SIZE: uint = 0x10000;  // Let's try 64KB chunks
 
 pub struct RequestBuffer<'self> {
     /// The socket connection to read from
-    priv stream: &'self mut TcpStream,
+    priv stream: ~BufferedReader<'self, TcpStream>,
 
     /// A working space for 
     priv line_bytes: ~[u8],
-
-    /// Header reading takes the first byte of the next line in its search for linear white space;
-    /// clearly, we mustn't lose it...
-    priv peeked_byte: Option<u8>,
-
-    /// A buffer because TcpStream.read() is SLOW.
-    priv read_buf: [u8, ..BUF_SIZE],
-    priv read_buf_pos: uint,
-    priv read_buf_max: uint,
 }
 
 impl<'self> RequestBuffer<'self> {
     pub fn new<'a> (stream: &'a mut TcpStream) -> RequestBuffer<'a> {
         RequestBuffer {
-            stream: stream,
+            stream: ~BufferedReader::new(stream/*, 0x10000*/), // 64KB buffer
             line_bytes: ~[0u8, ..MAX_LINE_LEN],
-            peeked_byte: None,
-            read_buf: [0u8, ..BUF_SIZE],
-            read_buf_pos: 0u,
-            read_buf_max: 0u,
-        }
-    }
-
-    #[inline]
-    fn read_byte(&mut self) -> Option<u8> {
-        match self.peeked_byte {
-            Some(byte) => {
-                self.peeked_byte = None;
-                Some(byte)
-            },
-            None => {
-                if self.read_buf_pos == self.read_buf_max {
-                    match self.stream.read(self.read_buf) {
-                        // Not sure if Some(0) can happen. Hope not!
-                        None | Some(0) => {
-                            self.read_buf_pos = 0;
-                            self.read_buf_max = 0;
-                            None
-                        },
-                        Some(i) => {
-                            self.read_buf_pos = 1;
-                            self.read_buf_max = i;
-                            Some(self.read_buf[0])
-                        },
-                    }
-                } else {
-                    self.read_buf_pos += 1;
-                    Some(self.read_buf[self.read_buf_pos - 1])
-                }
-            },
         }
     }
 
@@ -84,7 +43,7 @@ impl<'self> RequestBuffer<'self> {
         let mut state = Normal;
 
         loop {
-            state = match self.read_byte() {
+            state = match self.stream.read_byte() {
                 None => fail!("EOF"),
                 Some(b) => match state {
                     Normal if b == CR => {
@@ -130,7 +89,7 @@ impl<'self> RequestBuffer<'self> {
         self.line_bytes.clear();
 
         loop {
-            state = match self.read_byte() {
+            state = match self.stream.read_byte() {
                 None => return Err(EndOfFile),
                 Some(b) => match state {
                     Normal | CompactingLWS if b == CR => {
@@ -170,7 +129,7 @@ impl<'self> RequestBuffer<'self> {
                     GotCRLF => {
                         // Ooh! We got to a genuine end of line, so we're done
                         // But sorry, we don't want that byte after all...
-                        self.peeked_byte = Some(b);
+                        self.stream.poke_byte(b);
                         break;
                     },
                     Normal | CompactingLWS if b == SP || b == HT => {
