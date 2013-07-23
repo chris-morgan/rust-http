@@ -30,10 +30,12 @@ impl Server for InfoServer {
         w.write(bytes!("<h1>Request</h1>"));
         let s = fmt!("<dl>
             <dt>Method</dt><dd>%s</dd>
+            <dt>Host</dt><dd>%?</dd>
             <dt>Request URI</dt><dd>%?</dd>
             <dt>HTTP version</dt><dd>%?</dd>
             <dt>Close connection</dt><dd>%?</dd></dl>",
             r.method.to_str(),
+            r.host,
             r.request_uri,
             r.version,
             r.close_connection);

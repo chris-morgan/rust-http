@@ -4,7 +4,7 @@ use super::method::{Method, Options};
 use super::status;
 use std::rt::io::net::tcp::TcpStream;
 use std::rt::io::Reader;
-use std::{str, uint};
+use std::{str, uint, u16};
 use super::rfc2616::{CR, LF, SP, HT, COLON};
 use super::headers::{Headers, normalise_header_name};
 
@@ -197,10 +197,27 @@ impl<'self> RequestBuffer<'self> {
     }
 }
 
+/// A simple little thing for the host of a request
+struct RequestHost {
+
+    /// The name of the host that was requested
+    name: ~str,
+
+    /// If unspecified, assume the default port was used (80 for HTTP, 443 for HTTPS).
+    /// In that case, you shouldn't need to worry about it in URLs that you build, provided you
+    /// include the scheme.
+    port: Option<u16>,
+}
+
 /// An HTTP request sent to the server.
 pub struct Request {
-    /// TODO: the originating IP of the request?
-    //host: ip::IpAddr,
+    /// The originating IP address of the request. TODO: not exposed at present by TcpStream.
+    //remote_addr: ip::IpAddr,
+
+    /// The host name and IP address that the request was sent to; this must always be specified for
+    /// HTTP/1.1 requests (or the request will be rejected), but for HTTP/1.0 requests the Host
+    /// header was not defined, and so this field will probably be None in such cases.
+    host: Option<RequestHost>,
 
     /// The headers sent with the request.
     headers: ~Headers,
@@ -211,7 +228,8 @@ pub struct Request {
     /// The HTTP method for the request.
     method: Method,
 
-    /// The URI that was requested.
+    /// The URI that was requested, as found in the Request-URI of the Request-Line.
+    /// You will almost never need to use this; you should prefer the `url` field instead.
     request_uri: RequestUri,
 
     /// Whether to close the TCP connection when the request has been served.
@@ -364,7 +382,8 @@ impl Request {
 
         // Start out with dummy values
         let mut request = ~Request {
-            //host: socket.get_peer_addr(),
+            //remote_addr: socket.get_peer_addr(),
+            host: None,
             headers: ~TreeMap::new(),
             body: ~"",
             method: Options,
@@ -381,7 +400,9 @@ impl Request {
         request.request_uri = request_uri;
         request.version = version;
 
-        request.close_connection = match version {
+        // request.close_connection is deliberately left set to true so that in case of a bad
+        // request we can close the connection
+        let close_connection = match version {
             (1, 0) => true,
             (1, 1) => false,
             _ => return (request, Err(status::HttpVersionNotSupported)),
@@ -392,22 +413,43 @@ impl Request {
                 Err(EndOfFile) => fail!("client disconnected, nowhere to send response"),
                 Err(EndOfHeaders) => break,
                 Err(MalformedHeader) => {
-                    request.close_connection = true;
                     return (request, Err(status::BadRequest));
                 },
                 Ok((name, value)) => {
+                    let normalised = normalise_header_name(name);
+                    if normalised == ~"Host" {
+                        // TODO: this doesn't support IPv6 address access (e.g. "Host: [::1]")
+                        // Not bothering now as this will be thrown away in favour of parse-time
+                        // handling, where it's easier.
+                        let mut hi = value.splitn_iter(':', 1);
+                        request.host = Some(RequestHost {
+                            name: hi.next().get().to_owned(),
+                            port: match hi.next() {
+                                Some(name) => match u16::from_str(name) {
+                                    Some(port) => Some(port),
+                                    None => return (request, Err(status::BadRequest)),
+                                },
+                                None => None,
+                            },
+                        });
+                    }
                     request.headers.insert(normalise_header_name(name), value);
                 },
             }
+        }
+
+        // HTTP/1.0 doesn't have Host, but HTTP/1.1 requires it
+        if request.version == (1, 1) && request.host.is_none() {
+            return (request, Err(status::BadRequest));
         }
 
         request.close_connection = match request.headers.find(&~"Connection") {
             Some(s) => match s.to_ascii().to_lower().to_str_ascii() {
                 ~"close" => true,
                 ~"keep-alive" => false,
-                _ => request.close_connection,
+                _ => close_connection,
             },
-            None => request.close_connection,
+            None => close_connection,
         };
 
         (request, Ok(()))
