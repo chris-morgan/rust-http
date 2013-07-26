@@ -1,12 +1,13 @@
 /// Memory buffers for the benefit of `std::rt::io::net` which has slow read/write.
 
 use std::rt::io::{Reader, Writer};
+use std::cast::transmute_mut;
 use std::cmp::min;
 use std::ptr;
 
 // 64KB chunks (moderately arbitrary)
 static READ_BUF_SIZE: uint = 0x10000;
-//static WRITE_BUF_SIZE: uint = 0x10000;
+static WRITE_BUF_SIZE: uint = 0x10000;
 // TODO: consider removing constants and giving a buffer size in the constructor
 
 struct BufferedReader<'self, T> {
@@ -78,5 +79,76 @@ impl<'self, T: Reader> Reader for ~BufferedReader<'self, T> {
     /// Return whether the Reader has reached the end of the stream AND exhausted its buffer.
     fn eof(&mut self) -> bool {
         self.pos == self.max && self.wrapped.eof()
+    }
+}
+
+struct BufferedWriter<'self, T> {
+    wrapped: &'self mut T,
+    buffer: [u8, ..WRITE_BUF_SIZE],
+    buflen: uint,
+
+    /// Some things being written may not like flush() being called yet (e.g. explicitly fail!())
+    /// The BufferedReader may need to be flushed for good control, but let it provide for such
+    /// cases by not calling the wrapped object's flush method in turn.
+    call_wrapped_flush: bool,
+}
+
+impl<'self, T: Writer> BufferedWriter<'self, T> {
+    pub fn new<'a>(writer: &'a mut T, call_wrapped_flush: bool/*, buffer_size: uint*/)
+    -> BufferedWriter<'a, T> {
+        BufferedWriter {
+            wrapped: writer,
+            buffer: [0u8, ..WRITE_BUF_SIZE], //[0u8, ..buffer_size],
+            buflen: 0u,
+            call_wrapped_flush: call_wrapped_flush,
+        }
+    }
+}
+
+#[unsafe_destructor]
+impl<'self, T: Writer> Drop for BufferedWriter<'self, T> {
+    fn drop(&self) {
+        // Clearly wouldn't be a good idea to finish without flushing!
+        unsafe { transmute_mut(self) }.flush();
+    }
+}
+
+impl<'self, T: Writer> Writer for BufferedWriter<'self, T> {
+    fn write(&mut self, buf: &[u8]) {
+        if buf.len() + self.buflen > self.buffer.len() {
+            // This is the lazy approach which may involve two writes where it's really not
+            // warranted. Maybe deal with that later.
+            if self.buflen > 0 {
+                self.wrapped.write(self.buffer.slice_to(self.buflen));
+                self.buflen = 0;
+            }
+            self.wrapped.write(buf);
+            self.buflen = 0;
+        } else {
+            // Safely copy buf onto the "end" of self.buffer
+            unsafe {
+                do buf.as_imm_buf |p_src, len_src| {
+                    do self.buffer.as_mut_buf |p_dst, _len_dst| {
+                        // Note that copy_memory works on bytes; good, u8 is byte-sized
+                        ptr::copy_memory(ptr::mut_offset(p_dst, self.buflen), p_src, len_src)
+                    }
+                }
+            }
+            self.buflen += buf.len();
+            if self.buflen == self.buffer.len() {
+                self.wrapped.write(self.buffer);
+                self.buflen = 0;
+            }
+        }
+    }
+
+    fn flush(&mut self) {
+        if self.buflen > 0 {
+            self.wrapped.write(self.buffer.slice_to(self.buflen));
+            self.buflen = 0;
+        }
+        if self.call_wrapped_flush {
+            self.wrapped.flush();
+        }
     }
 }

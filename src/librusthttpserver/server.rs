@@ -83,7 +83,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                         let time_spawned = precise_time_ns();
                         let (request, err_status) = Request::get(~RequestBuffer::new(stream));
                         let time_request_made = precise_time_ns();
-                        let mut response = ~ResponseWriter::new(*stream, request);
+                        let mut response = ~ResponseWriter::new(stream, request);
                         let time_response_made = precise_time_ns();
                         match err_status {
                             Ok(()) => {
