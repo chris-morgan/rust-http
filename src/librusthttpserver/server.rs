@@ -32,38 +32,6 @@ pub trait ServerUtil {
     pub fn serve_forever(self);
 }
 
-static PERF_DUMP_FREQUENCY : u64 = 10_000;
-
-/// Simple function to dump out perf stats every `PERF_DUMP_FREQUENCY` requests
-fn perf_dumper(perf_po: Port<(u64, u64, u64, u64, u64)>) {
-    // Total durations
-    let mut td_spawn = 0u64;
-    let mut td_request = 0u64;
-    let mut td_response = 0u64;
-    let mut td_handle = 0u64;
-    let mut td_total = 0u64;
-    let mut i = 0u64;
-    loop {
-        let data = perf_po.recv();
-        let (start, spawned, request_made, response_made, finished) = data;
-        td_spawn += spawned - start;
-        td_request += request_made - spawned;
-        td_response += response_made - request_made;
-        td_handle += finished - response_made;
-        td_total += finished - start;
-        i += 1;
-        if i % PERF_DUMP_FREQUENCY == 0 {
-            println("");
-            println(fmt!("%? requests made thus far. Current means:", i));
-            println(fmt!("- Total:               100%%, %12?", td_total / i));
-            println(fmt!("- Spawn:               %3?%%, %12?", 100 * td_spawn / td_total, td_spawn / i));
-            println(fmt!("- Load request:        %3?%%, %12?", 100 * td_request / td_total, td_request / i));
-            println(fmt!("- Initialise response: %3?%%, %12?", 100 * td_response / td_total, td_response / i));
-            println(fmt!("- Handle:              %3?%%, %12?", 100 * td_handle / td_total, td_handle / i));
-        }
-    }
-}
-
 impl<T: Send + Clone + Server> ServerUtil for T {
 	/**
 	 * Attempt to bind to the address and port and start serving forever.
@@ -210,3 +178,35 @@ pub fn serve_forever(ip_addr: IpAddr, handler: ~fn(&Request, &mut ResponseWriter
 /// encounter on the Internet and is vulnerable to various DoS attacks. Sit it behind a gateway.
 static PUBLIC: IpAddr = Ipv4(0, 0, 0, 0, 80);
 */
+
+static PERF_DUMP_FREQUENCY : u64 = 10_000;
+
+/// Simple function to dump out perf stats every `PERF_DUMP_FREQUENCY` requests
+fn perf_dumper(perf_po: Port<(u64, u64, u64, u64, u64)>) {
+    // Total durations
+    let mut td_spawn = 0u64;
+    let mut td_request = 0u64;
+    let mut td_response = 0u64;
+    let mut td_handle = 0u64;
+    let mut td_total = 0u64;
+    let mut i = 0u64;
+    loop {
+        let data = perf_po.recv();
+        let (start, spawned, request_made, response_made, finished) = data;
+        td_spawn += spawned - start;
+        td_request += request_made - spawned;
+        td_response += response_made - request_made;
+        td_handle += finished - response_made;
+        td_total += finished - start;
+        i += 1;
+        if i % PERF_DUMP_FREQUENCY == 0 {
+            println("");
+            println(fmt!("%? requests made thus far. Current means:", i));
+            println(fmt!("- Total:               100%%, %12?", td_total / i));
+            println(fmt!("- Spawn:               %3?%%, %12?", 100 * td_spawn / td_total, td_spawn / i));
+            println(fmt!("- Load request:        %3?%%, %12?", 100 * td_request / td_total, td_request / i));
+            println(fmt!("- Initialise response: %3?%%, %12?", 100 * td_response / td_total, td_response / i));
+            println(fmt!("- Handle:              %3?%%, %12?", 100 * td_handle / td_total, td_handle / i));
+        }
+    }
+}
