@@ -110,7 +110,7 @@ impl<'self, T: Writer> Drop for BufferedWriter<'self, T> {
     fn drop(&self) {
         // Clearly wouldn't be a good idea to finish without flushing!
 
-        // TODO: blocked on https://github.com/mozilla/rust/issues/8059
+        // TODO: blocked on https://github.com/mozilla/rust/issues/4252
         //unsafe { transmute_mut(self) }.flush();
     }
 }
