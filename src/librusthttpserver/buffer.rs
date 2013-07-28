@@ -111,6 +111,7 @@ impl<'self, T: Writer> Drop for BufferedWriter<'self, T> {
         // Clearly wouldn't be a good idea to finish without flushing!
 
         // TODO: blocked on https://github.com/mozilla/rust/issues/4252
+        // Also compare usage of response.flush() in server.rs
         //unsafe { transmute_mut(self) }.flush();
     }
 }

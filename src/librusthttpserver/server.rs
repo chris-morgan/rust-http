@@ -4,7 +4,7 @@ extern mod extra;
 
 use std::comm::SharedChan;
 use std::task::{spawn_with, spawn_supervised};
-use std::rt::io::Listener;
+use std::rt::io::{Listener, Writer};
 use std::rt::io::net::ip::IpAddr;
 use std::rt::io::io_error;
 use extra::time::precise_time_ns;
@@ -100,6 +100,11 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                                 response.write_headers();
                             },
                         }
+                        // This should not be necessary, but is, because of the Drop bug apparent in
+                        // BufferedWriter. When that is fixed up, then it *may* be suitable to
+                        // remove flush() from here. I say "may" as it would mean that time_finished
+                        // might not include writing all the response (a non-trivial time interval).
+                        response.flush();
                         let time_finished = precise_time_ns();
                         child_perf_ch.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
                     }
