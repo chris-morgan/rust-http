@@ -3,7 +3,7 @@
 extern mod extra;
 
 use std::comm::SharedChan;
-use std::task::spawn_with;
+use std::task::{spawn_with, spawn_supervised};
 use std::rt::io::Listener;
 use std::rt::io::net::ip::IpAddr;
 use std::rt::io::io_error;
@@ -76,7 +76,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                     let stream = ::std::cell::Cell::new(optstream.unwrap());
                     let child_perf_ch = perf_ch.clone();
                     let child_self = self.clone();
-                    do spawn {
+                    do spawn_supervised {
                         let mut stream = ~stream.take();
                         debug!("accepted connection, got %?", stream);
                         //RequestBuffer::new(stream);
