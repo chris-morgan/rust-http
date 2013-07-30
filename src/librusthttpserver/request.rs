@@ -2,6 +2,7 @@ use extra::treemap::TreeMap;
 use extra::url::Url;
 use super::method::{Method, Options};
 use super::status;
+use std::rt::io::net::ip::IpAddr;
 use std::rt::io::net::tcp::TcpStream;
 use std::rt::io::Reader;
 use std::rt::io::extensions::ReaderUtil;
@@ -21,10 +22,10 @@ static BUF_SIZE: uint = 0x10000;  // Let's try 64KB chunks
 
 pub struct RequestBuffer<'self> {
     /// The socket connection to read from
-    priv stream: ~BufferedReader<'self, TcpStream>,
+    stream: ~BufferedReader<'self, TcpStream>,
 
     /// A working space for 
-    priv line_bytes: ~[u8],
+    line_bytes: ~[u8],
 }
 
 impl<'self> RequestBuffer<'self> {
@@ -171,8 +172,8 @@ struct RequestHost {
 
 /// An HTTP request sent to the server.
 pub struct Request {
-    /// The originating IP address of the request. TODO: not exposed at present by TcpStream.
-    //remote_addr: ip::IpAddr,
+    /// The originating IP address of the request.
+    remote_addr: Option<IpAddr>,
 
     /// The host name and IP address that the request was sent to; this must always be specified for
     /// HTTP/1.1 requests (or the request will be rejected), but for HTTP/1.0 requests the Host
@@ -342,7 +343,7 @@ impl Request {
 
         // Start out with dummy values
         let mut request = ~Request {
-            //remote_addr: socket.get_peer_addr(),
+            remote_addr: buffer.stream.wrapped.peer_name(),
             host: None,
             headers: ~TreeMap::new(),
             body: ~"",
