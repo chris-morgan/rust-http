@@ -44,6 +44,7 @@ impl<'self> RequestBuffer<'self> {
 
         loop {
             state = match self.stream.read_byte() {
+                // Client closed connection (e.g. keep-alive timeout, connect without HTTP request):
                 None => fail!("EOF"),
                 Some(b) => match state {
                     Normal if b == CR => {

@@ -77,36 +77,46 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                     let child_perf_ch = perf_ch.clone();
                     let child_self = self.clone();
                     do spawn_supervised {
+                        let mut time_start = time_start;
                         let mut stream = ~stream.take();
                         debug!("accepted connection, got %?", stream);
-                        //RequestBuffer::new(stream);
-                        let time_spawned = precise_time_ns();
-                        let (request, err_status) = Request::get(~RequestBuffer::new(stream));
-                        let time_request_made = precise_time_ns();
-                        let mut response = ~ResponseWriter::new(stream, request);
-                        let time_response_made = precise_time_ns();
-                        match err_status {
-                            Ok(()) => {
-                                child_self.handle_request(request, response);
-                                // Ensure that we actually do send a response:
-                                response.try_write_headers();
-                            },
-                            Err(status) => {
-                                // Uh oh, it's a response that I as a server cannot cope with.
-                                // No good user-agent should have caused this, so for the moment at
-                                // least I am content to send no body in the response.
-                                response.status = status;
-                                response.headers.insert(~"Content-Length", ~"0");
-                                response.write_headers();
-                            },
+                        loop {  // A keep-alive loop, condition at end
+                            let time_spawned = precise_time_ns();
+                            let (request, err_status) = Request::get(~RequestBuffer::new(stream));
+                            let time_request_made = precise_time_ns();
+                            let mut response = ~ResponseWriter::new(stream, request);
+                            let time_response_made = precise_time_ns();
+                            match err_status {
+                                Ok(()) => {
+                                    child_self.handle_request(request, response);
+                                    // Ensure that we actually do send a response:
+                                    response.try_write_headers();
+                                },
+                                Err(status) => {
+                                    // Uh oh, it's a response that I as a server cannot cope with.
+                                    // No good user-agent should have caused this, so for the moment
+                                    // at least I am content to send no body in the response.
+                                    response.status = status;
+                                    response.headers.insert(~"Content-Length", ~"0");
+                                    response.write_headers();
+                                },
+                            }
+                            // This should not be necessary, but is, because of the Drop bug
+                            // apparent in BufferedWriter. When that is fixed up, then it *may* be
+                            // suitable to remove flush() from here. I say "may" as it would mean
+                            // that time_finished might not include writing all the response (a
+                            // non-trivial time interval).
+                            response.flush();
+                            let time_finished = precise_time_ns();
+                            child_perf_ch.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
+
+                            // Subsequent requests on this connection have no spawn time
+                            time_start = time_spawned;
+
+                            if request.close_connection {
+                                break;
+                            }
                         }
-                        // This should not be necessary, but is, because of the Drop bug apparent in
-                        // BufferedWriter. When that is fixed up, then it *may* be suitable to
-                        // remove flush() from here. I say "may" as it would mean that time_finished
-                        // might not include writing all the response (a non-trivial time interval).
-                        response.flush();
-                        let time_finished = precise_time_ns();
-                        child_perf_ch.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
                     }
                 }
             }
