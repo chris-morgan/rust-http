@@ -111,7 +111,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                             child_perf_ch.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
 
                             // Subsequent requests on this connection have no spawn time
-                            time_start = time_spawned;
+                            time_start = time_finished;
 
                             if request.close_connection {
                                 break;
