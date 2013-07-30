@@ -2,6 +2,7 @@
 
 extern mod extra;
 
+use std::cell::Cell;
 use std::comm::SharedChan;
 use std::task::{spawn_with, spawn_supervised};
 use std::rt::io::{Listener, Writer};
@@ -73,7 +74,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                         // ECONNABORTED. TODO.
                         loop;
                     }
-                    let stream = ::std::cell::Cell::new(optstream.unwrap());
+                    let stream = Cell::new(optstream.unwrap());
                     let child_perf_ch = perf_ch.clone();
                     let child_self = self.clone();
                     do spawn_supervised {
