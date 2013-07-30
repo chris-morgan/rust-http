@@ -1,5 +1,3 @@
-#[allow(default_methods)];  // For the benefit of Server. Hopefully it'll work.
-
 extern mod extra;
 
 use std::cell::Cell;
