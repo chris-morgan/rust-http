@@ -9,6 +9,9 @@ counterparts as their server frameworks may insert extra headers. They should
 not be using such significant differences as chunked encodings, though, which
 would really render the comparison unfair.
 
+The examples shown below are not in any way scientific tests; I have not run
+them in any controlled environment whatsoever—just on my own personal machine.
+
 How to run the examples
 -----------------------
 
@@ -32,22 +35,70 @@ and Apache config got broken.)
 
 :Hardware: Over-six-year-old Core 2 Duo laptop with 4GB ("plenty") of RAM
 :OS: Ubuntu 13.10 (alpha) 64-bit
-:Rust version: 0.8-pre (906264b 2013-07-25 03:07:44 -0700)
+:Rust version: 0.8-pre (d34016d 2013-07-29 14:01:24 -0700)
 :Node version: 0.10.15
 :Go version: 1.1.1
 
-Benchmarking is done with ApacheBench at present as the easiest way (yes, I
-know ``ab`` is reasonably disparaged)::
+Note that concurrency levels greater than one will at present cause the server
+to occasionally segfault. Just keep trying.
+
+``ab`` (new connections)
+````````````````````````
+
+::
 
    ab -n 10000 -c 1 http://127.0.0.1:8001/
 
-Getting results from Rust with concurrency > 1 is difficult at present as it'll
-normally segfault within a few thousand requests. Just keep trying...
+(For higher concurrency, alter the value of ``-c``.)
 
 =========== ==== ==== ====
 Concurrency Node Go   Rust
 =========== ==== ==== ====
-1           3200 3000 3500
-2           4400 6500 4000
-3           4700 7400 4500
+1           3200 3000 3200
+2           4400 6500 3600
+3           4700 7400 3900
 =========== ==== ==== ====
+
+I have not attempted ``ab`` with ``-k`` (keep-alive) as it doesn’t seem to
+work. (Haven’t had time to assess why, yet.)
+
+``wrk`` (same connection)
+`````````````````````````
+
+Ten seconds of benchmarking, with one connection kept per thread.
+
+::
+
+   wrk --connections 1 --duration 10s --threads 1 http://127.0.0.1:8001/
+
+(For higher concurrency, alter the value of both ``-c`` and ``-t``.)
+
+=========== ===== ===== ====
+Concurrency Node  Go    Rust
+=========== ===== ===== ====
+1            9400  9000 6900
+2           11200 20500 7200
+3           11600 20500 7400
+=========== ===== ===== ====
+
+Conclusions
+===========
+
+There is still a lot of work to be done; the Rust version is able to take
+advantage of very little of a second core at present, and while its performance
+is par for new connections its keep-alive performance is distinctly poor. This
+suggests that opening a connection performs well, but reading and writing are
+comparatively slow.
+
+There is scope for further performance increases at all levels, from the
+TCP library (probably even in the scheduler) to my server library. There are a
+number of things known to be suboptimal which will be improved. (Request
+reading is very poor, for example, and accounts for over half the time taken
+with ``wrk``, and about a third with ``ab``.)
+
+Although my server library claims to be HTTP/1.1, it is by no means a compliant
+HTTP/1.1 server; many things are not yet implemented (e.g. full request
+reading, transfer codings). However, the general framework is in place and
+general performance characteristics are not expected to change radically. (By
+that I mean that I don’t believe any new things I add should slow it down
+enormously.)
