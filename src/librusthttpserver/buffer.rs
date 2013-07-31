@@ -41,6 +41,35 @@ impl<'self, T: Reader> BufferedReader<'self, T> {
         }
         self.buffer[self.pos] = byte;
     }
+
+    #[inline]
+    fn fill_buffer(&mut self) -> bool {
+        assert_eq!(self.pos, self.max);
+        match self.wrapped.read(self.buffer) {
+            None => {
+                self.pos = 0;
+                self.max = 0;
+                false
+            },
+            Some(i) => {
+                self.pos = 0;
+                self.max = i;
+                true
+            },
+        }
+    }
+
+    /// Slightly faster implementation of read_byte than that which is provided by ReaderUtil
+    /// (which just uses `read()`)
+    #[inline]
+    pub fn read_byte(&mut self) -> Option<u8> {
+        if self.pos == self.max && !self.fill_buffer() {
+            // Run out of buffered content, no more to come
+            return None;
+        }
+        self.pos += 1;
+        Some(self.buffer[self.pos - 1])
+    }
 }
 
 impl<'self, T: Reader> Reader for ~BufferedReader<'self, T> {
@@ -49,19 +78,9 @@ impl<'self, T: Reader> Reader for ~BufferedReader<'self, T> {
     /// At present, this makes no attempt to fill its buffer proactively, instead waiting until you
     /// ask.
     fn read(&mut self, buf: &mut [u8]) -> Option<uint> {
-        if self.pos == self.max {
-            // Run out of buffered content, read some more
-            match self.wrapped.read(self.buffer) {
-                None => {
-                    self.pos = 0;
-                    self.max = 0;
-                    return None
-                },
-                Some(i) => {
-                    self.pos = 0;
-                    self.max = i;
-                },
-            }
+        if self.pos == self.max && !self.fill_buffer() {
+            // Run out of buffered content, no more to come
+            return None;
         }
         let size = min(self.max - self.pos, buf.len());
         unsafe {
