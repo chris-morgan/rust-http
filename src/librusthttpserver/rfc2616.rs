@@ -2,7 +2,6 @@
 
 use extra::time::{Tm, strptime};
 
-/*
 /// OCTET: any 8-bit sequence of data (typechecking ensures this to be true)
 #[inline]
 pub fn is_octet(_: u8) -> bool { true }
@@ -30,7 +29,6 @@ pub fn is_digit(octet: u8) -> bool { octet >= 48 && octet <= 57 }
 /// CTL: any US-ASCII control character (octets 0 - 31) and DEL (127)
 #[inline]
 pub fn is_ctl(octet: u8) -> bool { octet < 32 || octet == 127 }
-*/
 
 /// CR: US-ASCII CR, carriage return (13)
 pub static CR: u8 = 13;
@@ -86,7 +84,6 @@ fn is_lws(octets: &[u8]) -> bool {
    replaced with a single SP before interpretation of the TEXT value.
 */
 
-/*
 /// HEX: "A" | "B" | "C" | "D" | "E" | "F" | "a" | "b" | "c" | "d" | "e" | "f" | DIGIT
 #[inline]
 pub fn is_hex(octet: u8) -> bool {
@@ -94,6 +91,10 @@ pub fn is_hex(octet: u8) -> bool {
 }
 
 /// token          = 1*<any CHAR except CTLs or separators>
+#[inline]
+pub fn is_token_item(o: u8) -> bool {
+    is_char(o) && !is_ctl(o) && !is_separator(o)
+}
 
 
 /// separators: "(" | ")" | "<" | ">" | "@" | "," | ";" | ":"
@@ -105,7 +106,7 @@ pub fn is_separator(o: u8) -> bool {
         || o == 34 || o == 47 || o == 91 || o == 93 || o == 63 || o == 61 || o == 123 ||
         o == 125 || o == SP || o == HT
 }
-*/
+
 /*
  * Comments can be included in some HTTP header fields by surrounding
  * the comment text with parentheses. Comments are only allowed in
