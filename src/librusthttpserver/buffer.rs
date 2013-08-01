@@ -87,7 +87,7 @@ impl<'self, T: Reader> Reader for ~BufferedReader<'self, T> {
             do buf.as_mut_buf |p_dst, _len_dst| {
                 do self.buffer.as_imm_buf |p_src, _len_src| {
                     // Note that copy_memory works on bytes; good, u8 is byte-sized
-                    ptr::copy_memory(p_dst, ptr::offset(p_src, self.pos), size)
+                    ptr::copy_memory(p_dst, ptr::offset(p_src, self.pos as int), size)
                 }
             }
         }
@@ -152,7 +152,7 @@ impl<'self, T: Writer> Writer for BufferedWriter<'self, T> {
                 do buf.as_imm_buf |p_src, len_src| {
                     do self.buffer.as_mut_buf |p_dst, _len_dst| {
                         // Note that copy_memory works on bytes; good, u8 is byte-sized
-                        ptr::copy_memory(ptr::mut_offset(p_dst, self.buflen), p_src, len_src)
+                        ptr::copy_memory(ptr::mut_offset(p_dst, self.buflen as int), p_src, len_src)
                     }
                 }
             }
