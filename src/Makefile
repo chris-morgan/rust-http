@@ -5,12 +5,25 @@ RUSTFLAGS=-O
 VERSION=0.1-pre
 
 lrhs_so=librusthttpserver/librusthttpserver-20af9b1d3441fe5a-$(VERSION).so
-lrhs_files=librusthttpserver/buffer.rs librusthttpserver/headers.rs librusthttpserver/method.rs librusthttpserver/request.rs librusthttpserver/response.rs librusthttpserver/rfc2616.rs librusthttpserver/rusthttpserver.rs librusthttpserver/server.rs librusthttpserver/status.rs
+lrhs_files=\
+		   librusthttpserver/buffer.rs \
+		   librusthttpserver/generated/read_method.rs \
+		   librusthttpserver/generated/status.rs \
+		   librusthttpserver/headers.rs \
+		   librusthttpserver/method.rs \
+		   librusthttpserver/request.rs \
+		   librusthttpserver/response.rs \
+		   librusthttpserver/rfc2616.rs \
+		   librusthttpserver/rusthttpserver.rs \
+		   librusthttpserver/server.rs
 
 all: $(lrhs_so) examples
 
-librusthttpserver/status.rs: librusthttpserver/generate_status.py
-	cd librusthttpserver; python2 generate_status.py
+librusthttpserver/codegen/codegen: $(wildcard librusthttpserver/codegen/*.rs)
+	$(RUSTC) $(RUSTFLAGS) $@.rs
+
+librusthttpserver/generated/%.rs: librusthttpserver/codegen/codegen
+	librusthttpserver/codegen/codegen $(patsubst librusthttpserver/generated/%,%,$@)
 
 $(lrhs_so): $(lrhs_files)
 	cd librusthttpserver; $(RUSTC) $(RUSTFLAGS) rusthttpserver.rs
@@ -35,6 +48,7 @@ clean-tests:
 
 clean: clean-tests
 	rm -f $(lrhs_so)
+	rm -rf librusthttpserver/generated/ librusthttpserver/codegen/codegen
 	rm -f examples/apache_fake examples/hello_world examples/info
 
 .PHONY: all examples clean tests clean-tests
