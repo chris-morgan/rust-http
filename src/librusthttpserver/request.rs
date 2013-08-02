@@ -4,21 +4,94 @@ use super::method::{Method, Options};
 use super::status;
 use std::rt::io::net::ip::IpAddr;
 use std::rt::io::net::tcp::TcpStream;
-use std::rt::io::Reader;
-use std::rt::io::extensions::ReaderUtil;
-use std::{str, uint, u16};
+use std::{str, u16};
 use super::rfc2616::{CR, LF, SP, HT, COLON};
 use super::headers::{Headers, normalise_header_name};
 use super::buffer::BufferedReader;
 
 pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeader }
 
+//#[path = "request.old.rs"]
+//mod old;
+
 /// Line/header can't be more than 4KB long (note that with the compacting of LWS the actual source
 /// data could be longer than 4KB)
 static MAX_LINE_LEN: uint = 0x1000;
 
+static MAX_REQUEST_URI_LEN: uint = 1024;
+pub static MAX_METHOD_LEN: uint = 64;
+static MAX_HTTP_VERSION_LEN: uint = 1024;
+
 /// Moderately arbitrary figure: read in 64KB chunks. GET requests should never be this large.
 static BUF_SIZE: uint = 0x10000;  // Let's try 64KB chunks
+
+// TODO: go through http://www.iana.org/assignments/message-headers/message-headers.xhtml
+// and assess what new headers need to be supported
+
+// RFC 2616, Section 4.5: General Header Fields
+enum GeneralHeader {
+    CacheControl(~str),      // Section 14.9
+    Connection(~str),        // Section 14.10
+    Date(~str),              // Section 14.18
+    Pragma(~str),            // Section 14.32
+    Trailer(~str),           // Section 14.40
+    TransferEncoding(~str),  // Section 14.41
+    Upgrade(~str),           // Section 14.42
+    Via(~str),               // Section 14.45
+    Warning(~str),           // Section 14.46
+}
+
+// RFC 2616, Section 5.3: Request Header Fields
+enum RequestHeader {
+    Accept(~str),              // Section 14.1
+    AcceptCharset(~str),       // Section 14.2
+    AcceptEncoding(~str),      // Section 14.3
+    AcceptLanguage(~str),      // Section 14.4
+    Authorization(~str),       // Section 14.8
+    Expect(~str),              // Section 14.20
+    From(~str),                // Section 14.22
+    Host(~str),                // Section 14.23
+    IfMatch(~str),             // Section 14.24
+    IfModifiedSince(~str),     // Section 14.25
+    IfNoneMatch(~str),         // Section 14.26
+    IfRange(~str),             // Section 14.27
+    IfUnmodifiedSince(~str),   // Section 14.28
+    MaxForwards(~str),         // Section 14.31
+    ProxyAuthorization(~str),  // Section 14.34
+    Range(~str),               // Section 14.35
+    Referer(~str),             // Section 14.36
+    TE(~str),                  // Section 14.39
+    UserAgent(~str),           // Section 14.43
+}
+
+// RFC 2616, Section 6.2: Response Header Fields
+enum ResponseHeader {
+    AcceptPatch(~str),        // RFC 5789, Section 3.1
+    AcceptRanges(~str),       // Section 14.5
+    Age(~str),                // Section 14.6
+    ETag(~str),               // Section 14.19
+    Location(~str),           // Section 14.30
+    ProxyAuthenticate(~str),  // Section 14.33
+    RetryAfter(~str),         // Section 14.37
+    Server(~str),             // Section 14.38
+    Vary(~str),               // Section 14.44
+    WwwAuthenticate(~str),    // Section 14.47
+}
+
+// RFC 2616, Section 7.1: Entity Header Fields
+enum EntityHeader {
+    Allow(~str),            // Section 14.7
+    ContentEncoding(~str),  // Section 14.11
+    ContentLanguage(~str),  // Section 14.12
+    ContentLength(~str),    // Section 14.13
+    ContentLocation(~str),  // Section 14.14
+    ContentMD5(~str),       // Section 14.15
+    ContentRange(~str),     // Section 14.16
+    ContentType(~str),      // Section 14.17
+    Expires(~str),          // Section 14.21
+    LastModified(~str),     // Section 14.29
+    ExtensionHeader(~str, ~str),
+}
 
 pub struct RequestBuffer<'self> {
     /// The socket connection to read from
@@ -36,37 +109,125 @@ impl<'self> RequestBuffer<'self> {
         }
     }
 
-    /// Read a line ending in CRLF
-    pub fn read_crlf_line(&mut self) -> ~str {
-        self.line_bytes.clear();
+    pub fn read_request_line(&mut self) -> Result<(Method, RequestUri, (uint, uint)),
+                                                  status::Status> {
+        let method = match self.read_method() {
+            Some(m) => m,
+            // TODO: this is a very common case, if a connection is kept open but then closed or
+            // timed out. We should handle that case specially if we can improve perf—check if the
+            // peer is still there and just drop the request if it is not
+            None => return Err(status::BadRequest),
+        };
 
-        enum State { Normal, GotCR };
-        let mut state = Normal;
+        let request_uri = match self.read_request_uri() {
+            Ok(m) => m,
+            Err(e) => return Err(e),
+        };
 
-        loop {
-            state = match self.stream.read_byte() {
-                // Client closed connection (e.g. keep-alive timeout, connect without HTTP request):
-                None => fail!("EOF"),
-                Some(b) => match state {
-                    Normal if b == CR => {
-                        GotCR
-                    },
-                    GotCR if b == LF => {
-                        break;
-                    },
-                    GotCR => {
-                        self.line_bytes.push(CR);
-                        self.line_bytes.push(b);
-                        Normal
-                    },
-                    Normal => {
-                        self.line_bytes.push(b);
-                        Normal
-                    }
-                }
-            };
+        match self.read_http_version() {
+            Some(vv) => Ok((method, request_uri, vv)),
+            None => return Err(status::BadRequest),
         }
-        str::from_bytes(self.line_bytes)
+    }
+
+    #[inline]
+    fn read_method(&mut self) -> Option<Method> {
+        include!("generated/read_method.rs");
+    }
+
+    #[inline]
+    fn read_request_uri(&mut self) -> Result<RequestUri, status::Status> {
+        // Got that, including consuming the SP; now get the request_uri
+        let mut request_uri = ~"";
+        loop {
+            match self.stream.read_byte() {
+                None => return Err(status::BadRequest),
+                Some(b) if b == SP => break,
+                Some(b) => {
+                    if request_uri.len() == MAX_REQUEST_URI_LEN {
+                        return Err(status::RequestUriTooLong)
+                    }
+                    request_uri.push_char(b as char);
+                }
+            }
+        }
+        match FromStr::from_str::<RequestUri>(request_uri) {
+            Some(r) => Ok(r),
+            None => Err(status::BadRequest),
+        }
+    }
+
+    #[inline]
+    fn read_http_version(&mut self) -> Option<(uint, uint)> {
+        // HTTP/%u.%u
+        match self.stream.read_byte() {
+            Some(b) if b == 'h' as u8 || b == 'H' as u8 => (),
+            _ => return None,
+        }
+        match self.stream.read_byte() {
+            Some(b) if b == 't' as u8 || b == 'T' as u8 => (),
+            _ => return None,
+        }
+        match self.stream.read_byte() {
+            Some(b) if b == 't' as u8 || b == 'T' as u8 => (),
+            _ => return None,
+        }
+        match self.stream.read_byte() {
+            Some(b) if b == 'p' as u8 || b == 'P' as u8 => (),
+            _ => return None,
+        }
+        match self.stream.read_byte() {
+            Some(b) if b == ('/' as u8) => (),
+            _ => return None,
+        }
+
+        // First number
+        let mut ord = 1u;
+        let mut n1 = 0;
+        loop {
+            if ord == 100000 {
+                return None;
+            }
+            match self.stream.read_byte() {
+                Some(b) if b >= '0' as u8 && b <= '9' as u8 => {
+                    n1 += ord * ((b - ('0' as u8)) as uint);
+                },
+                Some(b) if b == '.' as u8 => break,
+                _ => return None,
+            }
+            ord *= 10;
+        }
+
+        // Second number
+        ord = 1u;
+        let mut n2 = 0;
+        loop {
+            if ord == 100000 {
+                return None;
+            }
+            match self.stream.read_byte() {
+                Some(b) if b >= '0' as u8 && b <= '9' as u8 => {
+                    n2 += ord * ((b - ('0' as u8)) as uint);
+                },
+                Some(b) if b == CR => break,
+                _ => return None,
+            }
+            ord *= 10;
+        }
+
+        match self.stream.read_byte() {
+            Some(b) if b == LF => Some((n1, n2)),
+            _ => None,
+        }
+    }
+
+    /// Quick adapter from read_header back into read_header_line to let it compile for now
+    pub fn read_header_line(&mut self) -> Result<(~str, ~str), HeaderLineErr> {
+        match self.read_header() {
+            Ok(ExtensionHeader(k, v)) => Ok((k, v)),
+            Ok(_) => fail!("Temporary method, this shouldn't have happened!"),
+            Err(e) => Err(e),
+        }
     }
 
     /// Read a header (name, value) pair.
@@ -80,7 +241,7 @@ impl<'self> RequestBuffer<'self> {
     /// - `EndOfHeaders`: I have no more headers to give; go forth and conquer on the body!
     /// - `EndOfFile`: socket was closed unexpectedly; probable best behavour is to drop the request
     /// - `MalformedHeader`: request is bad; you could drop it or try returning 400 Bad Request
-    pub fn read_header_line(&mut self) -> Result<(~str, ~str), HeaderLineErr> {
+    pub fn read_header(&mut self) -> Result<EntityHeader, HeaderLineErr> {
         enum State2 { Normal, CompactingLWS, GotCR, GotCRLF };
         // XXX: not called State because of https://github.com/mozilla/rust/issues/7770
         // TODO: investigate quoted strings
@@ -154,7 +315,7 @@ impl<'self> RequestBuffer<'self> {
                 },
             };
         }
-        return Ok((header_name, str::from_bytes(self.line_bytes)));
+        Ok(ExtensionHeader(header_name, str::from_bytes(self.line_bytes)))
     }
 }
 
@@ -253,89 +414,6 @@ impl FromStr for RequestUri {
     }
 }
 
-/// Parse an HTTP request line into its parts.
-///
-/// `parse_request_line("GET /foo HTTP/1.1") == Ok((method::Get, AbsolutePath("/foo"), (1, 1)))`
-fn parse_request_line(line: &str) -> Option<(Method, RequestUri, (uint, uint))> {
-    let mut words = line.word_iter();
-    let method = match words.next() {
-        Some(s) => Method::from_str_or_new(s),
-        None => return None,
-    };
-    let request_uri = match words.next() {
-        Some(s) => match FromStr::from_str::<RequestUri>(s) {
-            Some(r) => r,
-            None => return None,
-        },
-        None => return None,
-    };
-    let http_version = match words.next() {
-        Some(s) => parse_http_version(s),
-        None => return None,
-    };
-    match (words.next(), http_version) {
-        (None, Some(v)) => Some((method, request_uri, v)),
-        _ => None,  // More words or invalid HTTP version
-    }
-}
-
-/// Parse an HTTP version string into the two X.Y parts.
-///
-/// At present, HTTP versions the server does not know about are rejected.
-///
-/// ~~~ {.rust}
-/// assert_eq!(parse_http_version(~"HTTP/1.0"), Some((1, 0)))
-/// assert_eq!(parse_http_version(~"HTTP/1.1"), Some((1, 1)))
-/// assert_eq!(parse_http_version(~"HTTP/2.0"), Some((2, 0)))
-/// ~~~
-fn parse_http_version(version: &str) -> Option<(uint, uint)> {
-    match version.to_ascii().to_upper().to_str_ascii() {
-        // These two are efficiency shortcuts; they're expected to be all that we ever receive,
-        // but naturally we mustn't let it crash on other inputs.
-        ~"HTTP/1.0" => Some((1, 0)),
-        ~"HTTP/1.1" => Some((1, 1)),
-        ref v if v.starts_with("HTTP/") => {
-            // This commented-out variant would fail! if given non-integers
-            //let ints: ~[uint] = v.slice_from(5).split_iter('.').map(
-            //    |&num| uint::from_str_radix(num, 10).get()).collect();
-            let mut ints = [0u, 0u];
-            for v.slice_from(5).split_iter('.').enumerate().advance |(i, strnum)| {
-                if i > 1 {
-                    // More than two numbers, e.g. HTTP/1.2.3
-                    return None;
-                }
-                match uint::from_str_radix(strnum, 10) {
-                    Some(num) => ints[i] = num,
-                    None => return None,
-                }
-            }
-            Some((ints[0], ints[1]))
-        }
-        _ => None
-    }
-}
-
-// Now why should these go in a separate module? Especially when we're testing private methods...
-#[test]
-fn test_parse_http_version() {
-    assert_eq!(parse_http_version("http/1.1"), Some((1, 1)));
-    assert_eq!(parse_http_version("hTTp/1.1"), Some((1, 1)));
-    assert_eq!(parse_http_version("HTTP/1.1"), Some((1, 1)));
-    assert_eq!(parse_http_version("HTTP/1.0"), Some((1, 0)));
-    assert_eq!(parse_http_version("HTTP/2.34"), Some((2, 34)));
-}
-
-#[test]
-fn test_parse_request_line() {
-    use super::method::{Get, Post};
-    assert_eq!(parse_request_line("GET /foo HTTP/1.1"),
-        Some((Get, AbsolutePath(~"/foo"), (1, 1))));
-    assert_eq!(parse_request_line("POST / http/1.0"),
-        Some((Post, AbsolutePath(~"/"), (1, 0))));
-    assert_eq!(parse_request_line("POST / HTTP/2.0"),
-        Some((Post, AbsolutePath(~"/"), (2, 0))));
-}
-
 impl Request {
 
     /// Get a response from an open socket.
@@ -353,9 +431,10 @@ impl Request {
             version: (0, 0),
         };
 
-        let (method, request_uri, version) = match parse_request_line(buffer.read_crlf_line()) {
-            Some(vals) => vals,
-            None => return (request, Err(status::BadRequest)),
+        //let (method, request_uri, version) = match old::read_request_line(buffer) {
+        let (method, request_uri, version) = match buffer.read_request_line() {
+            Ok(vals) => vals,
+            Err(err) => return (request, Err(err)),
         };
         request.method = method;
         request.request_uri = request_uri;
