@@ -108,7 +108,7 @@ pub fn generate_branchified_method(
                 None => wf!("    Some(b) if b == SP => return Some(%s),",
                                 unknown.replace("%s", fmt!("~\"%s\"", next_prefix))),
             }
-            wf!("    Some(b) if %s => (~\"%s\", b),", valid, next_prefix);
+            wf!("    Some(b) if %s => (\"%s\", b),", valid, next_prefix);
             wf!("    _ => return None,");
             wf!("},");
         }
@@ -118,11 +118,11 @@ pub fn generate_branchified_method(
     foreach b in branches.iter() {
         r(writer, b, "", indent + 1, read_call, end, max_len, valid, unknown);
     }
-    wf!("    Some(b) if %s => (~\"\", b),", valid);
+    wf!("    Some(b) if %s => (\"\", b),", valid);
     wf!("    _ => return None,");
     wf!("};");
     wf!("// OK, that didn't pan out. Let's read the rest and see what we get.");
-    wf!("let mut s = s;");
+    wf!("let mut s = s.to_owned();");
     wf!("s.push_char(next_byte as char);");
     wf!("loop {");
     wf!("    match %s {", read_call);
