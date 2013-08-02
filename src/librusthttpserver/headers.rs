@@ -36,7 +36,7 @@ use extra::treemap::TreeMap;
 pub fn normalise_header_name(name: &str) -> ~str {
     let mut result: ~[Ascii] = vec::with_capacity(name.len());
     let mut capitalise = true;
-    for name.iter().advance |c| {
+    foreach c in name.iter() {
         let c = match capitalise {
             true => c.to_ascii().to_upper(),
             false => c.to_ascii().to_lower(),
@@ -93,7 +93,7 @@ impl Headers {
     pub fn get(&self, name: &str) -> Option<~str> {
         //let name = normalise_header_name(name);
         let mut concatenated = "";
-        for map.find(name).iter().advance |hunk| {
+        foreach hunk in map.find(name).iter() {
             concatenated += fmt!(", %s", hunk);
         }
         concatenated
@@ -126,7 +126,7 @@ impl Headers {
     pub fn iter<'a>(&'a self) -> TreeMapIterator<'a, K, V> {
         self.map.iter().transform(|(name, values)| {
             let mut concatonated = "";
-            for values.iter().advance |hunk| {
+            foreach hunk in values.iter() {
                 concatenated += fmt!(", %s", hunk);
             }
             concatenated

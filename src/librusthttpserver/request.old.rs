@@ -92,7 +92,7 @@ fn parse_http_version(version: &str) -> Option<(uint, uint)> {
             //let ints: ~[uint] = v.slice_from(5).split_iter('.').map(
             //    |&num| uint::from_str_radix(num, 10).get()).collect();
             let mut ints = [0u, 0u];
-            for v.slice_from(5).split_iter('.').enumerate().advance |(i, strnum)| {
+            foreach (i, strnum) in v.slice_from(5).split_iter('.').enumerate() {
                 if i > 1 {
                     // More than two numbers, e.g. HTTP/1.2.3
                     return None;

@@ -77,7 +77,7 @@ impl<'self> ResponseWriter<'self> {
 
         // Write the miscellaneous varieties of headers
         // XXX: this is not in the slightest bit sufficient; much more filtration is required.
-        for self.headers.iter().advance |(name, value)| {
+        foreach (name, value) in self.headers.iter() {
             let s = fmt!("%s: %s\r\n", *name, *value);
             self.writer.write(s.as_bytes());
         }

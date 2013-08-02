@@ -42,7 +42,7 @@ impl Server for InfoServer {
         w.write(s.as_bytes().to_owned());
         w.write(bytes!("<h2>Headers</h2>"));
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
-        for r.headers.iter().advance |(k, v)| {
+        foreach (k, v) in r.headers.iter() {
             let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>", *k, *v);
             w.write(line.as_bytes().to_owned());
         }
@@ -58,7 +58,7 @@ impl Server for InfoServer {
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
         {
             let h = w.headers.clone();
-            for h.iter().advance |(k, v)| {
+            foreach (k, v) in h.iter() {
                 let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>", *k, *v);
                 w.write(line.as_bytes().to_owned());
             }
