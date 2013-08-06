@@ -58,7 +58,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                     let mut error = None;
                     let optstream = io_error::cond.trap(|e| {
                         error = Some(e);
-                    }).in(|| {
+                    }).inside(|| {
                         listener.accept()
                     });
 
