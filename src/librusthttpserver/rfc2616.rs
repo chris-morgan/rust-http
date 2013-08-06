@@ -96,6 +96,11 @@ pub fn is_token_item(o: u8) -> bool {
     is_char(o) && !is_ctl(o) && !is_separator(o)
 }
 
+#[inline]
+pub fn is_token(s: &str) -> bool {
+    s.iter().all(|c| is_token_item(c as u8))
+}
+
 
 /// separators: "(" | ")" | "<" | ">" | "@" | "," | ";" | ":"
 ///           | "\" | <"> | "/" | "[" | "]" | "?" | "=" | "{"
@@ -212,44 +217,69 @@ pub fn format_http_time(value: Tm) -> ~str {
 // IANA is assigned as maintaining the registry for these things:
 // see https://www.iana.org/assignments/http-parameters/http-parameters.xml
 
-/// Content-coding value tokens
-pub enum ContentCodingValueToken {
-    // An encoding format produced by the file compression program "gzip" (GNU zip) as described in
-    // RFC 1952 [25]. This format is a Lempel-Ziv coding (LZ77) with a 32 bit CRC.
-    CCVTGzip,
+mod content_coding {
+    /// Content-coding value tokens
+    pub enum ValueToken {
+        // An encoding format produced by the file compression program "gzip" (GNU zip) as described
+        // in RFC 1952 [25]. This format is a Lempel-Ziv coding (LZ77) with a 32 bit CRC.
+        Gzip,
 
-    // The encoding format produced by the common UNIX file compression program "compress". This
-    // format is an adaptive Lempel-Ziv-Welch coding (LZW).
-    // 
-    // Use of program names for the identification of encoding formats is not desirable and is
-    // discouraged for future encodings. Their use here is representative of historical practice,
-    // not good design. For compatibility with previous implementations of HTTP, applications SHOULD
-    // consider "x-gzip" and "x-compress" to be equivalent to "gzip" and "compress" respectively.
-    CCVTCompress,
+        // The encoding format produced by the common UNIX file compression program "compress". This
+        // format is an adaptive Lempel-Ziv-Welch coding (LZW).
+        // 
+        // Use of program names for the identification of encoding formats is not desirable and is
+        // discouraged for future encodings. Their use here is representative of historical
+        // practice, not good design. For compatibility with previous implementations of HTTP,
+        // applications SHOULD consider "x-gzip" and "x-compress" to be equivalent to "gzip" and
+        // "compress" respectively.
+        Compress,
 
-    // The "zlib" format defined in RFC 1950 [31] in combination with the "deflate" compression
-    // mechanism described in RFC 1951 [29].
-    CCVTDeflate,
+        // The "zlib" format defined in RFC 1950 [31] in combination with the "deflate" compression
+        // mechanism described in RFC 1951 [29].
+        Deflate,
 
-    // The default (identity) encoding; the use of no transformation whatsoever. This content-coding
-    // is used only in the Accept- Encoding header, and SHOULD NOT be used in the Content-Encoding
-    // header.
-    CCVTIdentity,
+        // The default (identity) encoding; the use of no transformation whatsoever. This
+        // content-coding is used only in the Accept- Encoding header, and SHOULD NOT be used in the
+        // Content-Encoding header.
+        Identity,
 
-    // IANA has also assigned the following currently unsupported content codings:
-    //
-    // - "exi": W3C Efficient XML Interchange
-    // - "pack200-gzip" (Network Transfer Format for Java Archives)
+        // IANA has also assigned the following currently unsupported content codings:
+        //
+        // - "exi": W3C Efficient XML Interchange
+        // - "pack200-gzip" (Network Transfer Format for Java Archives)
+    }
+    impl ToStr for ValueToken {
+        fn to_str(&self) -> ~str {
+            match *self {
+                Gzip => ~"gzip",
+                Compress => ~"compress",
+                Deflate => ~"deflate",
+                Identity => ~"identity",
+            }
+        }
+    }
 }
 
-/// Transfer-coding value tokens
-// Identity is in RFC 2616 but is withdrawn in RFC 2616 errata ID 408
-// http://www.rfc-editor.org/errata_search.php?rfc=2616&eid=408
-pub enum TransferCodingValueToken {
-    TCVTChunked,   // RFC 2616, §3.6.1
-    TCVTGzip,      // See above
-    TCVTCompress,  // See above
-    TCVTDeflate,   // See above
+mod transfer_coding {
+    /// Transfer-coding value tokens
+    // Identity is in RFC 2616 but is withdrawn in RFC 2616 errata ID 408
+    // http://www.rfc-editor.org/errata_search.php?rfc=2616&eid=408
+    pub enum ValueToken {
+        Chunked,   // RFC 2616, §3.6.1
+        Gzip,      // See above
+        Compress,  // See above
+        Deflate,   // See above
+    }
+    impl ToStr for ValueToken {
+        fn to_str(&self) -> ~str {
+            match *self {
+                Chunked => ~"chunked",
+                Gzip => ~"gzip",
+                Compress => ~"compress",
+                Deflate => ~"deflate",
+            }
+        }
+    }
 }
 
 // A server which receives an entity-body with a transfer-coding it does

@@ -7,6 +7,7 @@ use std::rt::io::net::tcp::TcpStream;
 use std::{str, u16};
 use super::rfc2616::{CR, LF, SP, HT, COLON};
 use super::headers::{Headers, normalise_header_name};
+use super::headers;
 use super::buffer::BufferedReader;
 
 pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeader }
@@ -24,74 +25,6 @@ static MAX_HTTP_VERSION_LEN: uint = 1024;
 
 /// Moderately arbitrary figure: read in 64KB chunks. GET requests should never be this large.
 static BUF_SIZE: uint = 0x10000;  // Let's try 64KB chunks
-
-// TODO: go through http://www.iana.org/assignments/message-headers/message-headers.xhtml
-// and assess what new headers need to be supported
-
-// RFC 2616, Section 4.5: General Header Fields
-enum GeneralHeader {
-    CacheControl(~str),      // Section 14.9
-    Connection(~str),        // Section 14.10
-    Date(~str),              // Section 14.18
-    Pragma(~str),            // Section 14.32
-    Trailer(~str),           // Section 14.40
-    TransferEncoding(~str),  // Section 14.41
-    Upgrade(~str),           // Section 14.42
-    Via(~str),               // Section 14.45
-    Warning(~str),           // Section 14.46
-}
-
-// RFC 2616, Section 5.3: Request Header Fields
-enum RequestHeader {
-    Accept(~str),              // Section 14.1
-    AcceptCharset(~str),       // Section 14.2
-    AcceptEncoding(~str),      // Section 14.3
-    AcceptLanguage(~str),      // Section 14.4
-    Authorization(~str),       // Section 14.8
-    Expect(~str),              // Section 14.20
-    From(~str),                // Section 14.22
-    Host(~str),                // Section 14.23
-    IfMatch(~str),             // Section 14.24
-    IfModifiedSince(~str),     // Section 14.25
-    IfNoneMatch(~str),         // Section 14.26
-    IfRange(~str),             // Section 14.27
-    IfUnmodifiedSince(~str),   // Section 14.28
-    MaxForwards(~str),         // Section 14.31
-    ProxyAuthorization(~str),  // Section 14.34
-    Range(~str),               // Section 14.35
-    Referer(~str),             // Section 14.36
-    TE(~str),                  // Section 14.39
-    UserAgent(~str),           // Section 14.43
-}
-
-// RFC 2616, Section 6.2: Response Header Fields
-enum ResponseHeader {
-    AcceptPatch(~str),        // RFC 5789, Section 3.1
-    AcceptRanges(~str),       // Section 14.5
-    Age(~str),                // Section 14.6
-    ETag(~str),               // Section 14.19
-    Location(~str),           // Section 14.30
-    ProxyAuthenticate(~str),  // Section 14.33
-    RetryAfter(~str),         // Section 14.37
-    Server(~str),             // Section 14.38
-    Vary(~str),               // Section 14.44
-    WwwAuthenticate(~str),    // Section 14.47
-}
-
-// RFC 2616, Section 7.1: Entity Header Fields
-enum EntityHeader {
-    Allow(~str),            // Section 14.7
-    ContentEncoding(~str),  // Section 14.11
-    ContentLanguage(~str),  // Section 14.12
-    ContentLength(~str),    // Section 14.13
-    ContentLocation(~str),  // Section 14.14
-    ContentMD5(~str),       // Section 14.15
-    ContentRange(~str),     // Section 14.16
-    ContentType(~str),      // Section 14.17
-    Expires(~str),          // Section 14.21
-    LastModified(~str),     // Section 14.29
-    ExtensionHeader(~str, ~str),
-}
 
 pub struct RequestBuffer<'self> {
     /// The socket connection to read from
@@ -224,7 +157,7 @@ impl<'self> RequestBuffer<'self> {
     /// Quick adapter from read_header back into read_header_line to let it compile for now
     pub fn read_header_line(&mut self) -> Result<(~str, ~str), HeaderLineErr> {
         match self.read_header() {
-            Ok(ExtensionHeader(k, v)) => Ok((k, v)),
+            Ok(headers::RequestEntityHeader(headers::ExtensionHeader(k, v))) => Ok((k, v)),
             Ok(_) => fail!("Temporary method, this shouldn't have happened!"),
             Err(e) => Err(e),
         }
@@ -241,7 +174,7 @@ impl<'self> RequestBuffer<'self> {
     /// - `EndOfHeaders`: I have no more headers to give; go forth and conquer on the body!
     /// - `EndOfFile`: socket was closed unexpectedly; probable best behavour is to drop the request
     /// - `MalformedHeader`: request is bad; you could drop it or try returning 400 Bad Request
-    pub fn read_header(&mut self) -> Result<EntityHeader, HeaderLineErr> {
+    pub fn read_header(&mut self) -> Result<headers::AnyRequestHeader, HeaderLineErr> {
         enum State2 { Normal, CompactingLWS, GotCR, GotCRLF };
         // XXX: not called State because of https://github.com/mozilla/rust/issues/7770
         // TODO: investigate quoted strings
@@ -315,7 +248,8 @@ impl<'self> RequestBuffer<'self> {
                 },
             };
         }
-        Ok(ExtensionHeader(header_name, str::from_bytes(self.line_bytes)))
+        Ok(headers::RequestEntityHeader(
+                headers::ExtensionHeader(header_name, str::from_bytes(self.line_bytes))))
     }
 }
 
