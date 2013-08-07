@@ -2,7 +2,7 @@ use extra::treemap::TreeMap;
 use extra::url::Url;
 use super::method::{Method, Options};
 use super::status;
-use std::rt::io::net::ip::IpAddr;
+use std::rt::io::net::ip::SocketAddr;
 use std::rt::io::net::tcp::TcpStream;
 use std::{str, u16};
 use super::rfc2616::{CR, LF, SP, HT, COLON};
@@ -268,7 +268,7 @@ struct RequestHost {
 /// An HTTP request sent to the server.
 pub struct Request {
     /// The originating IP address of the request.
-    remote_addr: Option<IpAddr>,
+    remote_addr: Option<SocketAddr>,
 
     /// The host name and IP address that the request was sent to; this must always be specified for
     /// HTTP/1.1 requests (or the request will be rejected), but for HTTP/1.0 requests the Host
@@ -397,7 +397,7 @@ impl Request {
                         // handling, where it's easier.
                         let mut hi = value.splitn_iter(':', 1);
                         request.host = Some(RequestHost {
-                            name: hi.next().get().to_owned(),
+                            name: hi.next().unwrap().to_owned(),
                             port: match hi.next() {
                                 Some(name) => match u16::from_str(name) {
                                     Some(port) => Some(port),

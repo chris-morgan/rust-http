@@ -39,7 +39,7 @@ use super::method::Method;
 pub fn normalise_header_name(name: &str) -> ~str {
     let mut result: ~[Ascii] = vec::with_capacity(name.len());
     let mut capitalise = true;
-    foreach c in name.iter() {
+    for c in name.iter() {
         let c = match capitalise {
             true => c.to_ascii().to_upper(),
             false => c.to_ascii().to_lower(),
@@ -96,7 +96,7 @@ impl Headers {
     pub fn get(&self, name: &str) -> Option<~str> {
         //let name = normalise_header_name(name);
         let mut concatenated = "";
-        foreach hunk in map.find(name).iter() {
+        for hunk in map.find(name).iter() {
             concatenated += fmt!(", %s", hunk);
         }
         concatenated
@@ -129,7 +129,7 @@ impl Headers {
     pub fn iter<'a>(&'a self) -> TreeMapIterator<'a, K, V> {
         self.map.iter().transform(|(name, values)| {
             let mut concatonated = "";
-            foreach hunk in values.iter() {
+            for hunk in values.iter() {
                 concatenated += fmt!(", %s", hunk);
             }
             concatenated
@@ -261,7 +261,7 @@ pub fn push_quoted_string(mut s: ~str, t: &str) -> ~str {
     let i = s.len();
     s.reserve_at_least(i + t.len() + 2);
     s.push_char('"');
-    foreach c in t.iter() {
+    for c in t.iter() {
         if c == '\\' || c == '"' {
             s.push_char('\\');
         }
@@ -281,7 +281,7 @@ pub fn push_key_value_pair(mut s: ~str, k: &str, v: &str) -> ~str {
 }
 
 pub fn push_key_value_pairs(mut s: ~str, parameters: &[(~str, ~str)]) -> ~str {
-    foreach &(ref k, ref v) in parameters.iter() {
+    for &(ref k, ref v) in parameters.iter() {
         s = push_key_value_pair(s, *k, *v);
     }
     s

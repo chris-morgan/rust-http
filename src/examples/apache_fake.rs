@@ -7,7 +7,7 @@ extern mod rusthttpserver;
 
 use rusthttpserver::request::Request;
 use rusthttpserver::response::ResponseWriter;
-use std::rt::io::net::ip::Ipv4;
+use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::rt::io::Writer;
 use extra::time;
 
@@ -19,7 +19,7 @@ struct ApacheFakeServer;
 
 impl Server for ApacheFakeServer {
     fn get_config(&self) -> Config {
-        Config { bind_address: Ipv4(127, 0, 0, 1, 8001) }
+        Config { bind_address: SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 } }
     }
 
     fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {

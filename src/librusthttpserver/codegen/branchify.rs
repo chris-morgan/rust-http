@@ -25,7 +25,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> ~[ParseBranc
         match chariter.next() {
             Some(c) => {
                 let first_case = if case_sensitive { c as u8 } else { c.to_ascii().to_upper().to_byte() };
-                foreach next_branch in branch.children.mut_iter() {
+                for next_branch in branch.children.mut_iter() {
                     if next_branch.matches[0] == first_case {
                         go_down_moses(next_branch, chariter, result, case_sensitive);
                         return;
@@ -49,7 +49,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> ~[ParseBranc
         }
     };
 
-    foreach &(key, result) in options.iter() {
+    for &(key, result) in options.iter() {
         go_down_moses(&mut root, key.iter(), result, case_sensitive);
     }
 
@@ -97,10 +97,10 @@ pub fn generate_branchified_method(
     fn r(writer: @Writer, branch: &ParseBranch, prefix: &str, indent: uint, read_call: &str,
             end: &str, max_len: &str, valid: &str, unknown: &str) {
         let indentstr = " ".repeat(indent * 4);
-        foreach &c in branch.matches.iter() {
+        for &c in branch.matches.iter() {
             let next_prefix = fmt!("%s%c", prefix, c as char);
             wf!("Some(b) if b == '%c' as u8 => match %s {", c as char, read_call);
-            foreach b in branch.children.iter() {
+            for b in branch.children.iter() {
                 r(writer, b, next_prefix, indent + 1, read_call, end, max_len, valid, unknown);
             }
             match branch.result {
@@ -115,7 +115,7 @@ pub fn generate_branchified_method(
     }
     let indentstr = " ".repeat(indent * 4);
     wf!("let (s, next_byte) = match %s {", read_call);
-    foreach b in branches.iter() {
+    for b in branches.iter() {
         r(writer, b, "", indent + 1, read_call, end, max_len, valid, unknown);
     }
     wf!("    Some(b) if %s => (\"\", b),", valid);

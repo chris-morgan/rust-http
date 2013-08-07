@@ -90,9 +90,9 @@ fn parse_http_version(version: &str) -> Option<(uint, uint)> {
         ref v if v.starts_with("HTTP/") => {
             // This commented-out variant would fail! if given non-integers
             //let ints: ~[uint] = v.slice_from(5).split_iter('.').map(
-            //    |&num| uint::from_str_radix(num, 10).get()).collect();
+            //    |&num| uint::from_str_radix(num, 10).unwrap()).collect();
             let mut ints = [0u, 0u];
-            foreach (i, strnum) in v.slice_from(5).split_iter('.').enumerate() {
+            for (i, strnum) in v.slice_from(5).split_iter('.').enumerate() {
                 if i > 1 {
                     // More than two numbers, e.g. HTTP/1.2.3
                     return None;

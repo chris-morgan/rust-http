@@ -4,7 +4,7 @@ use std::cell::Cell;
 use std::comm::SharedChan;
 use std::task::{spawn_with, spawn_supervised};
 use std::rt::io::{Listener, Writer};
-use std::rt::io::net::ip::IpAddr;
+use std::rt::io::net::ip::SocketAddr;
 use std::rt::io::io_error;
 use extra::time::precise_time_ns;
 
@@ -128,7 +128,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
 /// At present, only the IP address and port to bind to are needed, but it's possible that other
 /// options may turn up later.
 pub struct Config {
-	bind_address: IpAddr,
+	bind_address: SocketAddr,
 }
 
 /* Sorry, but Rust isn't ready for this yet; SimpleServer can't be made Clone just yet. (For
@@ -169,13 +169,13 @@ impl Server for SimpleServer {
 /// This is equivalent to
 ///
 /// ~~~ {.rust}
-/// SimpleServer::new(Config { bind_address: ip_addr }, handler).serve_forever();
+/// SimpleServer::new(Config { bind_address: socket_addr }, handler).serve_forever();
 /// ~~~
 ///
 /// But it's nicer this way with `do` blocks and closures:
 ///
 /// ~~~ {.rust}
-/// do serve_forever(ip_addr) |r, mut w| {
+/// do serve_forever(socket_addr) |r, mut w| {
 ///     // Now you can handle the request here and write the wresponse.
 /// }
 /// ~~~
@@ -183,14 +183,14 @@ impl Server for SimpleServer {
 /// The signature of this method is liable to change if `Config` gets more members.
 // Please, pretty please, don't correct the word "wresponse".
 #[inline]
-pub fn serve_forever(ip_addr: IpAddr, handler: ~fn(&Request, &mut ResponseWriter)) {
-    SimpleServer::new(Config { bind_address: ip_addr }, handler).serve_forever();
+pub fn serve_forever(socket_addr: SocketAddr, handler: ~fn(&Request, &mut ResponseWriter)) {
+    SimpleServer::new(Config { bind_address: socket_addr }, handler).serve_forever();
 }
 
 /// 0.0.0.0, port 80: publicly bound to the standard HTTP port.
 /// Not recommended at present as this server is not hardened against the sort of traffic you may
 /// encounter on the Internet and is vulnerable to various DoS attacks. Sit it behind a gateway.
-static PUBLIC: IpAddr = Ipv4(0, 0, 0, 0, 80);
+static PUBLIC: SocketAddr = SocketAddr { ip: Ipv4Addr(0, 0, 0, 0), port: 80 };
 */
 
 static PERF_DUMP_FREQUENCY : u64 = 10_000;

@@ -6,7 +6,7 @@ extern mod rusthttpserver;
 
 use rusthttpserver::request::Request;
 use rusthttpserver::response::ResponseWriter;
-use std::rt::io::net::ip::Ipv4;
+use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::rt::io::Writer;
 use extra::time;
 
@@ -18,7 +18,7 @@ struct InfoServer;
 
 impl Server for InfoServer {
     fn get_config(&self) -> Config {
-        Config { bind_address: Ipv4(127, 0, 0, 1, 8001) }
+        Config { bind_address: SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 } }
     }
 
     fn handle_request(&self, r: &Request, w: &mut ResponseWriter) {
@@ -42,7 +42,7 @@ impl Server for InfoServer {
         w.write(s.as_bytes().to_owned());
         w.write(bytes!("<h2>Headers</h2>"));
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
-        foreach (k, v) in r.headers.iter() {
+        for (k, v) in r.headers.iter() {
             let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>", *k, *v);
             w.write(line.as_bytes().to_owned());
         }
@@ -58,7 +58,7 @@ impl Server for InfoServer {
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
         {
             let h = w.headers.clone();
-            foreach (k, v) in h.iter() {
+            for (k, v) in h.iter() {
                 let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>", *k, *v);
                 w.write(line.as_bytes().to_owned());
             }

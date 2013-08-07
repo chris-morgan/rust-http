@@ -29,7 +29,7 @@ fn main() {
 }
 
 fn output_dir() -> Path {
-    os::self_exe_path().get().with_filename("generated")  // i.e. ../generated/
+    os::self_exe_path().unwrap().with_filename("generated")  // i.e. ../generated/
 }
 
 pub fn get_writer(filename: &str) -> @Writer {
