@@ -31,12 +31,6 @@ $(lrhs_so): $(lrhs_files)
 %:: %.rs $(lrhs_so)
 	$(RUSTC) $(RUSTFLAGS) $< -o $@ -L librusthttpserver
 
-run-%: %
-	RUST_NEWRT=1 $<
-
-test-%: %.rs
-	RUST_NEWRT=1 $(RUST) test $(RUSTFLAGS) $<
-
 examples: examples/apache_fake examples/hello_world examples/info
 
 tests: $(lrhs_files)
