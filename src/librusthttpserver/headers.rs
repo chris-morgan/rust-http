@@ -311,8 +311,8 @@ pub mod accept {
         fn to_str(&self) -> ~str {
             match *self {
                 StarSlashStar => ~"*/*",
-                TypeSlashStar(ref t) => t + "/*",
-                TypeSlashSubType(ref t, ref s) => t + "/" + *s,
+                TypeSlashStar(ref t) => *t + "/*",
+                TypeSlashSubType(ref t, ref s) => *t + "/" + *s,
             }
         }
     }
