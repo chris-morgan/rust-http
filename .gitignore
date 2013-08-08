@@ -1,0 +1,4 @@
+*~
+src/librusthttpserver/codegen/codegen
+src/librusthttpserver/generated/
+build/
