@@ -1,7 +1,17 @@
-Rust HTTP server
-================
+Rust HTTP library
+=================
 
-This project is, quite simply, to create a generic HTTP server for Rust.
+This project has two parts:
+
+1. An HTTP server: work in progress.
+
+2. An HTTP client: not yet implemented.
+
+Goals
+-----
+
+The goal of the present phase of this project is, quite simply, to create a
+generic HTTP server for Rust.
 
 This server is not opinionated; it provides the tools, handles communication,
 the HTTP/1.1 protocol and the basic headers and then leaves the rest to you.
