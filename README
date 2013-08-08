@@ -130,6 +130,14 @@ In the end, Go's ``net/http`` package has been my primary source of
 all sorts of nice things Rust has, such as its enums and iteration on aught
 beyond built-in types.
 
+License
+-------
+
+This library is distributed under similar terms to Rust: dual licensed under
+the MIT license and the Apache license (version 2.0).
+
+See LICENSE-APACHE, LICENSE-MIT, and COPYRIGHT for details.
+
 .. _PEP 3333: http://www.python.org/dev/peps/pep-3333/
 .. _pathod: http://pathod.net/
 
