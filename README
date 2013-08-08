@@ -11,6 +11,25 @@ framework.
 This project will also expand to include an HTTP client soon, using the same
 foundation as the HTTP server, but it does not yet contain one.
 
+Getting started
+---------------
+
+This is developed on Ubuntu and is aimed at the moving target of Rust's master
+branch.
+
+Build everything::
+
+   make
+
+Run one of the servers::
+
+   build/examples/apache_fake
+
+At present, all of the example servers serve to http://127.0.0.1:8001/.
+
+Don't expect everything to work well. The server claims HTTP/1.1, but is not
+in any way compliant yet.
+
 Roadmap
 -------
 
