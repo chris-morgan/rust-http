@@ -1,4 +1,4 @@
-#[link(name = "rusthttpserver",
+#[link(name = "http",
        vers = "0.1-pre",
        uuid = "d2ad8df0-547a-4ce1-99c6-a9da3b98fb3e",
        url = "")];
