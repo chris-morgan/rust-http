@@ -14,6 +14,9 @@ libhttp_files=\
 		      src/libhttp/headers.rs \
 		      src/libhttp/method.rs \
 		      src/libhttp/rfc2616.rs \
+		      src/libhttp/client/mod.rs \
+		      src/libhttp/client/request.rs \
+		      src/libhttp/client/response.rs \
 		      src/libhttp/server/mod.rs \
 		      src/libhttp/server/request.rs \
 		      src/libhttp/server/response.rs
@@ -34,7 +37,7 @@ build/%:: src/%.rs $(libhttp_so)
 	mkdir -p '$(dir $@)'
 	$(RUSTC) $(RUSTFLAGS) $< -o $@ -L build/
 
-examples: build/examples/apache_fake build/examples/hello_world build/examples/info
+examples: build/examples/apache_fake build/examples/hello_world build/examples/info build/examples/client/client
 
 tests: $(libhttp_files)
 	$(RUSTC) $(RUSTFLAGS) --test -o build/tests src/libhttp/lib.rs
