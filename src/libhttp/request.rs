@@ -12,9 +12,6 @@ use super::buffer::BufferedReader;
 
 pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeader }
 
-//#[path = "request.old.rs"]
-//mod old;
-
 /// Line/header can't be more than 4KB long (note that with the compacting of LWS the actual source
 /// data could be longer than 4KB)
 static MAX_LINE_LEN: uint = 0x1000;
@@ -365,7 +362,6 @@ impl Request {
             version: (0, 0),
         };
 
-        //let (method, request_uri, version) = match old::read_request_line(buffer) {
         let (method, request_uri, version) = match buffer.read_request_line() {
             Ok(vals) => vals,
             Err(err) => return (request, Err(err)),
