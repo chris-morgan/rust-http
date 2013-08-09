@@ -53,7 +53,7 @@ pub fn read_http_version<T: Reader>(reader: &mut T, next_u8: u8) -> Option<(uint
         }
         match reader.read_byte() {
             Some(b) if b >= '0' as u8 && b <= '9' as u8 => {
-                n2 = n1 * 10 + b as uint - '0' as uint;
+                n2 = n2 * 10 + b as uint - '0' as uint;
             },
             Some(b) if b == next_u8 => break,
             _ => return None,
