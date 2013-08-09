@@ -1,16 +1,16 @@
 //! A very simple HTTP server which responds with the plain text "Hello, World!" to every request.
 
 extern mod extra;
-extern mod rusthttpserver;
+extern mod http;
 
-use rusthttpserver::request::Request;
-use rusthttpserver::response::ResponseWriter;
+use http::request::Request;
+use http::response::ResponseWriter;
 use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::rt::io::Writer;
 use extra::time;
 
-use rusthttpserver::server::{Config, Server, ServerUtil};
-use rusthttpserver::rfc2616::format_http_time;
+use http::server::{Config, Server, ServerUtil};
+use http::rfc2616::format_http_time;
 
 #[deriving(Clone)]
 struct HelloWorldServer;

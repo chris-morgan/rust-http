@@ -4,46 +4,46 @@ RUSTC=rustc
 RUSTFLAGS=-O
 VERSION=0.1-pre
 
-lrhs_so=build/librusthttpserver-20af9b1d3441fe5a-$(VERSION).so
-lrhs_files=\
-		   src/librusthttpserver/buffer.rs \
-		   src/librusthttpserver/generated/read_method.rs \
-		   src/librusthttpserver/generated/status.rs \
-		   src/librusthttpserver/headers.rs \
-		   src/librusthttpserver/method.rs \
-		   src/librusthttpserver/request.rs \
-		   src/librusthttpserver/response.rs \
-		   src/librusthttpserver/rfc2616.rs \
-		   src/librusthttpserver/rusthttpserver.rs \
-		   src/librusthttpserver/server.rs
+libhttp_so=build/libhttp-20af9b1d3441fe5a-$(VERSION).so
+libhttp_files=\
+		      src/libhttp/buffer.rs \
+		      src/libhttp/generated/read_method.rs \
+		      src/libhttp/generated/status.rs \
+		      src/libhttp/headers.rs \
+		      src/libhttp/method.rs \
+		      src/libhttp/request.rs \
+		      src/libhttp/response.rs \
+		      src/libhttp/rfc2616.rs \
+		      src/libhttp/lib.rs \
+		      src/libhttp/server.rs
 
-all: $(lrhs_so) examples
+all: $(libhttp_so) examples
 
-src/librusthttpserver/codegen/codegen: $(wildcard src/librusthttpserver/codegen/*.rs)
+src/libhttp/codegen/codegen: $(wildcard src/libhttp/codegen/*.rs)
 	$(RUSTC) $(RUSTFLAGS) $@.rs
 
-src/librusthttpserver/generated/%.rs: src/librusthttpserver/codegen/codegen
-	src/librusthttpserver/codegen/codegen $(patsubst src/librusthttpserver/generated/%,%,$@)
+src/libhttp/generated/%.rs: src/libhttp/codegen/codegen
+	src/libhttp/codegen/codegen $(patsubst src/libhttp/generated/%,%,$@)
 
-$(lrhs_so): $(lrhs_files)
+$(libhttp_so): $(libhttp_files)
 	mkdir -p build/
-	$(RUSTC) $(RUSTFLAGS) src/librusthttpserver/rusthttpserver.rs --out-dir=build
+	$(RUSTC) $(RUSTFLAGS) src/libhttp/lib.rs --out-dir=build
 
-build/%:: src/%.rs $(lrhs_so)
+build/%:: src/%.rs $(libhttp_so)
 	mkdir -p '$(dir $@)'
 	$(RUSTC) $(RUSTFLAGS) $< -o $@ -L build/
 
 examples: build/examples/apache_fake build/examples/hello_world build/examples/info
 
-tests: $(lrhs_files)
-	$(RUSTC) $(RUSTFLAGS) --test --out-dir=build src/librusthttpserver/rusthttpserver.rs
-	build/rusthttpserver --test
+tests: $(libhttp_files)
+	$(RUSTC) $(RUSTFLAGS) --test -o build/tests src/libhttp/lib.rs
+	build/tests --test
 
 clean-tests:
-	rm -f build/rusthttpserver
+	rm -f build/tests
 
 clean: clean-tests
-	rm -rf src/librusthttpserver/generated/ src/librusthttpserver/codegen/codegen
+	rm -rf src/libhttp/generated/ src/libhttp/codegen/codegen
 	rm -rf build/
 
 .PHONY: all examples clean tests clean-tests
