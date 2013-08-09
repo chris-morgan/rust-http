@@ -643,6 +643,28 @@ pub mod etag {
     }
 }
 
+pub mod host {
+    /// A simple little thing for the host of a request
+    pub struct Host {
+
+        /// The name of the host that was requested
+        name: ~str,
+
+        /// If unspecified, assume the default port was used (80 for HTTP, 443 for HTTPS).
+        /// In that case, you shouldn't need to worry about it in URLs that you build, provided you
+        /// include the scheme.
+        port: Option<u16>,
+    }
+    impl ToStr for Host {
+        fn to_str(&self) -> ~str {
+            match self.port {
+                Some(port) => fmt!("%s:%s", self.name, port.to_str()),
+                None => self.name.clone(),
+            }
+        }
+    }
+}
+
 // RFC 2616, Section 4.5: General Header Fields
 pub enum GeneralHeader {
     CacheControl(~[cache_control::CacheDirective]),  // Section 14.9
@@ -681,7 +703,7 @@ pub enum RequestHeader {
     Authorization(~str),       // Section 14.8, TODO
     Expect(~str),              // Section 14.20, TODO
     From(~str),                // Section 14.22, TODO
-    Host(~str),                // Section 14.23, TODO
+    Host(host::Host),          // Section 14.23
     IfMatch(~str),             // Section 14.24, TODO
     IfModifiedSince(~str),     // Section 14.25, TODO
     IfNoneMatch(~str),         // Section 14.26, TODO

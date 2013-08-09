@@ -13,6 +13,7 @@
 extern mod extra;
 
 pub mod buffer;
+pub mod common;
 pub mod server;
 pub mod method;
 pub mod headers;

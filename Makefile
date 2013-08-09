@@ -6,16 +6,17 @@ VERSION=0.1-pre
 
 libhttp_so=build/libhttp-20af9b1d3441fe5a-$(VERSION).so
 libhttp_files=\
+		      src/libhttp/lib.rs \
 		      src/libhttp/buffer.rs \
+		      src/libhttp/common.rs \
 		      src/libhttp/generated/read_method.rs \
 		      src/libhttp/generated/status.rs \
 		      src/libhttp/headers.rs \
 		      src/libhttp/method.rs \
-		      src/libhttp/server/request.rs \
-		      src/libhttp/server/response.rs \
 		      src/libhttp/rfc2616.rs \
-		      src/libhttp/lib.rs \
-		      src/libhttp/server/mod.rs
+		      src/libhttp/server/mod.rs \
+		      src/libhttp/server/request.rs \
+		      src/libhttp/server/response.rs
 
 all: $(libhttp_so) examples
 

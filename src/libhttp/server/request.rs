@@ -7,8 +7,10 @@ use std::rt::io::net::tcp::TcpStream;
 use std::{str, u16};
 use rfc2616::{CR, LF, SP, HT, COLON};
 use headers::{Headers, normalise_header_name};
+use headers::host::Host;
 use headers;
 use buffer::BufferedReader;
+use common::read_http_version;
 
 pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeader }
 
@@ -54,9 +56,9 @@ impl<'self> RequestBuffer<'self> {
             Err(e) => return Err(e),
         };
 
-        match self.read_http_version() {
-            Some(vv) => Ok((method, request_uri, vv)),
-            None => return Err(status::BadRequest),
+        match (read_http_version(&mut self.stream, CR), self.stream.read_byte()) {
+            (Some(vv), Some(b)) if b == LF => Ok((method, request_uri, vv)),
+            _ => return Err(status::BadRequest),
         }
     }
 
@@ -84,70 +86,6 @@ impl<'self> RequestBuffer<'self> {
         match FromStr::from_str::<RequestUri>(request_uri) {
             Some(r) => Ok(r),
             None => Err(status::BadRequest),
-        }
-    }
-
-    #[inline]
-    fn read_http_version(&mut self) -> Option<(uint, uint)> {
-        // HTTP/%u.%u
-        match self.stream.read_byte() {
-            Some(b) if b == 'h' as u8 || b == 'H' as u8 => (),
-            _ => return None,
-        }
-        match self.stream.read_byte() {
-            Some(b) if b == 't' as u8 || b == 'T' as u8 => (),
-            _ => return None,
-        }
-        match self.stream.read_byte() {
-            Some(b) if b == 't' as u8 || b == 'T' as u8 => (),
-            _ => return None,
-        }
-        match self.stream.read_byte() {
-            Some(b) if b == 'p' as u8 || b == 'P' as u8 => (),
-            _ => return None,
-        }
-        match self.stream.read_byte() {
-            Some(b) if b == ('/' as u8) => (),
-            _ => return None,
-        }
-
-        // First number
-        let mut ord = 1u;
-        let mut n1 = 0;
-        loop {
-            if ord == 100000 {
-                return None;
-            }
-            match self.stream.read_byte() {
-                Some(b) if b >= '0' as u8 && b <= '9' as u8 => {
-                    n1 += ord * ((b - ('0' as u8)) as uint);
-                },
-                Some(b) if b == '.' as u8 => break,
-                _ => return None,
-            }
-            ord *= 10;
-        }
-
-        // Second number
-        ord = 1u;
-        let mut n2 = 0;
-        loop {
-            if ord == 100000 {
-                return None;
-            }
-            match self.stream.read_byte() {
-                Some(b) if b >= '0' as u8 && b <= '9' as u8 => {
-                    n2 += ord * ((b - ('0' as u8)) as uint);
-                },
-                Some(b) if b == CR => break,
-                _ => return None,
-            }
-            ord *= 10;
-        }
-
-        match self.stream.read_byte() {
-            Some(b) if b == LF => Some((n1, n2)),
-            _ => None,
         }
     }
 
@@ -250,18 +188,6 @@ impl<'self> RequestBuffer<'self> {
     }
 }
 
-/// A simple little thing for the host of a request
-struct RequestHost {
-
-    /// The name of the host that was requested
-    name: ~str,
-
-    /// If unspecified, assume the default port was used (80 for HTTP, 443 for HTTPS).
-    /// In that case, you shouldn't need to worry about it in URLs that you build, provided you
-    /// include the scheme.
-    port: Option<u16>,
-}
-
 /// An HTTP request sent to the server.
 pub struct Request {
     /// The originating IP address of the request.
@@ -270,7 +196,7 @@ pub struct Request {
     /// The host name and IP address that the request was sent to; this must always be specified for
     /// HTTP/1.1 requests (or the request will be rejected), but for HTTP/1.0 requests the Host
     /// header was not defined, and so this field will probably be None in such cases.
-    host: Option<RequestHost>,
+    host: Option<Host>,
 
     /// The headers sent with the request.
     headers: ~Headers,
@@ -392,7 +318,7 @@ impl Request {
                         // Not bothering now as this will be thrown away in favour of parse-time
                         // handling, where it's easier.
                         let mut hi = value.splitn_iter(':', 1);
-                        request.host = Some(RequestHost {
+                        request.host = Some(Host {
                             name: hi.next().unwrap().to_owned(),
                             port: match hi.next() {
                                 Some(name) => match u16::from_str(name) {
