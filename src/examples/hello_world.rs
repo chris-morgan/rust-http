@@ -3,13 +3,11 @@
 extern mod extra;
 extern mod http;
 
-use http::request::Request;
-use http::response::ResponseWriter;
 use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::rt::io::Writer;
 use extra::time;
 
-use http::server::{Config, Server, ServerUtil};
+use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};
 use http::rfc2616::format_http_time;
 
 #[deriving(Clone)]

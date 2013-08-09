@@ -5,10 +5,10 @@ use std::rt::io::Writer;
 
 use std::rt::io::net::tcp::TcpStream;
 
-use super::buffer::BufferedWriter;
-use super::request;
-use super::status;
-use super::headers;
+use buffer::BufferedWriter;
+use server::Request;
+use status;
+use headers;
 
 /**
  * The HTTP version tag which will be used for the response.
@@ -24,14 +24,14 @@ pub struct ResponseWriter<'self> {
     // The place to write to (typically a TCP stream, rt::io::net::tcp::TcpStream)
     priv writer: ~BufferedWriter<'self, TcpStream>,
     priv headers_written: bool,
-    request: &'self request::Request,
+    request: &'self Request,
     headers: ~headers::Headers,
     status: status::Status,
 }
 
 impl<'self> ResponseWriter<'self> {
     /// Create a `ResponseWriter` writing to the specified location
-    pub fn new(writer: &'self mut TcpStream, request: &'self request::Request) -> ResponseWriter<'self> {
+    pub fn new(writer: &'self mut TcpStream, request: &'self Request) -> ResponseWriter<'self> {
         ResponseWriter {
             writer: ~BufferedWriter::new(writer, /* TcpStream.flush() fails! */false),
             headers_written: false,

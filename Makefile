@@ -11,11 +11,11 @@ libhttp_files=\
 		      src/libhttp/generated/status.rs \
 		      src/libhttp/headers.rs \
 		      src/libhttp/method.rs \
-		      src/libhttp/request.rs \
-		      src/libhttp/response.rs \
+		      src/libhttp/server/request.rs \
+		      src/libhttp/server/response.rs \
 		      src/libhttp/rfc2616.rs \
 		      src/libhttp/lib.rs \
-		      src/libhttp/server.rs
+		      src/libhttp/server/mod.rs
 
 all: $(libhttp_so) examples
 

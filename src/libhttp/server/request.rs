@@ -1,14 +1,14 @@
 use extra::treemap::TreeMap;
 use extra::url::Url;
-use super::method::{Method, Options};
-use super::status;
+use method::{Method, Options};
+use status;
 use std::rt::io::net::ip::SocketAddr;
 use std::rt::io::net::tcp::TcpStream;
 use std::{str, u16};
-use super::rfc2616::{CR, LF, SP, HT, COLON};
-use super::headers::{Headers, normalise_header_name};
-use super::headers;
-use super::buffer::BufferedReader;
+use rfc2616::{CR, LF, SP, HT, COLON};
+use headers::{Headers, normalise_header_name};
+use headers;
+use buffer::BufferedReader;
 
 pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeader }
 
@@ -62,7 +62,7 @@ impl<'self> RequestBuffer<'self> {
 
     #[inline]
     fn read_method(&mut self) -> Option<Method> {
-        include!("generated/read_method.rs");
+        include!("../generated/read_method.rs");
     }
 
     #[inline]

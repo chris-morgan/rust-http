@@ -10,8 +10,11 @@ use extra::time::precise_time_ns;
 
 use std::rt::io::net::tcp::TcpListener;
 
-use super::request::{RequestBuffer, Request};
-use super::response::ResponseWriter;
+pub use self::request::{RequestBuffer, Request};
+pub use self::response::ResponseWriter;
+
+pub mod request;
+pub mod response;
 
 // TODO: when mozilla/rust#7661 is resolved, assuming also that specifying inheritance of kinds for
 // the trait works:

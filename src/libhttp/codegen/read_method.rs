@@ -6,9 +6,9 @@ pub fn generate() {
     writer.write(bytes!("\
 // This automatically generated file is included in request.rs.
 {
-    use super::method::{Connect, Delete, Get, Head, Options, Patch, Post, Put, Trace, ExtensionMethod};
-    use super::request::MAX_METHOD_LEN;
-    use super::rfc2616::{SP, is_token_item};
+    use method::{Connect, Delete, Get, Head, Options, Patch, Post, Put, Trace, ExtensionMethod};
+    use server::request::MAX_METHOD_LEN;
+    use rfc2616::{SP, is_token_item};
 
 "));
 
