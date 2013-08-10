@@ -3,13 +3,12 @@ use extra::url::Url;
 use method::{Method, Options};
 use status;
 use std::rt::io::net::ip::SocketAddr;
-use std::rt::io::net::tcp::TcpStream;
 use std::{str, u16};
 use rfc2616::{CR, LF, SP, HT, COLON};
 use headers::{Headers, normalise_header_name};
 use headers::host::Host;
 use headers;
-use buffer::BufferedReader;
+use buffer::BufTcpStream;
 use common::read_http_version;
 
 pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeader }
@@ -27,16 +26,16 @@ static BUF_SIZE: uint = 0x10000;  // Let's try 64KB chunks
 
 pub struct RequestBuffer<'self> {
     /// The socket connection to read from
-    stream: ~BufferedReader<'self, TcpStream>,
+    stream: &'self mut BufTcpStream,
 
     /// A working space for 
     line_bytes: ~[u8],
 }
 
 impl<'self> RequestBuffer<'self> {
-    pub fn new<'a> (stream: &'a mut TcpStream) -> RequestBuffer<'a> {
+    pub fn new<'a>(stream: &'a mut BufTcpStream) -> RequestBuffer<'a> {
         RequestBuffer {
-            stream: ~BufferedReader::new(stream/*, 0x10000*/), // 64KB buffer
+            stream: stream,
             line_bytes: ~[0u8, ..MAX_LINE_LEN],
         }
     }
@@ -56,7 +55,7 @@ impl<'self> RequestBuffer<'self> {
             Err(e) => return Err(e),
         };
 
-        match (read_http_version(&mut self.stream, CR), self.stream.read_byte()) {
+        match (read_http_version(self.stream, CR), self.stream.read_byte()) {
             (Some(vv), Some(b)) if b == LF => Ok((method, request_uri, vv)),
             _ => return Err(status::BadRequest),
         }
@@ -274,7 +273,8 @@ impl FromStr for RequestUri {
 impl Request {
 
     /// Get a response from an open socket.
-    pub fn get(buffer: &mut RequestBuffer) -> (~Request, Result<(), status::Status>) {
+    pub fn load(stream: &mut BufTcpStream) -> (~Request, Result<(), status::Status>) {
+        let mut buffer = RequestBuffer::new(stream);
 
         // Start out with dummy values
         let mut request = ~Request {

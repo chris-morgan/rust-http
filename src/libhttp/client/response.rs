@@ -1,7 +1,6 @@
 use extra::treemap::TreeMap;
 use std::rt::io::Reader;
 use std::rt::io::extensions::ReaderUtil;
-use std::rt::io::net::tcp::TcpStream;
 use std::rt::io::{io_error, OtherIoError, IoError};
 use std::rt;
 use client::request::RequestWriter;
@@ -10,10 +9,11 @@ use common::read_http_version;
 use headers::{Headers, normalise_header_name};
 use status::Status;
 
+use buffer::BufTcpStream;
 use server::request::{RequestBuffer, EndOfFile, EndOfHeaders, MalformedHeader};
 
 struct ResponseReader {
-    priv stream: TcpStream,
+    priv stream: BufTcpStream,
 
     /// The request which this is a response to
     request: RequestWriter,
@@ -38,7 +38,7 @@ fn bad_response_err() -> IoError {
 }
 
 impl ResponseReader {
-    pub fn construct(mut stream: TcpStream, request: RequestWriter)
+    pub fn construct(mut stream: BufTcpStream, request: RequestWriter)
             -> Result<ResponseReader, RequestWriter> {
         // TODO: raise condition at the points where Err is returned
         //let mut b = [0u8, ..4096];
@@ -106,7 +106,6 @@ impl ResponseReader {
         // between a request and response.
         let headers = {
             let mut buffer = RequestBuffer::new(&mut stream);
-
             let mut headers = ~TreeMap::new();
             loop {
                 match buffer.read_header_line() {

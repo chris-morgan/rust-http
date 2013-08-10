@@ -4,7 +4,7 @@ use std::rt::io::extensions::ReaderUtil;
 
 #[inline]
 pub fn read_http_version<T: Reader>(reader: &mut T, next_u8: u8) -> Option<(uint, uint)> {
-    // XXX: by doing this, I've stopped the more efficient BufferedReader.read_byte from being used
+    // XXX: by doing this, I've stopped the more efficient BufferedStream.read_byte from being used
     // HTTP/%u.%u
     match reader.read_byte() {
         Some(b) if b == 'h' as u8 || b == 'H' as u8 => (),

@@ -10,6 +10,8 @@ use extra::time::precise_time_ns;
 
 use std::rt::io::net::tcp::TcpListener;
 
+use buffer::BufferedStream;
+
 pub use self::request::{RequestBuffer, Request};
 pub use self::response::ResponseWriter;
 
@@ -80,13 +82,14 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                     let child_self = self.clone();
                     do spawn_supervised {
                         let mut time_start = time_start;
-                        let mut stream = ~stream.take();
+                        let mut stream = BufferedStream::new(stream.take(),
+                                                             /* TcpStream.flush() fails! */ false);
                         debug!("accepted connection, got %?", stream);
                         loop {  // A keep-alive loop, condition at end
                             let time_spawned = precise_time_ns();
-                            let (request, err_status) = Request::get(~RequestBuffer::new(stream));
+                            let (request, err_status) = Request::load(&mut stream);
                             let time_request_made = precise_time_ns();
-                            let mut response = ~ResponseWriter::new(stream, request);
+                            let mut response = ~ResponseWriter::new(&mut stream, request);
                             let time_response_made = precise_time_ns();
                             match err_status {
                                 Ok(()) => {
@@ -104,7 +107,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                                 },
                             }
                             // This should not be necessary, but is, because of the Drop bug
-                            // apparent in BufferedWriter. When that is fixed up, then it *may* be
+                            // apparent in BufferedStream. When that is fixed up, then it *may* be
                             // suitable to remove flush() from here. I say "may" as it would mean
                             // that time_finished might not include writing all the response (a
                             // non-trivial time interval).

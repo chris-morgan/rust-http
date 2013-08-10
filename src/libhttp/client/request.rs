@@ -5,6 +5,7 @@ use std::rt;
 use std::rt::io::Writer;
 use std::rt::io::net::ip::SocketAddr;
 use std::rt::io::net::tcp::TcpStream;
+use buffer::{BufTcpStream, BufferedStream};
 use headers::Headers;
 use headers::host::Host;
 
@@ -29,8 +30,7 @@ use client::response::ResponseReader;
 
 pub struct RequestWriter {
     // The place to write to (typically a TCP stream, rt::io::net::tcp::TcpStream)
-    //priv writer: Option<BufferedWriter<'self, TcpStream>>,
-    priv stream: Option<TcpStream>,
+    priv stream: Option<BufTcpStream>,
     priv headers_written: bool,
 
     /// The originating IP address of the request.
@@ -99,13 +99,11 @@ impl RequestWriter {
 
         self.stream = match self.remote_addr {
             Some(addr) => match TcpStream::connect(addr) {
-                Some(stream) => Some(stream),
+                Some(stream) => Some(BufferedStream::new(stream, false)),
                 None => return false,
             },
             None => fail!("connect() called before remote_addr was set"),
         };
-        // Desired: BufferedWriter::new(stream, false), but lifetime woes make that not possible
-        // with how it's structured at present.
         true
     }
 

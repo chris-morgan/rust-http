@@ -3,9 +3,7 @@ use extra::treemap::TreeMap;
 use std::rt;
 use std::rt::io::Writer;
 
-use std::rt::io::net::tcp::TcpStream;
-
-use buffer::BufferedWriter;
+use buffer::BufTcpStream;
 use server::Request;
 use status;
 use headers;
@@ -22,7 +20,7 @@ static RESPONSE_HTTP_VERSION: &'static str = "HTTP/1.1";
 
 pub struct ResponseWriter<'self> {
     // The place to write to (typically a TCP stream, rt::io::net::tcp::TcpStream)
-    priv writer: ~BufferedWriter<'self, TcpStream>,
+    priv writer: &'self mut BufTcpStream,
     priv headers_written: bool,
     request: &'self Request,
     headers: ~headers::Headers,
@@ -31,9 +29,9 @@ pub struct ResponseWriter<'self> {
 
 impl<'self> ResponseWriter<'self> {
     /// Create a `ResponseWriter` writing to the specified location
-    pub fn new(writer: &'self mut TcpStream, request: &'self Request) -> ResponseWriter<'self> {
+    pub fn new(writer: &'self mut BufTcpStream, request: &'self Request) -> ResponseWriter<'self> {
         ResponseWriter {
-            writer: ~BufferedWriter::new(writer, /* TcpStream.flush() fails! */false),
+            writer: writer,
             headers_written: false,
             request: request,
             //headers: headers::Headers::new(),
