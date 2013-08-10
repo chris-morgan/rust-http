@@ -153,6 +153,7 @@ impl RequestWriter {
     pub fn read_response(~self) -> Result<ResponseReader, ~RequestWriter> {
         let mut mut_self = self;
         mut_self.try_write_headers();
+        mut_self.flush();
         match mut_self.stream.take() {
             Some(stream) => ResponseReader::construct(stream, mut_self),
             None => Err(mut_self), // TODO: raise condition
