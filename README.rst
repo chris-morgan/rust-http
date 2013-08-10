@@ -3,23 +3,26 @@ Rust HTTP library
 
 This project has two parts:
 
-1. An HTTP server: work in progress.
+1. An HTTP server
 
-2. An HTTP client: not yet implemented.
+2. An HTTP client
+
+Both are in progress; both have basic, low-level implementations in place.
+Neither is complete nor yet compliant in any way.
 
 Goals
 -----
 
 The goal of the present phase of this project is, quite simply, to create a
-generic HTTP server for Rust.
+generic HTTP server and client library for Rust.
+
+Eventually the client and server may be placed in different crates (with a
+common dependency), but I'm not sure about this yet.
 
 This server is not opinionated; it provides the tools, handles communication,
 the HTTP/1.1 protocol and the basic headers and then leaves the rest to you.
 Things like URL routing do not belong in here; that is the domain of a
 framework.
-
-This project will also expand to include an HTTP client soon, using the same
-foundation as the HTTP server, but it does not yet contain one.
 
 Getting started
 ---------------
@@ -35,6 +38,10 @@ Run one of the servers::
 
    build/examples/apache_fake
 
+To run the client example, start one of the servers and run::
+
+   build/examples/client/client
+
 At present, all of the example servers serve to http://127.0.0.1:8001/.
 
 Don't expect everything to work well. The server claims HTTP/1.1, but is not
@@ -43,7 +50,8 @@ in any way compliant yet.
 Roadmap
 -------
 
-Here are some of the things to be done. They are only *very* vaguely ordered.
+Here are some of the things to be done. They are only *very* vaguely ordered
+and treat client and server quite indiscriminately.
 
 - Implement HTTP/1.1.
 
@@ -65,10 +73,7 @@ Here are some of the things to be done. They are only *very* vaguely ordered.
 - Benchmarks, lots of them. This will be helpful at the level of my code and
   also at the runtime level.
 
-- Make an HTTP client. Potentially high priority: Servo needs a newrt HTTP
-  client as a matter of top priority, and brson has expressed interest in
-  working with what I've done thus far. Not yet certain if that's the best idea
-  or not.
+- Improve the convenience and correctness of the HTTP client.
 
 - DoS prevention: largely to do with things like connection timeouts.
   Make a test suite using pathod_.
@@ -88,8 +93,8 @@ When most of these things are done, *then* I'll start developing my web
 framework. And it'll end up blindingly fast, astonishingly safe and remarkably
 convenient. But don't plan on using it in 2013.
 
-Design
-------
+Design (server)
+---------------
 
 (In this section, the first person pronoun refers to Chris Morgan.)
 
