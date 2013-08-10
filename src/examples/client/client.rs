@@ -6,7 +6,7 @@ use std::rt::io::Reader;
 use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
 
 fn main() {
-    let mut request = RequestWriter::new(Get, FromStr::from_str("http://localhost/example")
+    let mut request = ~RequestWriter::new(Get, FromStr::from_str("http://localhost/example")
                                                 .expect("Uh oh, that's *really* badly broken!"));
     // Temporary measure, as hostname lookup is not yet supported in std::rt::io.
     request.remote_addr = Some(SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 });

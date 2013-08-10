@@ -16,7 +16,7 @@ struct ResponseReader {
     priv stream: BufTcpStream,
 
     /// The request which this is a response to
-    request: RequestWriter,
+    request: ~RequestWriter,
 
     /// The HTTP version number; typically `(1, 1)` or, less commonly, `(1, 0)`.
     version: (uint, uint),
@@ -38,8 +38,8 @@ fn bad_response_err() -> IoError {
 }
 
 impl ResponseReader {
-    pub fn construct(mut stream: BufTcpStream, request: RequestWriter)
-            -> Result<ResponseReader, RequestWriter> {
+    pub fn construct(mut stream: BufTcpStream, request: ~RequestWriter)
+            -> Result<ResponseReader, ~RequestWriter> {
         // TODO: raise condition at the points where Err is returned
         //let mut b = [0u8, ..4096];
         //let len = stream.read(b);

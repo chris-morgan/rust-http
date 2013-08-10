@@ -148,7 +148,9 @@ impl RequestWriter {
         self.headers_written = true;
     }
 
-    pub fn read_response(self) -> Result<ResponseReader, RequestWriter> {
+    // FIXME: ~self rather than self to work around a Rust bug in by-val self at present leading to
+    // a segfault on calling construct().
+    pub fn read_response(~self) -> Result<ResponseReader, ~RequestWriter> {
         let mut mut_self = self;
         mut_self.try_write_headers();
         match mut_self.stream.take() {
