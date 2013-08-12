@@ -17,7 +17,7 @@ use std::vec;
 use std::ascii::Ascii;
 use extra::treemap::TreeMap;
 use extra::time::Tm;
-use super::rfc2616::is_token;
+use super::rfc2616::{is_token, is_token_item};
 use super::method::Method;
 
 /// Normalise an HTTP header name.
@@ -60,6 +60,65 @@ pub fn normalise_header_name(name: &str) -> ~str {
 /// ~~~
 pub fn comma_split(value: &str) -> ~[~str] {
     value.split_iter(',').transform(|w| w.trim_left().to_owned()).collect()
+}
+
+pub fn comma_split_iter<'a>(value: &'a str)
+        -> ::std::iterator::Map<'a, &'a str, &'a str, ::std::str::CharSplitIterator<'a, char>> {
+    value.split_iter(',').transform(|w| w.trim_left())
+}
+
+pub fn parameter_split(input: &str) -> Option<~[(~str, ~str)]> {
+    enum State { Start, Key, KeyEnd, Token, QuotedString, QuotedStringEscape, QuotedStringEnd }
+    let mut state = Start;
+    let mut output = ~[];
+    let mut key = ~"";
+    let mut value = ~"";
+    for c in input.iter() {
+        if c > '\x7f' {
+            // Non-ASCII (TODO: better way to check?)
+            return None;
+        }
+        state = match state {
+            Start | Key if is_token_item(c as u8) => {
+                key.push_char(c);
+                Key
+            },
+            Key if c == '=' => KeyEnd,
+            Token if is_token_item(c as u8) => {
+                value.push_char(c);
+                Token
+            },
+            KeyEnd if c == '"' => QuotedString,
+            KeyEnd if is_token_item(c as u8) => {
+                value.push_char(c);
+                Token
+            },
+            QuotedString if c == '\\' => QuotedStringEscape,
+            QuotedString if c == '"' => QuotedStringEnd,
+            QuotedString => {
+                value.push_char(c);
+                QuotedStringEnd
+            },
+            QuotedStringEscape => {
+                value.push_char(c);
+                QuotedString
+            },
+            Token | QuotedStringEnd if c == ';' => {
+                output.push((key, value));
+                key = ~"";
+                value = ~"";
+                Start
+            },
+            _ => return None,
+        }
+    }
+    match state {
+        Token | QuotedStringEnd => {
+            output.push((key, value));
+        },
+        _ => return None,
+    }
+    Some(output)
 }
 
 /// Join a vector of values with commas, as is common for HTTP headers.
@@ -569,6 +628,14 @@ pub mod content_encoding {
             }
         }
     }
+    impl Coding {
+        pub fn from_str(s: &str) -> Coding {
+            match FromStr::from_str(s) {
+                Some(vt) => ContentCoding(vt),
+                None => Unknown(s.to_owned()),
+            }
+        }
+    }
 }
 
 pub mod content_range {
@@ -610,6 +677,49 @@ pub mod content_range {
             s
         }
     }
+    impl FromStr for ByteContentRangeSpec {
+        fn from_str(s: &str) -> Option<ByteContentRangeSpec> {
+            use std::ascii::to_ascii_lower;
+            let s = to_ascii_lower(s);
+            if !s.starts_with("bytes ") {
+                return None;
+            }
+            let t = s.slice_from(6);
+            let byte_range_resp_spec;
+            let u;
+            if t[0] == '*' as u8 {
+                byte_range_resp_spec = NotSatisfiable;
+                if t[1] != '/' as u8 {
+                    return None;
+                }
+                u = t.slice_from(2);
+            } else {
+                match t.find('/') {
+                    Some(slash_pos) => {
+                        let mut niter = t.slice(0, slash_pos).splitn_iter('-', 1);
+                        byte_range_resp_spec = match (niter.next(), niter.next()) {
+                            (Some(first), Some(last)) => match (FromStr::from_str(first),
+                                                                FromStr::from_str(last)) {
+                                (Some(first), Some(last)) => ByteRangeRespSpec(first, last),
+                                (_, _) => return None,
+                            },
+                            (_, _) => return None,
+                        };
+                        u = t.slice_from(slash_pos + 1);
+                    },
+                    None => return None,
+                }
+            }
+            let il = match FromStr::from_str(u) {
+                Some(il) => InstanceLength(il),
+                None => return None,
+            };
+            Some(ByteContentRangeSpec {
+                byte_range_resp_spec: byte_range_resp_spec,
+                instance_length: il
+            })
+        }
+    }
 }
 
 pub mod content_type {
@@ -622,6 +732,36 @@ pub mod content_type {
         fn to_str(&self) -> ~str {
             let s = fmt!("%s/%s", self.type_, self.subtype);
             super::push_key_value_pairs(s, self.parameters)
+        }
+    }
+    impl FromStr for MediaType {
+        fn from_str(s: &str) -> Option<MediaType> {
+            use rfc2616::is_token;
+
+            let mut slash_split = s.splitn_iter('/', 1);
+            let type_ = slash_split.next().expect("splitn_iter always has at least one value");
+            let subtype_and_parameters = match slash_split.next() {
+                Some(s) => s,
+                None => return None,
+            };
+            let mut param_split = subtype_and_parameters.splitn_iter(';', 1);
+            let subtype = param_split.next().expect("splitn_iter always has at least one value");
+            let parameters = match param_split.next() {
+                Some(params) => match super::parameter_split(params) {
+                    Some(params) => params,
+                    None => return None,
+                },
+                None => ~[],
+            };
+            if !is_token(type_) || !is_token(subtype) {
+                None
+            } else {
+                Some(MediaType {
+                    type_: type_.to_owned(),
+                    subtype: subtype.to_owned(),
+                    parameters: parameters,
+                })
+            }
         }
     }
 }
@@ -805,9 +945,43 @@ impl EntityHeader {
             ExtensionHeader(ref k, _) => k.to_owned(),
         }
     }
+
+    fn from_name_and_value(name: &str, value: &str) -> Result<EntityHeader, &'static str> {
+        Ok(match name {
+            "Allow" => Allow(comma_split_iter(value).transform(|s| Method::from_str_or_new(s))
+                                                    .collect()),
+            "Content-Encoding" => ContentEncoding(comma_split_iter(value)
+                                        .transform(|s| content_encoding::Coding::from_str(s))
+                                        .collect()),
+            "Content-Language" => ContentLanguage(comma_split(value)),
+            "Content-Length" => ContentLength(match FromStr::from_str(value) {
+                Some(n) => n,
+                None => return Err("expected a number"),
+            }),
+            "Content-Location" => ContentLocation(value.to_owned()),
+            "Content-MD5" => ContentMd5(value.to_owned()),
+            "Content-Range" => ContentRange(match FromStr::from_str(value) {
+                Some(v) => v,
+                None => return Err("invalid byte content range spec"),
+            }),
+            "Content-Type" => ContentType(match FromStr::from_str(value) {
+                Some(v) => v,
+                None => return Err("malformed media-type"),
+            }),
+            "Expires" => Expires(value.to_owned()),
+            "Last-Modified" => LastModified(value.to_owned()),
+            _ => ExtensionHeader(name.to_owned(), value.to_owned()),
+        })
+    }
 }
 
 // TODO, don't like this way of splitting it up at all...
+
+// TODO: ... (I won't even say it)
+pub trait HeaderThingummy {
+    pub fn header_name(&self) -> ~str;
+    pub fn from_name_and_value(name: &str, value: &str) -> Result<Self, &'static str>;
+}
 
 pub enum AnyRequestHeader {
     RequestGeneralHeader(GeneralHeader),
@@ -815,13 +989,28 @@ pub enum AnyRequestHeader {
     RequestEntityHeader(EntityHeader),
 }
 
-impl AnyRequestHeader {
+impl HeaderThingummy for AnyRequestHeader {
     fn header_name(&self) -> ~str {
         match *self {
             RequestGeneralHeader(ref h) => h.header_name(),
             RequestRequestHeader(ref h) => h.header_name(),
             RequestEntityHeader(ref h) => h.header_name(),
         }
+    }
+
+    pub fn from_name_and_value(name: &str, value: &str) -> Result<AnyRequestHeader, &'static str> {
+        // TODO: support this for the other headers also.
+        match EntityHeader::from_name_and_value(name, value) {
+            Ok(h) => Ok(RequestEntityHeader(h)),
+            Err(m) => Err(m),
+        }
+        /*Something like: match GeneralHeader::from_name_and_value(name, value) {
+            Some(h) => RequestGeneralHeader(h),
+            None => match RequestHeader::from_name_and_value(name, value) {
+                Some(h) => RequestRequestHeader(h),
+                None => RequestEntityHeader(EntityHeader::from_name_and_value(name, value)),
+            }
+        }*/
     }
 }
 
@@ -831,12 +1020,20 @@ pub enum AnyResponseHeader {
     ResponseEntityHeader(EntityHeader),
 }
 
-impl AnyResponseHeader {
+impl HeaderThingummy for AnyResponseHeader {
     fn header_name(&self) -> ~str {
         match *self {
             ResponseGeneralHeader(ref h) => h.header_name(),
             ResponseResponseHeader(ref h) => h.header_name(),
             ResponseEntityHeader(ref h) => h.header_name(),
+        }
+    }
+
+    pub fn from_name_and_value(name: &str, value: &str) -> Result<AnyResponseHeader, &'static str> {
+        // TODO: support this for the other headers also.
+        match EntityHeader::from_name_and_value(name, value) {
+            Ok(h) => Ok(ResponseEntityHeader(h)),
+            Err(m) => Err(m),
         }
     }
 }

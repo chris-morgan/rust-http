@@ -3,14 +3,16 @@ use std::rt::io::Reader;
 use std::rt::io::extensions::ReaderUtil;
 use std::rt::io::{io_error, OtherIoError, IoError};
 use std::rt;
+use std::either::{Left, Right};
 use client::request::RequestWriter;
 use rfc2616::{CR, LF, SP};
 use common::read_http_version;
 use headers::{Headers, normalise_header_name};
+use headers;
 use status::Status;
 
 use buffer::BufTcpStream;
-use server::request::{RequestBuffer, EndOfFile, EndOfHeaders, MalformedHeader};
+use server::request::{RequestBuffer, HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeader};
 
 struct ResponseReader {
     priv stream: BufTcpStream,
@@ -108,16 +110,20 @@ impl ResponseReader {
             let mut buffer = RequestBuffer::new(&mut stream);
             let mut headers = ~TreeMap::new();
             loop {
-                match buffer.read_header_line() {
-                    Err(EndOfFile) => {
+                match read_header_line(&mut buffer) {
+                    Err(Left(EndOfFile)) => {
                         io_error::cond.raise(bad_response_err());
                         //fail!("server disconnected, no more response to receive :-(");
                         return Err(request);
                     },
-                    Err(EndOfHeaders) => break,
-                    Err(MalformedHeader) => {
+                    Err(Left(EndOfHeaders)) => break,
+                    Err(Left(MalformedHeader)) => {
                         io_error::cond.raise(bad_response_err());
                         return Err(request);
+                    },
+                    Err(Right(cause)) => {
+                        printfln!("Bad header encountered (%s). TODO: handle this better.", cause);
+                        // Now just ignore the header
                     },
                     Ok((name, value)) => {
                         headers.insert(normalise_header_name(name), value);
@@ -144,5 +150,18 @@ impl rt::io::Reader for ResponseReader {
 
     fn eof(&mut self) -> bool {
         self.stream.eof()
+    }
+}
+
+/// TODO: kill this too.
+pub fn read_header_line(rb: &mut RequestBuffer) -> Result<(~str, ~str),
+                                                           Either<HeaderLineErr, &'static str>> {
+    match rb.read_header::<headers::AnyResponseHeader>() {
+        Ok(headers::ResponseEntityHeader(headers::ExtensionHeader(k, v))) => Ok((k, v)),
+        Ok(h) => {
+            printfln!("[31;1mHeader dropped (TODO):[0m %?", h);
+            Err(Right("header interpreted but I can't yet use it: dropped"))
+        },
+        Err(e) => Err(e),
     }
 }

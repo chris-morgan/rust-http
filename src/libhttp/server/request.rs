@@ -4,6 +4,7 @@ use method::{Method, Options};
 use status;
 use std::rt::io::net::ip::SocketAddr;
 use std::{str, u16};
+use std::either::{Either, Left, Right};
 use rfc2616::{CR, LF, SP, HT, COLON};
 use headers::{Headers, normalise_header_name};
 use headers::host::Host;
@@ -89,10 +90,14 @@ impl<'self> RequestBuffer<'self> {
     }
 
     /// Quick adapter from read_header back into read_header_line to let it compile for now
-    pub fn read_header_line(&mut self) -> Result<(~str, ~str), HeaderLineErr> {
-        match self.read_header() {
+    pub fn read_header_line(&mut self) -> Result<(~str, ~str),
+                                                 Either<HeaderLineErr, &'static str>> {
+        match self.read_header::<headers::AnyRequestHeader>() {
             Ok(headers::RequestEntityHeader(headers::ExtensionHeader(k, v))) => Ok((k, v)),
-            Ok(_) => fail!("Temporary method, this shouldn't have happened!"),
+            Ok(h) => {
+                printfln!("[31;1mHeader dropped (TODO):[0m %?", h);
+                Err(Right("header interpreted but I can't yet use it: dropped"))
+            },
             Err(e) => Err(e),
         }
     }
@@ -108,7 +113,8 @@ impl<'self> RequestBuffer<'self> {
     /// - `EndOfHeaders`: I have no more headers to give; go forth and conquer on the body!
     /// - `EndOfFile`: socket was closed unexpectedly; probable best behavour is to drop the request
     /// - `MalformedHeader`: request is bad; you could drop it or try returning 400 Bad Request
-    pub fn read_header(&mut self) -> Result<headers::AnyRequestHeader, HeaderLineErr> {
+    pub fn read_header<T: headers::HeaderThingummy>(&mut self) -> Result<T,
+                                            Either<HeaderLineErr, &'static str>> {
         enum State2 { Normal, CompactingLWS, GotCR, GotCRLF };
         // XXX: not called State because of https://github.com/mozilla/rust/issues/7770
         // TODO: investigate quoted strings
@@ -120,7 +126,7 @@ impl<'self> RequestBuffer<'self> {
 
         loop {
             state = match self.stream.read_byte() {
-                None => return Err(EndOfFile),
+                None => return Err(Left(EndOfFile)),
                 Some(b) => match state {
                     Normal | CompactingLWS if b == CR => {
                         // It's OK to go to GotCR on CompactingLWS: if it ends up CRLFSP it'll get
@@ -137,7 +143,7 @@ impl<'self> RequestBuffer<'self> {
                         Normal
                     },
                     GotCR if b == LF && in_name && self.line_bytes.len() == 0 => {
-                        return Err(EndOfHeaders);
+                        return Err(Left(EndOfHeaders));
                     },
                     GotCR if b == LF => {
                         GotCRLF
@@ -154,7 +160,7 @@ impl<'self> RequestBuffer<'self> {
                     },
                     GotCRLF if in_name => {
                         // Don't worry about poking b; the request is being aborted
-                        return Err(MalformedHeader);
+                        return Err(Left(MalformedHeader));
                     },
                     GotCRLF => {
                         // Ooh! We got to a genuine end of line, so we're done
@@ -182,8 +188,10 @@ impl<'self> RequestBuffer<'self> {
                 },
             };
         }
-        Ok(headers::RequestEntityHeader(
-                headers::ExtensionHeader(header_name, str::from_bytes(self.line_bytes))))
+        match headers::HeaderThingummy::from_name_and_value::<T>(header_name, str::from_bytes(self.line_bytes)) {
+            Ok(h) => Ok(h),
+            Err(m) => Err(Right(m)),
+        }
     }
 }
 
@@ -306,10 +314,14 @@ impl Request {
 
         loop {
             match buffer.read_header_line() {
-                Err(EndOfFile) => fail!("client disconnected, nowhere to send response"),
-                Err(EndOfHeaders) => break,
-                Err(MalformedHeader) => {
+                Err(Left(EndOfFile)) => fail!("client disconnected, nowhere to send response"),
+                Err(Left(EndOfHeaders)) => break,
+                Err(Left(MalformedHeader)) => {
                     return (request, Err(status::BadRequest));
+                },
+                Err(Right(cause)) => {
+                    printfln!("Bad header encountered (%s). TODO: handle this better.", cause);
+                    // Now just ignore the header
                 },
                 Ok((name, value)) => {
                     let normalised = normalise_header_name(name);
