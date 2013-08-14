@@ -59,12 +59,12 @@ pub fn normalise_header_name(name: &str) -> ~str {
 /// assert_eq!(comma_split(" en;q=0.8, en_AU, text/html"), ["en;q=0.8", "en_AU", "text/html"])
 /// ~~~
 pub fn comma_split(value: &str) -> ~[~str] {
-    value.split_iter(',').transform(|w| w.trim_left().to_owned()).collect()
+    value.split_iter(',').map(|w| w.trim_left().to_owned()).collect()
 }
 
 pub fn comma_split_iter<'a>(value: &'a str)
         -> ::std::iterator::Map<'a, &'a str, &'a str, ::std::str::CharSplitIterator<'a, char>> {
-    value.split_iter(',').transform(|w| w.trim_left())
+    value.split_iter(',').map(|w| w.trim_left())
 }
 
 pub fn parameter_split(input: &str) -> Option<~[(~str, ~str)]> {
@@ -186,7 +186,7 @@ impl Headers {
     }
 
     pub fn iter<'a>(&'a self) -> TreeMapIterator<'a, K, V> {
-        self.map.iter().transform(|(name, values)| {
+        self.map.iter().map(|(name, values)| {
             let mut concatonated = "";
             for hunk in values.iter() {
                 concatenated += fmt!(", %s", hunk);
@@ -948,10 +948,10 @@ impl EntityHeader {
 
     fn from_name_and_value(name: &str, value: &str) -> Result<EntityHeader, &'static str> {
         Ok(match name {
-            "Allow" => Allow(comma_split_iter(value).transform(|s| Method::from_str_or_new(s))
+            "Allow" => Allow(comma_split_iter(value).map(|s| Method::from_str_or_new(s))
                                                     .collect()),
             "Content-Encoding" => ContentEncoding(comma_split_iter(value)
-                                        .transform(|s| content_encoding::Coding::from_str(s))
+                                        .map(|s| content_encoding::Coding::from_str(s))
                                         .collect()),
             "Content-Language" => ContentLanguage(comma_split(value)),
             "Content-Length" => ContentLength(match FromStr::from_str(value) {
