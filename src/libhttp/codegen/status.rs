@@ -145,11 +145,11 @@ pub fn generate() {
         StatusC(511, "Network Authentication Required", "RFC 6585"),
         ];
     unsafe {
-        longest_ident = entries.iter().transform(|&e| match e {
+        longest_ident = entries.iter().map(|&e| match e {
             Left(_heading) => 0,
             Right(status) => status.ident().len(),
         }).max_by(|&i| i).unwrap();
-        longest_reason = entries.iter().transform(|&e| match e {
+        longest_reason = entries.iter().map(|&e| match e {
             Left(_heading) => 0,
             Right(status) => status.reason.len(),
         }).max_by(|&i| i).unwrap();
