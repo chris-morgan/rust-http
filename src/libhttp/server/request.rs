@@ -260,7 +260,7 @@ pub enum RequestUri {
 
 impl FromStr for RequestUri {
     /// Interpret a RFC2616 Request-URI
-    pub fn from_str(request_uri: &str) -> Option<RequestUri> {
+    fn from_str(request_uri: &str) -> Option<RequestUri> {
         if request_uri == "*" {
             Some(Star)
         } else if request_uri.starts_with("/") {

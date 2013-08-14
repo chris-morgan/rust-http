@@ -162,14 +162,14 @@ impl RequestWriter {
 }
 
 impl rt::io::Writer for RequestWriter {
-    pub fn write(&mut self, buf: &[u8]) {
+    fn write(&mut self, buf: &[u8]) {
         if (!self.headers_written) {
             self.write_headers();
         }
         self.stream.write(buf);
     }
 
-    pub fn flush(&mut self) {
+    fn flush(&mut self) {
         self.stream.flush();
     }
 }

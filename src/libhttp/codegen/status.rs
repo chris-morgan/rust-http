@@ -235,7 +235,7 @@ impl Status {
 impl ToStr for Status {
     /// Produce the HTTP status message incorporating both code and message,
     /// e.g. `ImATeapot.to_str() == \"418 I'm a teapot\"`
-	pub fn to_str(&self) -> ~str {
+	fn to_str(&self) -> ~str {
 		fmt!(\"%? %s\", self.code(), self.reason())
 	}
 }
@@ -243,7 +243,7 @@ impl ToStr for Status {
 impl IntConvertible for Status {
 
     /// Equivalent to `self.code()`
-    pub fn to_int(&self) -> int {
+    fn to_int(&self) -> int {
         self.code() as int
     }
 
@@ -252,7 +252,7 @@ impl IntConvertible for Status {
     /// This will fail if an unknown code is passed.
     ///
     /// For example, `from_int(200)` will return `OK`.
-    pub fn from_int(n: int) -> Status {
+    fn from_int(n: int) -> Status {
         match n {
 ");
     let mut matched_numbers = HashSet::new::<uint>();

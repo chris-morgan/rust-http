@@ -41,7 +41,7 @@ impl FromStr for Method {
      *
      * (If the string isn't ASCII, this will at present fail: TODO fix that.)
      */
-    pub fn from_str(method: &str) -> Option<Method> {
+    fn from_str(method: &str) -> Option<Method> {
         if (!method.is_ascii()) {
             return None;
         }

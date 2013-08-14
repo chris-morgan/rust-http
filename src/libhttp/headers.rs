@@ -979,8 +979,8 @@ impl EntityHeader {
 
 // TODO: ... (I won't even say it)
 pub trait HeaderThingummy {
-    pub fn header_name(&self) -> ~str;
-    pub fn from_name_and_value(name: &str, value: &str) -> Result<Self, &'static str>;
+    fn header_name(&self) -> ~str;
+    fn from_name_and_value(name: &str, value: &str) -> Result<Self, &'static str>;
 }
 
 pub enum AnyRequestHeader {
@@ -998,7 +998,7 @@ impl HeaderThingummy for AnyRequestHeader {
         }
     }
 
-    pub fn from_name_and_value(name: &str, value: &str) -> Result<AnyRequestHeader, &'static str> {
+    fn from_name_and_value(name: &str, value: &str) -> Result<AnyRequestHeader, &'static str> {
         // TODO: support this for the other headers also.
         match EntityHeader::from_name_and_value(name, value) {
             Ok(h) => Ok(RequestEntityHeader(h)),
@@ -1029,7 +1029,7 @@ impl HeaderThingummy for AnyResponseHeader {
         }
     }
 
-    pub fn from_name_and_value(name: &str, value: &str) -> Result<AnyResponseHeader, &'static str> {
+    fn from_name_and_value(name: &str, value: &str) -> Result<AnyResponseHeader, &'static str> {
         // TODO: support this for the other headers also.
         match EntityHeader::from_name_and_value(name, value) {
             Ok(h) => Ok(ResponseEntityHeader(h)),

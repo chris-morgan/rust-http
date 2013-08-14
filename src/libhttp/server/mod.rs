@@ -24,16 +24,16 @@ pub mod response;
 // - Change "trait Server" to "trait Server: Send"
 // - Shift the serve_forever method into Server
 pub trait Server {
-	pub fn handle_request(&self, request: &Request, response: &mut ResponseWriter) -> ();
+	fn handle_request(&self, request: &Request, response: &mut ResponseWriter) -> ();
 
 	// XXX: this could also be implemented on the serve methods
-	pub fn get_config(&self) -> Config;
+	fn get_config(&self) -> Config;
 }
 
 /// A temporary trait to fix current deficiencies in Rust's default methods on traits.
 /// You'll need to import `ServerUtil` to be able to call `serve_forever` on a Server.
 pub trait ServerUtil {
-    pub fn serve_forever(self);
+    fn serve_forever(self);
 }
 
 impl<T: Send + Clone + Server> ServerUtil for T {
@@ -42,7 +42,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
 	 *
 	 * This will only return if the initial connection fails or something else blows up.
 	 */
-    pub fn serve_forever(self) {
+    fn serve_forever(self) {
         let config = self.get_config();
         debug!("About to bind to %?", config.bind_address);
         let mut optlistener = TcpListener::bind(config.bind_address);

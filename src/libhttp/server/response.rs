@@ -86,14 +86,14 @@ impl<'self> ResponseWriter<'self> {
 
 impl<'self> rt::io::Writer for ResponseWriter<'self> {
 
-    pub fn write(&mut self, buf: &[u8]) {
+    fn write(&mut self, buf: &[u8]) {
         if (!self.headers_written) {
             self.write_headers();
         }
         self.writer.write(buf);
     }
 
-    pub fn flush(&mut self) {
+    fn flush(&mut self) {
         self.writer.flush();
     }
 
