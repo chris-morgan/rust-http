@@ -1,6 +1,6 @@
 //! The Accept-Ranges request header, defined in RFC 2616, Section 14.4.
 
-use std::ascii::to_ascii_lower;
+use std::ascii::StrAsciiExt;
 
 pub enum RangeUnit {
     Unknown(~str),
@@ -29,9 +29,10 @@ impl ToStr for AcceptRanges {
 }
 
 impl super::HeaderConvertible for AcceptRanges {
-    fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<AcceptRanges> {
+    fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
+            -> Option<AcceptRanges> {
         let s = reader.collect_to_str();
-        match to_ascii_lower(s) {
+        match s.to_ascii_lower() {
             "none" => NoAcceptableRanges,
             "bytes" => RangeUnit(Bytes),
             value => RangeUnit(Unknown(value)),

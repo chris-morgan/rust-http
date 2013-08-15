@@ -10,7 +10,15 @@ libhttp_files=\
 		      src/libhttp/common.rs \
 		      src/libhttp/generated/read_method.rs \
 		      src/libhttp/generated/status.rs \
-		      src/libhttp/headers.rs \
+			  src/libhttp/headers/mod.rs \
+			  src/libhttp/headers/serialization_utils.rs \
+			  src/libhttp/headers/test_utils.rs \
+			  src/libhttp/headers/request.rs \
+			  src/libhttp/headers/response.rs \
+			  src/libhttp/headers/accept_ranges.rs \
+			  src/libhttp/headers/allow.rs \
+			  src/libhttp/headers/connection.rs \
+			  src/libhttp/headers/host.rs \
 		      src/libhttp/method.rs \
 		      src/libhttp/rfc2616.rs \
 		      src/libhttp/client/mod.rs \

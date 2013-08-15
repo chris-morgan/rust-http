@@ -7,7 +7,8 @@ use std::either::{Left, Right};
 use client::request::RequestWriter;
 use rfc2616::{CR, LF, SP};
 use common::read_http_version;
-use headers::{Headers, normalise_header_name};
+use headers::Headers;
+use headers::serialization_utils::normalise_header_name;
 use headers;
 use status::Status;
 
@@ -111,18 +112,18 @@ impl ResponseReader {
             let mut headers = ~TreeMap::new();
             loop {
                 match read_header_line(&mut buffer) {
-                    Err(Left(EndOfFile)) => {
+                    Err(Some(EndOfFile)) => {
                         io_error::cond.raise(bad_response_err());
                         //fail!("server disconnected, no more response to receive :-(");
                         return Err(request);
                     },
-                    Err(Left(EndOfHeaders)) => break,
-                    Err(Left(MalformedHeader)) => {
+                    Err(Some(EndOfHeaders)) => break,
+                    Err(Some(MalformedHeader)) => {
                         io_error::cond.raise(bad_response_err());
                         return Err(request);
                     },
-                    Err(Right(cause)) => {
-                        printfln!("Bad header encountered (%s). TODO: handle this better.", cause);
+                    Err(None) => {
+                        println("Bad header encountered. TODO: handle this better.");
                         // Now just ignore the header
                     },
                     Ok((name, value)) => {
@@ -154,13 +155,12 @@ impl rt::io::Reader for ResponseReader {
 }
 
 /// TODO: kill this too.
-pub fn read_header_line(rb: &mut RequestBuffer) -> Result<(~str, ~str),
-                                                           Either<HeaderLineErr, &'static str>> {
+pub fn read_header_line(rb: &mut RequestBuffer) -> Result<(~str, ~str), Option<HeaderLineErr>> {
     match rb.read_header::<headers::response::Header>() {
         Ok(headers::response::ExtensionHeader(k, v)) => Ok((k, v)),
         Ok(h) => {
             printfln!("[31;1mHeader dropped (TODO):[0m %?", h);
-            Err(Right("header interpreted but I can't yet use it: dropped"))
+            Err(None)
         },
         Err(e) => Err(e),
     }

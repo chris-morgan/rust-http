@@ -2,6 +2,8 @@ use std::util::unreachable;
 use extra::url::Url;
 use extra::time::Tm;
 use headers;
+use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
+use headers::serialization_utils::{push_maybe_quoted_string, maybe_unquote_string};
 
 pub enum Header {
 
@@ -82,7 +84,7 @@ impl HeaderEnum for Header {
         }
     }
 
-    fn write_header<T: Writer>(&self, writer: T) {
+    fn write_header<T: Writer>(&self, writer: &mut T) {
         writer.write(match *self {
             // General headers
             CacheControl(*) =>     bytes!("Cache-Control: "),
@@ -125,7 +127,7 @@ impl HeaderEnum for Header {
                 s.reserve(name.len() + 4 + value.len());
                 s.push_str(name);
                 s.push_str(": ");
-                let s = headers::push_maybe_quoted_string(s);
+                let s = push_maybe_quoted_string(s);
                 writer.write(s.as_bytes());
                 return
             },
@@ -291,17 +293,7 @@ impl HeaderEnum for Header {
                 Some(v) => Some(LastModified(v)),
                 None => None,
             },
-            normalised_name => ExtensionHeader(normalised_name, super::maybe_unquote_string(value)),
+            normalised_name => ExtensionHeader(normalised_name, maybe_unquote_string(value)),
         }
     }
-/*
-        Ok(match name {
-            "Content-Language" => ContentLanguage(comma_split(value)),
-            "Content-Length" => ContentLength(match FromStr::from_str(value) {
-                Some(n) => n,
-                None => return Err("expected a number"),
-            }),
-            _ => ExtensionHeader(name.to_owned(), value.to_owned()),
-        })
-    }*/
 }

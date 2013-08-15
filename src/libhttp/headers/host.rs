@@ -23,7 +23,7 @@ impl ToStr for Host {
 }
 
 impl super::HeaderConvertible for Host {
-    fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<Host> {
+    fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>) -> Option<Host> {
         let s = reader.collect_to_str();
         // TODO: this doesn't support IPv6 address access (e.g. "[::1]")
         // Do this properly with correct authority parsing.

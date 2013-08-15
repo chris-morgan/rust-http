@@ -3,6 +3,7 @@
 use std::vec;
 use std::ascii::Ascii;
 use std::iterator;
+use rfc2616::{is_token, is_token_item};
 
 /// Normalise an HTTP header name.
 ///
@@ -183,7 +184,7 @@ pub fn unquote_string(s: &str) -> Option<~str> {
             Normal if c == '\\' => Escaping,
             Normal if c == '"' => End,
             Normal | Escaping => { output.push_char(c); Normal },
-            End => return None;
+            End => return None,
         }
     }
     output

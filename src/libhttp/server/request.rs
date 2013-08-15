@@ -4,9 +4,10 @@ use method::{Method, Options};
 use status;
 use std::rt::io::net::ip::SocketAddr;
 use std::{str, u16};
-use std::either::{Either, Left, Right};
+use std::util::unreachable;
 use rfc2616::{CR, LF, SP, HT, COLON};
-use headers::{Headers, normalise_header_name};
+use headers::Headers;
+use headers::serialization_utils::normalise_header_name;
 use headers::host::Host;
 use headers;
 use buffer::BufTcpStream;
@@ -90,13 +91,12 @@ impl<'self> RequestBuffer<'self> {
     }
 
     /// Quick adapter from read_header back into read_header_line to let it compile for now
-    pub fn read_header_line(&mut self) -> Result<(~str, ~str),
-                                                 Either<HeaderLineErr, &'static str>> {
+    pub fn read_header_line(&mut self) -> Result<(~str, ~str), Option<HeaderLineErr>> {
         match self.read_header::<headers::request::Header>() {
             Ok(headers::request::ExtensionHeader(k, v)) => Ok((k, v)),
             Ok(h) => {
                 printfln!("[31;1mHeader dropped (TODO):[0m %?", h);
-                Err(Right("header interpreted but I can't yet use it: dropped"))
+                Err(None)
             },
             Err(e) => Err(e),
         }
@@ -113,84 +113,18 @@ impl<'self> RequestBuffer<'self> {
     /// - `EndOfHeaders`: I have no more headers to give; go forth and conquer on the body!
     /// - `EndOfFile`: socket was closed unexpectedly; probable best behavour is to drop the request
     /// - `MalformedHeader`: request is bad; you could drop it or try returning 400 Bad Request
-    pub fn read_header<T: headers::HeaderThingummy>(&mut self) -> Result<T,
-                                            Either<HeaderLineErr, &'static str>> {
-        enum State2 { Normal, CompactingLWS, GotCR, GotCRLF };
-        // XXX: not called State because of https://github.com/mozilla/rust/issues/7770
-        // TODO: investigate quoted strings
-
-        let mut state = Normal;
-        let mut in_name = true;
-        let mut header_name = ~"";
-        self.line_bytes.clear();
-
-        loop {
-            state = match self.stream.read_byte() {
-                None => return Err(Left(EndOfFile)),
-                Some(b) => match state {
-                    Normal | CompactingLWS if b == CR => {
-                        // It's OK to go to GotCR on CompactingLWS: if it ends up CRLFSP it'll get
-                        // back to CompactingLWS, and if it ends up CRLF we didn't need the trailing
-                        // whitespace anyway.
-                        GotCR
-                    },
-                    Normal | CompactingLWS if in_name && b == COLON => {
-                        // As above, don't worry about trailing whitespace.
-                        // Found the colon, so switch across to value.
-                        in_name = false;
-                        header_name = str::from_bytes(self.line_bytes);
-                        self.line_bytes.clear();
-                        Normal
-                    },
-                    GotCR if b == LF && in_name && self.line_bytes.len() == 0 => {
-                        return Err(Left(EndOfHeaders));
-                    },
-                    GotCR if b == LF => {
-                        GotCRLF
-                    },
-                    GotCR => {
-                        // False alarm, CR without LF
-                        self.line_bytes.push(CR);
-                        self.line_bytes.push(b);
-                        Normal
-                    },
-                    GotCRLF if b == SP || b == HT => {
-                        // CR LF SP is a suitable linear whitespace, so don't stop yet
-                        CompactingLWS
-                    },
-                    GotCRLF if in_name => {
-                        // Don't worry about poking b; the request is being aborted
-                        return Err(Left(MalformedHeader));
-                    },
-                    GotCRLF => {
-                        // Ooh! We got to a genuine end of line, so we're done
-                        // But sorry, we don't want that byte after all...
-                        self.stream.poke_byte(b);
-                        break;
-                    },
-                    Normal | CompactingLWS if b == SP || b == HT => {
-                        // Start or continue to compact linear whitespace
-                        CompactingLWS
-                    },
-                    CompactingLWS => {
-                        // End of LWS, compact it down to a single space, unless it's at the start
-                        // (saves a trim_left() call later)
-                        if self.line_bytes.len() > 0 {
-                            self.line_bytes.push(SP);
-                        }
-                        self.line_bytes.push(b);
-                        Normal
-                    },
-                    Normal => {
-                        self.line_bytes.push(b);
-                        Normal
-                    }
-                },
-            };
-        }
-        match headers::HeaderThingummy::from_name_and_value::<T>(header_name, str::from_bytes(self.line_bytes)) {
-            Ok(h) => Ok(h),
-            Err(m) => Err(Right(m)),
+    pub fn read_header<T: headers::HeaderEnum>(&mut self) -> Result<T, Option<HeaderLineErr>> {
+        match headers::HeaderEnum::from_stream(self.stream) {
+            (None, None) => Err(Some(EndOfFile)),
+            (None, Some(b)) => {
+                self.stream.poke_byte(b);
+                Err(Some(MalformedHeader))
+            },
+            (Some(header), Some(b)) => {
+                self.stream.poke_byte(b);
+                Ok(header)
+            }
+            (Some(_header), None) => unreachable()
         }
     }
 }
@@ -314,13 +248,13 @@ impl Request {
 
         loop {
             match buffer.read_header_line() {
-                Err(Left(EndOfFile)) => fail!("client disconnected, nowhere to send response"),
-                Err(Left(EndOfHeaders)) => break,
-                Err(Left(MalformedHeader)) => {
+                Err(Some(EndOfFile)) => fail!("client disconnected, nowhere to send response"),
+                Err(Some(EndOfHeaders)) => break,
+                Err(Some(MalformedHeader)) => {
                     return (request, Err(status::BadRequest));
                 },
-                Err(Right(cause)) => {
-                    printfln!("Bad header encountered (%s). TODO: handle this better.", cause);
+                Err(None) => {
+                    println("Bad header encountered. TODO: handle this better.");
                     // Now just ignore the header
                 },
                 Ok((name, value)) => {

@@ -4,7 +4,7 @@
 // whether they should be interpreted (I recall its being a header name thing for legacy code,
 // perhaps I should normalise header case or some such thing?)
 
-use std::ascii::to_ascii_lower;
+use std::ascii::StrAsciiExt;
 
 pub enum Connection {
     Token(~str),
@@ -20,9 +20,10 @@ impl ToStr for Connection {
 }
 
 impl super::HeaderConvertible for Connection {
-    fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<Connection> {
+    fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
+            -> Option<Connection> {
         let s = reader.collect_to_str();
-        if to_ascii_lower(s) == "close" {
+        if s.to_ascii_lower() == "close" {
             Some(Close)
         } else {
             Some(Token(s))

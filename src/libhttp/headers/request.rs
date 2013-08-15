@@ -3,6 +3,8 @@ use std::rt::io::{Reader, Writer};
 use extra::url::Url;
 use extra::time::Tm;
 use headers;
+use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
+use headers::serialization_utils::{push_maybe_quoted_string, maybe_unquote_string};
 
 pub enum Header {
 
@@ -151,7 +153,7 @@ impl HeaderEnum for Header {
                 // TODO: be more efficient
                 let s = name + ": ";
                 let s = ~"";
-                let s = headers::push_maybe_quoted_string(~"", value);
+                let s = push_maybe_quoted_string(~"", value);
                 writer.write(s.as_bytes());
                 return;
             },
@@ -367,7 +369,7 @@ impl HeaderEnum for Header {
                 Some(v) => Some(LastModified(v)),
                 None => None,
             },
-            normalised_name => ExtensionHeader(normalised_name, super::maybe_unquote_string(value)),
+            normalised_name => ExtensionHeader(normalised_name, maybe_unquote_string(value)),
         }
     }
 }

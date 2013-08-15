@@ -15,15 +15,15 @@
 
 use std::rt::io::{Reader, Stream};
 use extra::treemap::TreeMap;
-use extra::time::Tm;
-use super::rfc2616::{is_token_item, CR, LF, SP, HT, DOUBLE_QUOTE, BACKSLASH};
-use super::method::Method;
+use extra::time::{Tm, strptime};
+use rfc2616::{is_token_item, CR, LF, SP, HT, COLON, DOUBLE_QUOTE, BACKSLASH};
+use method::Method;
 
-use serialization_utils::{normalise_header_name, push_quality};
-use serialization_utils::{push_maybe_quoted_string, maybe_quoted_string, push_quoted_string};
-use serialization_utils::{push_key_value_pair, push_key_value_pairs};
-use serialization_utils::{unquote_string, maybe_unquote_string};
-use serialization_utils::{parameter_split, comma_split, comma_split_iter, comma_join};
+use self::serialization_utils::{normalise_header_name, push_quality};
+use self::serialization_utils::{push_maybe_quoted_string, maybe_quoted_string, push_quoted_string};
+use self::serialization_utils::{push_key_value_pair, push_key_value_pairs};
+use self::serialization_utils::{unquote_string, maybe_unquote_string};
+use self::serialization_utils::{parameter_split, comma_split, comma_split_iter, comma_join};
 
 mod request;
 mod response;
@@ -66,17 +66,18 @@ be the more canonical source.
 
 */
 
-pub mod accept;
-pub mod accept_charset;
-pub mod accept_encoding;
-pub mod accept_language;
+//pub mod accept;
+//pub mod accept_charset;
+//pub mod accept_encoding;
+//pub mod accept_language;
 pub mod accept_ranges;
 pub mod allow;
-pub mod cache_control;
-pub mod content_encoding;
-pub mod content_range;
-pub mod content_type;
-pub mod etag;
+//pub mod cache_control;
+pub mod connection;
+//pub mod content_encoding;
+//pub mod content_range;
+//pub mod content_type;
+//pub mod etag;
 pub mod host;
 
 pub type DeltaSeconds = u64;
@@ -93,7 +94,10 @@ pub trait HeaderEnum {
     /// - Header
     /// - Next byte (consumed out of linear white space checking necessity)
     ///
-    /// (None, None) means syntax error; (None, Some) means a bad header read error
+    /// (None, None) means EOF.
+    /// (None, Some) means malformed header.
+    /// (Some, None) is impossible.
+    /// (Some, Some) means you have a valid header.
     fn from_stream<T: Reader>(reader: &mut T) -> (Option<Self>, Option<u8>) {
         let mut name_finished = false;
         let mut header_name = ~"";
@@ -111,11 +115,10 @@ pub trait HeaderEnum {
             next_byte: None,
             state: Normal,
         };
-        header_name = super::normalise_header_name(header_name);
-        let header = read_value_from_stream(header_name, &mut iter);
-        // FIXME: what's the correct function call for this?
+        header_name = normalise_header_name(header_name);
+        let header = HeaderEnum::value_from_stream(header_name, &mut iter);
         // Ensure that the entire header line is consumed (don't want to mess up next header!)
-        iter.consume();
+        for _ in iter { }
         (header, iter.next_byte)
     }
 
@@ -179,7 +182,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 None => {
                     // EOF; not a friendly reader :-(. Let's just call that the end.
                     self.state = Finished;
-                    return None,
+                    return None
                 },
                 Some(b) => b,
             }
@@ -259,7 +262,7 @@ pub trait HeaderConvertible {
      * (This is not provided as a default implementation as owing to present upstream limitations
      * that would require the type to implement FromStr also, which is not considered reasonable.)
      */
-    fn from_stream<T: Reader>(reader: &mut HeaderIterator<T>) -> Option<Self>;
+    fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<Self>;
 
     /**
      * Write the HTTP value of the header to the stream.
@@ -284,7 +287,7 @@ pub trait HeaderConvertible {
 // Some header types really are arbitrary strings. Let's cover that case here.
 impl HeaderConvertible for ~str {
     fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<~str> {
-        Some(writer.collect_to_str())
+        Some(reader.collect_to_str())
     }
 
     fn to_stream<T: Writer>(&self, writer: &mut T) {
@@ -355,7 +358,7 @@ impl HeaderConvertible for ~str {
  *    logging, etc.
  */
 impl HeaderConvertible for Tm {
-    fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<~str> {
+    fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<Tm> {
         let value = reader.collect_to_str();
 
         // XXX: %Z actually ignores any timezone other than UTC. Probably not a good idea?

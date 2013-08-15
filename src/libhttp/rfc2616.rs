@@ -183,8 +183,8 @@ mod content_coding {
     }
     impl FromStr for ValueToken {
         fn from_str(s: &str) -> Option<ValueToken> {
-            use std::ascii::to_ascii_lower;
-            match to_ascii_lower(s).as_slice() {
+            use std::ascii::StrAsciiExt;
+            match s.to_ascii_lower().as_slice() {
                 "gzip" => Some(Gzip),
                 "compress" => Some(Compress),
                 "deflate" => Some(Deflate),
