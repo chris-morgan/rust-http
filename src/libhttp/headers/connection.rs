@@ -5,6 +5,7 @@
 // perhaps I should normalise header case or some such thing?)
 
 use std::ascii::StrAsciiExt;
+use std::rt::io::{Reader, Writer};
 
 pub enum Connection {
     Token(~str),
@@ -23,7 +24,8 @@ impl super::HeaderConvertible for Connection {
     fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
             -> Option<Connection> {
         let s = reader.collect_to_str();
-        if s.to_ascii_lower() == "close" {
+        let slower = s.to_ascii_lower();
+        if slower.as_slice() == "close" {
             Some(Close)
         } else {
             Some(Token(s))
@@ -31,14 +33,14 @@ impl super::HeaderConvertible for Connection {
     }
 
     fn to_stream<T: Writer>(&self, writer: &mut T) {
-        writer.write(match self {
+        writer.write(match *self {
             Close => bytes!("close"),
             Token(ref s) => s.as_bytes(),
         });
     }
 
     fn http_value(&self) -> ~str {
-        match self {
+        match *self {
             Close => ~"close",
             Token(ref s) => s.to_owned(),
         }

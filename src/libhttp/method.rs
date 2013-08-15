@@ -66,9 +66,9 @@ impl Method {
      *
      * (If the string isn't ASCII, this will at present fail.)
      */
-    pub fn from_str_or_new(method: &str) -> Method {
+    pub fn from_str_or_new(method: &str) -> Option<Method> {
         assert!(method.is_ascii());
-        match method {
+        Some(match method {
             "OPTIONS" => Options,
             "GET"     => Get,
             "HEAD"    => Head,
@@ -79,6 +79,6 @@ impl Method {
             "CONNECT" => Connect,
             "PATCH"   => Patch,
             _         => ExtensionMethod(method.to_owned()),
-        }
+        })
     }
 }

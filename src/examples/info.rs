@@ -9,7 +9,7 @@ use std::rt::io::Writer;
 use extra::time;
 
 use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};
-use http::rfc2616::format_http_time;
+use http::headers::test_utils::to_stream_into_str;
 
 #[deriving(Clone)]
 struct InfoServer;
@@ -20,7 +20,7 @@ impl Server for InfoServer {
     }
 
     fn handle_request(&self, r: &Request, w: &mut ResponseWriter) {
-        w.headers.insert(~"Date", format_http_time(time::now_utc()));
+        w.headers.insert(~"Date", to_stream_into_str(&time::now_utc()));
         w.headers.insert(~"Content-Type", ~"text/html");
         w.headers.insert(~"Server", ~"Rust Thingummy/0.0-pre");
         w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>"));

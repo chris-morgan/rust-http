@@ -1,6 +1,5 @@
 use std::util::unreachable;
 use std::rt::io::{Reader, Writer};
-use extra::url::Url;
 use extra::time::Tm;
 use headers;
 use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
@@ -55,56 +54,72 @@ pub enum Header {
 }
 
 impl HeaderEnum for Header {
-    fn header_name<'a>(&'a self) -> &'a str {
+    fn header_name(&self) -> ~str {
         match *self {
             // General headers
-            CacheControl(*) =>     "Cache-Control",
-            Connection(*) =>       "Connection",
-            Date(*) =>             "Date",
-            Pragma(*) =>           "Pragma",
-            Trailer(*) =>          "Trailer",
-            TransferEncoding(*) => "Transfer-Encoding",
-            Upgrade(*) =>          "Upgrade",
-            Via(*) =>              "Via",
-            Warning(*) =>          "Warning",
+            CacheControl(*) =>     ~"Cache-Control",
+            Connection(*) =>       ~"Connection",
+            Date(*) =>             ~"Date",
+            Pragma(*) =>           ~"Pragma",
+            Trailer(*) =>          ~"Trailer",
+            TransferEncoding(*) => ~"Transfer-Encoding",
+            Upgrade(*) =>          ~"Upgrade",
+            Via(*) =>              ~"Via",
+            Warning(*) =>          ~"Warning",
 
             // Request headers
-            Accept(*) =>             "Accept",
-            AcceptCharset(*) =>      "Accept-Charset",
-            AcceptEncoding(*) =>     "Accept-Encoding",
-            AcceptLanguage(*) =>     "Accept-Language",
-            Authorization(*) =>      "Authorization",
-            Expect(*) =>             "Expect",
-            From(*) =>               "From",
-            Host(*) =>               "Host",
-            IfMatch(*) =>            "If-Match",
-            IfModifiedSince(*) =>    "If-Modified-Since",
-            IfNoneMatch(*) =>        "If-None-Match",
-            IfRange(*) =>            "If-Range",
-            IfUnmodifiedSince(*) =>  "If-Unmodified-Since",
-            MaxForwards(*) =>        "Max-Forwards",
-            ProxyAuthorization(*) => "Proxy-Authorization",
-            Range(*) =>              "Range",
-            Referer(*) =>            "Referer",
-            Te(*) =>                 "TE",
-            UserAgent(*) =>          "User-Agent",
+            Accept(*) =>             ~"Accept",
+            AcceptCharset(*) =>      ~"Accept-Charset",
+            AcceptEncoding(*) =>     ~"Accept-Encoding",
+            AcceptLanguage(*) =>     ~"Accept-Language",
+            Authorization(*) =>      ~"Authorization",
+            Expect(*) =>             ~"Expect",
+            From(*) =>               ~"From",
+            Host(*) =>               ~"Host",
+            IfMatch(*) =>            ~"If-Match",
+            IfModifiedSince(*) =>    ~"If-Modified-Since",
+            IfNoneMatch(*) =>        ~"If-None-Match",
+            IfRange(*) =>            ~"If-Range",
+            IfUnmodifiedSince(*) =>  ~"If-Unmodified-Since",
+            MaxForwards(*) =>        ~"Max-Forwards",
+            ProxyAuthorization(*) => ~"Proxy-Authorization",
+            Range(*) =>              ~"Range",
+            Referer(*) =>            ~"Referer",
+            Te(*) =>                 ~"TE",
+            UserAgent(*) =>          ~"User-Agent",
 
             // Entity headers
-            Allow(*) =>           "Allow",
-            ContentEncoding(*) => "Content-Encoding",
-            ContentLanguage(*) => "Content-Language",
-            ContentLength(*) =>   "Content-Length",
-            ContentLocation(*) => "Content-Location",
-            ContentMd5(*) =>      "Content-MD5",
-            ContentRange(*) =>    "Content-Range",
-            ContentType(*) =>     "Content-Type",
-            Expires(*) =>         "Expires",
-            LastModified(*) =>    "Last-Modified",
-            ExtensionHeader(ref name, _) => name,
+            Allow(*) =>           ~"Allow",
+            ContentEncoding(*) => ~"Content-Encoding",
+            ContentLanguage(*) => ~"Content-Language",
+            ContentLength(*) =>   ~"Content-Length",
+            ContentLocation(*) => ~"Content-Location",
+            ContentMd5(*) =>      ~"Content-MD5",
+            ContentRange(*) =>    ~"Content-Range",
+            ContentType(*) =>     ~"Content-Type",
+            Expires(*) =>         ~"Expires",
+            LastModified(*) =>    ~"Last-Modified",
+            ExtensionHeader(ref name, _) => name.to_owned(),
         }
     }
 
     fn write_header<T: Writer>(&self, writer: &mut T) {
+        match *self {
+            ExtensionHeader(ref name, ref value) => {
+                // TODO: be more efficient
+                let mut s = ~"";
+                // Allocate for name, ": " and quoted value (typically an overallocation of 2 bytes,
+                // occasionally an underallocation in case of needing to escape double quotes)
+                s.reserve(name.len() + 4 + value.len());
+                s.push_str(*name);
+                s.push_str(": ");
+                let s = push_maybe_quoted_string(s, *value);
+                writer.write(s.as_bytes());
+                return
+            },
+            _ => (),
+        }
+
         writer.write(match *self {
             // General headers
             CacheControl(*) =>     bytes!("Cache-Control: "),
@@ -149,69 +164,62 @@ impl HeaderEnum for Header {
             ContentType(*) =>     bytes!("Content-Type: "),
             Expires(*) =>         bytes!("Expires: "),
             LastModified(*) =>    bytes!("Last-Modified: "),
-            ExtensionHeader(ref name, ref value) => {
-                // TODO: be more efficient
-                let s = name + ": ";
-                let s = ~"";
-                let s = push_maybe_quoted_string(~"", value);
-                writer.write(s.as_bytes());
-                return;
-            },
+            ExtensionHeader(*) => unreachable(),  // Already returned
         });
 
         // FIXME: all the `h` cases satisfy HeaderConvertible, can it be simplified?
         match *self {
             // General headers
-            CacheControl(h) =>     h.to_stream(writer),
-            Connection(h) =>       h.to_stream(writer),
-            Date(h) =>             h.to_stream(writer),
-            Pragma(h) =>           h.to_stream(writer),
-            Trailer(h) =>          h.to_stream(writer),
-            TransferEncoding(h) => h.to_stream(writer),
-            Upgrade(h) =>          h.to_stream(writer),
-            Via(h) =>              h.to_stream(writer),
-            Warning(h) =>          h.to_stream(writer),
+            CacheControl(ref h) =>     h.to_stream(writer),
+            Connection(ref h) =>       h.to_stream(writer),
+            Date(ref h) =>             h.to_stream(writer),
+            Pragma(ref h) =>           h.to_stream(writer),
+            Trailer(ref h) =>          h.to_stream(writer),
+            TransferEncoding(ref h) => h.to_stream(writer),
+            Upgrade(ref h) =>          h.to_stream(writer),
+            Via(ref h) =>              h.to_stream(writer),
+            Warning(ref h) =>          h.to_stream(writer),
 
             // Request headers
-            Accept(h) =>             h.to_stream(writer),
-            AcceptCharset(h) =>      h.to_stream(writer),
-            AcceptEncoding(h) =>     h.to_stream(writer),
-            AcceptLanguage(h) =>     h.to_stream(writer),
-            Authorization(h) =>      h.to_stream(writer),
-            Expect(h) =>             h.to_stream(writer),
-            From(h) =>               h.to_stream(writer),
-            Host(h) =>               h.to_stream(writer),
-            IfMatch(h) =>            h.to_stream(writer),
-            IfModifiedSince(h) =>    h.to_stream(writer),
-            IfNoneMatch(h) =>        h.to_stream(writer),
-            IfRange(h) =>            h.to_stream(writer),
-            IfUnmodifiedSince(h) =>  h.to_stream(writer),
-            MaxForwards(h) =>        h.to_stream(writer),
-            ProxyAuthorization(h) => h.to_stream(writer),
-            Range(h) =>              h.to_stream(writer),
-            Referer(h) =>            h.to_stream(writer),
-            Te(h) =>                 h.to_stream(writer),
-            UserAgent(h) =>          h.to_stream(writer),
+            Accept(ref h) =>             h.to_stream(writer),
+            AcceptCharset(ref h) =>      h.to_stream(writer),
+            AcceptEncoding(ref h) =>     h.to_stream(writer),
+            AcceptLanguage(ref h) =>     h.to_stream(writer),
+            Authorization(ref h) =>      h.to_stream(writer),
+            Expect(ref h) =>             h.to_stream(writer),
+            From(ref h) =>               h.to_stream(writer),
+            Host(ref h) =>               h.to_stream(writer),
+            IfMatch(ref h) =>            h.to_stream(writer),
+            IfModifiedSince(ref h) =>    h.to_stream(writer),
+            IfNoneMatch(ref h) =>        h.to_stream(writer),
+            IfRange(ref h) =>            h.to_stream(writer),
+            IfUnmodifiedSince(ref h) =>  h.to_stream(writer),
+            MaxForwards(ref h) =>        h.to_stream(writer),
+            ProxyAuthorization(ref h) => h.to_stream(writer),
+            Range(ref h) =>              h.to_stream(writer),
+            Referer(ref h) =>            h.to_stream(writer),
+            Te(ref h) =>                 h.to_stream(writer),
+            UserAgent(ref h) =>          h.to_stream(writer),
 
             // Entity headers
-            Allow(h) =>           h.to_stream(writer),
-            ContentEncoding(h) => h.to_stream(writer),
-            ContentLanguage(h) => h.to_stream(writer),
-            ContentLength(h) =>   h.to_stream(writer),
-            ContentLocation(h) => h.to_stream(writer),
-            ContentMd5(h) =>      h.to_stream(writer),
-            ContentRange(h) =>    h.to_stream(writer),
-            ContentType(h) =>     h.to_stream(writer),
-            Expires(h) =>         h.to_stream(writer),
-            LastModified(h) =>    h.to_stream(writer),
-            ExtensionHeader(ref name, ref value) => unreachable(),  // Already returned
+            Allow(ref h) =>           h.to_stream(writer),
+            ContentEncoding(ref h) => h.to_stream(writer),
+            ContentLanguage(ref h) => h.to_stream(writer),
+            ContentLength(ref h) =>   h.to_stream(writer),
+            ContentLocation(ref h) => h.to_stream(writer),
+            ContentMd5(ref h) =>      h.to_stream(writer),
+            ContentRange(ref h) =>    h.to_stream(writer),
+            ContentType(ref h) =>     h.to_stream(writer),
+            Expires(ref h) =>         h.to_stream(writer),
+            LastModified(ref h) =>    h.to_stream(writer),
+            ExtensionHeader(*) =>     unreachable(),  // Already returned
         };
         writer.write(bytes!("\r\n"));
     }
 
-    fn value_from_stream<T: Writer>(name: ~str, value: &mut HeaderValueByteIterator<T>)
+    fn value_from_stream<T: Reader>(name: ~str, value: &mut HeaderValueByteIterator<T>)
             -> Option<Header> {
-        match name {
+        match name.as_slice() {
             // General headers
             "Cache-Control" => match HeaderConvertible::from_stream(value) {
                 Some(v) => Some(CacheControl(v)),
@@ -369,7 +377,10 @@ impl HeaderEnum for Header {
                 Some(v) => Some(LastModified(v)),
                 None => None,
             },
-            normalised_name => ExtensionHeader(normalised_name, maybe_unquote_string(value)),
+            _ => match maybe_unquote_string(value.collect_to_str()) {
+                Some(v) => Some(ExtensionHeader(name, v)),
+                None => None,
+            }
         }
     }
 }

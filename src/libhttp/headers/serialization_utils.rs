@@ -2,7 +2,6 @@
 
 use std::vec;
 use std::ascii::Ascii;
-use std::iterator;
 use rfc2616::{is_token, is_token_item};
 
 /// Normalise an HTTP header name.
@@ -181,19 +180,20 @@ pub fn unquote_string(s: &str) -> Option<~str> {
     for c in s.iter() {
         state = match state {
             Start if c == '"' => Normal,
+            Start => return None,
             Normal if c == '\\' => Escaping,
             Normal if c == '"' => End,
             Normal | Escaping => { output.push_char(c); Normal },
             End => return None,
         }
     }
-    output
+    Some(output)
 }
 
 /// Parse a ( token | quoted-string ). Returns ``None`` if it is not valid.
 pub fn maybe_unquote_string(s: &str) -> Option<~str> {
     if is_token(s) {
-        s.to_owned()
+        Some(s.to_owned())
     } else {
         unquote_string(s)
     }
@@ -204,7 +204,7 @@ pub fn push_key_value_pair(mut s: ~str, k: &str, v: &str) -> ~str {
     s.push_char(';');
     s.push_str(k);
     s.push_char('=');
-    push_maybe_quoted_string(s, v);
+    push_maybe_quoted_string(s, v)
 }
 
 // TODO: &Str instead of ~str?

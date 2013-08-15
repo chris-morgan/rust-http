@@ -10,7 +10,7 @@ use std::rt::io::Writer;
 use extra::time;
 
 use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};
-use http::rfc2616::format_http_time;
+use http::headers::test_utils::to_stream_into_str;
 
 #[deriving(Clone)]
 struct ApacheFakeServer;
@@ -21,7 +21,7 @@ impl Server for ApacheFakeServer {
     }
 
     fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
-        w.headers.insert(~"Date", format_http_time(time::now_utc()));
+        w.headers.insert(~"Date", to_stream_into_str(&time::now_utc()));
         w.headers.insert(~"Server", ~"Apache/2.2.22 (Ubuntu)");
         w.headers.insert(~"Last-Modified", ~"Thu, 05 May 2011 11:46:42 GMT");
         w.headers.insert(~"ETag", ~"\"501b29-b1-4a285ed47404a\"");

@@ -1,4 +1,5 @@
 use std::util::unreachable;
+use std::rt::io::{Reader, Writer};
 use extra::url::Url;
 use extra::time::Tm;
 use headers;
@@ -45,46 +46,63 @@ pub enum Header {
 }
 
 impl HeaderEnum for Header {
-    fn header_name<'a>(&'a self) -> &'a str {
+    fn header_name(&self) -> ~str {
         match *self {
             // General headers
-            CacheControl(*) =>     "Cache-Control",
-            Connection(*) =>       "Connection",
-            Date(*) =>             "Date",
-            Pragma(*) =>           "Pragma",
-            Trailer(*) =>          "Trailer",
-            TransferEncoding(*) => "Transfer-Encoding",
-            Upgrade(*) =>          "Upgrade",
-            Via(*) =>              "Via",
-            Warning(*) =>          "Warning",
+            CacheControl(*) =>     ~"Cache-Control",
+            Connection(*) =>       ~"Connection",
+            Date(*) =>             ~"Date",
+            Pragma(*) =>           ~"Pragma",
+            Trailer(*) =>          ~"Trailer",
+            TransferEncoding(*) => ~"Transfer-Encoding",
+            Upgrade(*) =>          ~"Upgrade",
+            Via(*) =>              ~"Via",
+            Warning(*) =>          ~"Warning",
 
             // Response headers
-            AcceptRanges(*) =>      "Accept-Ranges",
-            Age(*) =>               "Age",
-            ETag(*) =>              "ETag",
-            Location(*) =>          "Location",
-            ProxyAuthenticate(*) => "Proxy-Authenticate",
-            RetryAfter(*) =>        "Retry-After",
-            Server(*) =>            "Server",
-            Vary(*) =>              "Vary",
-            WwwAuthenticate(*) =>   "WWW-Authenticate",
+            AcceptPatch(*) =>       ~"Accept-Patch",
+            AcceptRanges(*) =>      ~"Accept-Ranges",
+            Age(*) =>               ~"Age",
+            ETag(*) =>              ~"ETag",
+            Location(*) =>          ~"Location",
+            ProxyAuthenticate(*) => ~"Proxy-Authenticate",
+            RetryAfter(*) =>        ~"Retry-After",
+            Server(*) =>            ~"Server",
+            Vary(*) =>              ~"Vary",
+            WwwAuthenticate(*) =>   ~"WWW-Authenticate",
 
             // Entity headers
-            Allow(*) =>           "Allow",
-            ContentEncoding(*) => "Content-Encoding",
-            ContentLanguage(*) => "Content-Language",
-            ContentLength(*) =>   "Content-Length",
-            ContentLocation(*) => "Content-Location",
-            ContentMd5(*) =>      "Content-MD5",
-            ContentRange(*) =>    "Content-Range",
-            ContentType(*) =>     "Content-Type",
-            Expires(*) =>         "Expires",
-            LastModified(*) =>    "Last-Modified",
-            ExtensionHeader(ref name, _) => name,
+            Allow(*) =>           ~"Allow",
+            ContentEncoding(*) => ~"Content-Encoding",
+            ContentLanguage(*) => ~"Content-Language",
+            ContentLength(*) =>   ~"Content-Length",
+            ContentLocation(*) => ~"Content-Location",
+            ContentMd5(*) =>      ~"Content-MD5",
+            ContentRange(*) =>    ~"Content-Range",
+            ContentType(*) =>     ~"Content-Type",
+            Expires(*) =>         ~"Expires",
+            LastModified(*) =>    ~"Last-Modified",
+            ExtensionHeader(ref name, _) => name.to_owned(),
         }
     }
 
     fn write_header<T: Writer>(&self, writer: &mut T) {
+        match *self {
+            ExtensionHeader(ref name, ref value) => {
+                // TODO: be more efficient
+                let mut s = ~"";
+                // Allocate for name, ": " and quoted value (typically an overallocation of 2 bytes,
+                // occasionally an underallocation in case of needing to escape double quotes)
+                s.reserve(name.len() + 4 + value.len());
+                s.push_str(*name);
+                s.push_str(": ");
+                let s = push_maybe_quoted_string(s, *value);
+                writer.write(s.as_bytes());
+                return
+            },
+            _ => (),
+        }
+
         writer.write(match *self {
             // General headers
             CacheControl(*) =>     bytes!("Cache-Control: "),
@@ -98,6 +116,7 @@ impl HeaderEnum for Header {
             Warning(*) =>          bytes!("Warning: "),
 
             // Response headers
+            AcceptPatch(*) =>       bytes!("Accept-Patch: "),
             AcceptRanges(*) =>      bytes!("Accept-Ranges: "),
             Age(*) =>               bytes!("Age: "),
             ETag(*) =>              bytes!("ETag: "),
@@ -119,63 +138,53 @@ impl HeaderEnum for Header {
             ContentType(*) =>     bytes!("Content-Type: "),
             Expires(*) =>         bytes!("Expires: "),
             LastModified(*) =>    bytes!("Last-Modified: "),
-            ExtensionHeader(ref name, ref value) => {
-                // TODO: be more efficient
-                let mut s = ~"";
-                // Allocate for name, ": " and quoted value (typically an overallocation of 2 bytes,
-                // occasionally an underallocation in case of needing to escape double quotes)
-                s.reserve(name.len() + 4 + value.len());
-                s.push_str(name);
-                s.push_str(": ");
-                let s = push_maybe_quoted_string(s);
-                writer.write(s.as_bytes());
-                return
-            },
+            ExtensionHeader(*) => unreachable(),  // Already returned
         });
 
         // FIXME: all the `h` cases satisfy HeaderConvertible, can it be simplified?
         match *self {
             // General headers
-            CacheControl(h) =>     h.to_stream(writer),
-            Connection(h) =>       h.to_stream(writer),
-            Date(h) =>             h.to_stream(writer),
-            Pragma(h) =>           h.to_stream(writer),
-            Trailer(h) =>          h.to_stream(writer),
-            TransferEncoding(h) => h.to_stream(writer),
-            Upgrade(h) =>          h.to_stream(writer),
-            Via(h) =>              h.to_stream(writer),
-            Warning(h) =>          h.to_stream(writer),
+            CacheControl(ref h) =>     h.to_stream(writer),
+            Connection(ref h) =>       h.to_stream(writer),
+            Date(ref h) =>             h.to_stream(writer),
+            Pragma(ref h) =>           h.to_stream(writer),
+            Trailer(ref h) =>          h.to_stream(writer),
+            TransferEncoding(ref h) => h.to_stream(writer),
+            Upgrade(ref h) =>          h.to_stream(writer),
+            Via(ref h) =>              h.to_stream(writer),
+            Warning(ref h) =>          h.to_stream(writer),
 
             // Response headers
-            AcceptRanges(h) =>      h.to_stream(writer),
-            Age(h) =>               h.to_stream(writer),
-            ETag(h) =>              h.to_stream(writer),
-            Location(h) =>          h.to_stream(writer),
-            ProxyAuthenticate(h) => h.to_stream(writer),
-            RetryAfter(h) =>        h.to_stream(writer),
-            Server(h) =>            h.to_stream(writer),
-            Vary(h) =>              h.to_stream(writer),
-            WwwAuthenticate(h) =>   h.to_stream(writer),
+            AcceptPatch(ref h) =>       h.to_stream(writer),
+            AcceptRanges(ref h) =>      h.to_stream(writer),
+            Age(ref h) =>               h.to_stream(writer),
+            ETag(ref h) =>              h.to_stream(writer),
+            Location(ref h) =>          h.to_stream(writer),
+            ProxyAuthenticate(ref h) => h.to_stream(writer),
+            RetryAfter(ref h) =>        h.to_stream(writer),
+            Server(ref h) =>            h.to_stream(writer),
+            Vary(ref h) =>              h.to_stream(writer),
+            WwwAuthenticate(ref h) =>   h.to_stream(writer),
 
             // Entity headers
-            Allow(h) =>           h.to_stream(writer),
-            ContentEncoding(h) => h.to_stream(writer),
-            ContentLanguage(h) => h.to_stream(writer),
-            ContentLength(h) =>   h.to_stream(writer),
-            ContentLocation(h) => h.to_stream(writer),
-            ContentMd5(h) =>      h.to_stream(writer),
-            ContentRange(h) =>    h.to_stream(writer),
-            ContentType(h) =>     h.to_stream(writer),
-            Expires(h) =>         h.to_stream(writer),
-            LastModified(h) =>    h.to_stream(writer),
-            ExtensionHeader(ref name, ref value) => unreachable(),  // Already returned
+            Allow(ref h) =>           h.to_stream(writer),
+            ContentEncoding(ref h) => h.to_stream(writer),
+            ContentLanguage(ref h) => h.to_stream(writer),
+            ContentLength(ref h) =>   h.to_stream(writer),
+            ContentLocation(ref h) => h.to_stream(writer),
+            ContentMd5(ref h) =>      h.to_stream(writer),
+            ContentRange(ref h) =>    h.to_stream(writer),
+            ContentType(ref h) =>     h.to_stream(writer),
+            Expires(ref h) =>         h.to_stream(writer),
+            LastModified(ref h) =>    h.to_stream(writer),
+            ExtensionHeader(*) =>     unreachable(),  // Already returned
         };
         writer.write(bytes!("\r\n"));
     }
 
     fn value_from_stream<T: Reader>(name: ~str, value: &mut HeaderValueByteIterator<T>)
             -> Option<Header> {
-        match name {
+        match name.as_slice() {
             // General headers
             "Cache-Control" => match HeaderConvertible::from_stream(value) {
                 Some(v) => Some(CacheControl(v)),
@@ -215,6 +224,10 @@ impl HeaderEnum for Header {
             },
 
             // Response headers
+            "Accept-Patch" => match HeaderConvertible::from_stream(value) {
+                Some(v) => Some(AcceptPatch(v)),
+                None => None,
+            },
             "Accept-Ranges" => match HeaderConvertible::from_stream(value) {
                 Some(v) => Some(AcceptRanges(v)),
                 None => None,
@@ -293,7 +306,10 @@ impl HeaderEnum for Header {
                 Some(v) => Some(LastModified(v)),
                 None => None,
             },
-            normalised_name => ExtensionHeader(normalised_name, maybe_unquote_string(value)),
+            _ => match maybe_unquote_string(value.collect_to_str()) {
+                Some(v) => Some(ExtensionHeader(name, v)),
+                None => None,
+            }
         }
     }
 }

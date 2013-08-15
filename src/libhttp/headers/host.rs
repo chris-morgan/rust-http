@@ -1,6 +1,7 @@
 //! The Host request header, defined in RFC 2616, Section 14.23.
 
 use std::u16;
+use std::rt::io::Reader;
 
 /// A simple little thing for the host of a request
 pub struct Host {
@@ -28,13 +29,10 @@ impl super::HeaderConvertible for Host {
         // TODO: this doesn't support IPv6 address access (e.g. "[::1]")
         // Do this properly with correct authority parsing.
         let mut hi = s.splitn_iter(':', 1);
-        Ok(Host {
+        Some(Host {
             name: hi.next().unwrap().to_owned(),
             port: match hi.next() {
-                Some(name) => match u16::from_str(name) {
-                    Some(port) => Some(port),
-                    None => return Err("invalid port number"),
-                },
+                Some(name) => u16::from_str(name),
                 None => None,
             },
         })

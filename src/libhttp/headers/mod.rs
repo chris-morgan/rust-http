@@ -13,21 +13,22 @@
 //! e.g. `Accept: text/html, text/plain;q=0.8, text/*;q=0.1`. For transforming to and from these
 //! values we have `comma_split` and `comma_join`.
 
-use std::rt::io::{Reader, Stream};
+use std::rt::io::{Reader, Writer};
+use std::rt::io::extensions::ReaderUtil;
+use std::util::unreachable;
 use extra::treemap::TreeMap;
 use extra::time::{Tm, strptime};
+use extra::url::Url;
 use rfc2616::{is_token_item, CR, LF, SP, HT, COLON, DOUBLE_QUOTE, BACKSLASH};
-use method::Method;
 
-use self::serialization_utils::{normalise_header_name, push_quality};
-use self::serialization_utils::{push_maybe_quoted_string, maybe_quoted_string, push_quoted_string};
-use self::serialization_utils::{push_key_value_pair, push_key_value_pairs};
-use self::serialization_utils::{unquote_string, maybe_unquote_string};
-use self::serialization_utils::{parameter_split, comma_split, comma_split_iter, comma_join};
+use self::serialization_utils::{normalise_header_name};
 
-mod request;
-mod response;
-mod serialization_utils;
+pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeader }
+
+pub mod request;
+pub mod response;
+pub mod test_utils;
+pub mod serialization_utils;
 
 pub type Headers = TreeMap<~str, ~str>;
 
@@ -83,7 +84,7 @@ pub mod host;
 pub type DeltaSeconds = u64;
 
 pub trait HeaderEnum {
-    fn header_name<'a>(&'a self) -> &'a str;
+    fn header_name(&self) -> ~str;
 
     fn write_header<T: Writer>(&self, writer: &mut T);
 
@@ -94,36 +95,48 @@ pub trait HeaderEnum {
     /// - Header
     /// - Next byte (consumed out of linear white space checking necessity)
     ///
-    /// (None, None) means EOF.
-    /// (None, Some) means malformed header.
-    /// (Some, None) is impossible.
-    /// (Some, Some) means you have a valid header.
-    fn from_stream<T: Reader>(reader: &mut T) -> (Option<Self>, Option<u8>) {
-        let mut name_finished = false;
-        let mut header_name = ~"";
-        loop {
-            match reader.read_byte() {
-                Some(b) if !name_finished && is_token_item(b) => header_name.push_char(b as char),
-                // TODO: check up on the rules for a line like "Name : value". Full LWS?
-                Some(b) if b == SP => name_finished = true,
-                Some(b) if b == COLON => break,
-                _ => return (None, None),
-            }
-        }
-        let mut iter = HeaderValueByteIterator {
-            reader: reader,
-            next_byte: None,
-            state: Normal,
-        };
-        header_name = normalise_header_name(header_name);
-        let header = HeaderEnum::value_from_stream(header_name, &mut iter);
-        // Ensure that the entire header line is consumed (don't want to mess up next header!)
-        for _ in iter { }
-        (header, iter.next_byte)
-    }
+    /// (Err, Option) means EOF/EOH/Malformed.
+    /// (Ok, None) is impossible.
+    /// (Ok, Some) means you have a valid header.
+    //REMOVED BECAUSE OF ICE:
+    //fn from_stream<T: Reader>(reader: &mut T) -> (Result<Self, HeaderLineErr>, Option<u8>) { ... }
 
     fn value_from_stream<T: Reader>(name: ~str, input: &mut HeaderValueByteIterator<T>)
         -> Option<Self>;
+}
+
+/// Shifted out of being a default method to fix an ICE (not yet reported, TODO)
+pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
+        -> (Result<E, HeaderLineErr>, Option<u8>) {
+    enum State { Start, ReadingName, NameFinished, GotCR }
+    let mut state = Start;
+    let mut header_name = ~"";
+    loop {
+        state = match (state, reader.read_byte()) {
+            (Start, Some(b)) | (ReadingName, Some(b)) if is_token_item(b) => {
+                header_name.push_char(b as char);
+                ReadingName
+            },
+            // TODO: check up on the rules for a line like "Name : value". Full LWS?
+            (Start, Some(b)) if b == CR => GotCR,
+            (Start, Some(b)) | (GotCR, Some(b)) if b == LF => {
+                return (Err(EndOfHeaders), None);
+            },
+            (_, Some(b)) if b == SP => NameFinished,
+            (_, Some(b)) if b == COLON => break,
+            (_, Some(_)) => return (Err(MalformedHeader), None),
+            (_, None) => return (Err(EndOfFile), None),
+        }
+    }
+    let mut iter = HeaderValueByteIterator::new(reader);
+    header_name = normalise_header_name(header_name);
+    let header = HeaderEnum::value_from_stream(header_name, &mut iter);
+    // Ensure that the entire header line is consumed (don't want to mess up next header!)
+    for _ in iter { }
+    match header {
+        Some(h) => (Ok(h), iter.next_byte),
+        None => (Err(MalformedHeader), iter.next_byte),
+    }
 }
 
 #[deriving(Eq)]
@@ -152,18 +165,35 @@ pub struct HeaderValueByteIterator<'self, R> {
     /// It is guaranteed that if ``self.state == Finished`` this will be a ``Some``.
     next_byte: Option<u8>,
 
+    at_start: bool,
     state: HeaderValueByteIteratorState,
 }
 
 impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
+
+    fn new(reader: &'self mut R) -> HeaderValueByteIterator<'self, R> {
+        HeaderValueByteIterator {
+            reader: reader,
+            next_byte: None,
+            at_start: true,
+            state: Normal,
+        }
+    }
     // TODO: can we have collect() implemented for ~str? That would negate the need for this.
     fn collect_to_str(&mut self) -> ~str {
         // TODO: be more efficient (char cast is a little unnecessary)
-        let out = ~"";
+        let mut out = ~"";
         // No point in trying out.reserve(self.size_hint()); I *know* I can't offer a useful hint.
+        loop {
+            match self.next() {
+                None => break,
+                Some(b) => out.push_char(b as char),
+            }
+        }
+        /*Doesn't work: "cannot borrow immutable self value as mutable" (!! TODO: report bug)
         for b in self {
             out.push_char(b as char);
-        }
+        }*/
         out
     }
 }
@@ -173,74 +203,100 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
         if self.state == Finished {
             return None;
         }
-        let b = match self.next_byte {
-            Some(b) => {
-                self.next_byte = None;
-                b
-            },
-            None => match self.reader.read_byte() {
-                None => {
-                    // EOF; not a friendly reader :-(. Let's just call that the end.
-                    self.state = Finished;
-                    return None
+        loop {
+            let b = match self.next_byte {
+                Some(b) => {
+                    self.next_byte = None;
+                    b
                 },
-                Some(b) => b,
-            }
-        };
-        self.state = match self.state {
-            Normal | CompactingLWS if b == CR => {
-                // It's OK to go to GotCR on CompactingLWS: if it ends up ``CR LF SP`` it'll get
-                // back to CompactingLWS, and if it ends up ``CR LF`` we didn't need the
-                // trailing whitespace anyway.
-                GotCR
-            },
-
-            // TODO: fix up these quoted-string rules, they're probably wrong (CRLF inside it?)
-            Normal if b == DOUBLE_QUOTE => InsideQuotedString,
-            InsideQuotedString if b == BACKSLASH => InsideQuotedStringEscape,
-            InsideQuotedStringEscape => InsideQuotedString,
-            InsideQuotedString if b == DOUBLE_QUOTE => Normal,
-
-            GotCR | Normal if b == LF => {
-                // TODO: check RFC 2616's precise rules, I think it does say that a server
-                // should also accept missing CR
-                GotCRLF
-            },
-            GotCR => {
-                // False alarm, CR without LF. Hmm... was it LWS then? TODO.
-                // FIXME: this is BAD, but I'm dropping the CR for now;
-                // when we can have yield it'd be better. Also again, check speck.
-                self.next_byte = Some(b);
-                return Some(CR);
-            },
-            GotCRLF if b == SP || b == HT => {
-                // CR LF SP is a suitable linear whitespace, so don't stop yet
-                CompactingLWS
-            },
-            GotCRLF => {
-                // Ooh! We got to a genuine end of line, so we're done.
-                // But first, we must makes sure not to lose that byte.
-                self.final_byte = Some(b);
-                self.state = Finished;
-                return None;
-            },
-            Normal | CompactingLWS if b == SP || b == HT => {
-                // Start or continue to compact linear whitespace
-                CompactingLWS
-            },
-            CompactingLWS => {
-                // End of LWS, compact it down to a single space, unless it's at the start.
-                if !self.at_start {
-                    self.next_byte = Some(b);
+                None => match self.reader.read_byte() {
+                    None => {
+                        // EOF; not a friendly reader :-(. Let's just call that the end.
+                        self.state = Finished;
+                        return None
+                    },
+                    Some(b) => b,
                 }
-                self.state = Normal;
-                return Some(SP);
-            },
-            Normal => {
-                Normal
-            },
-        };
-        Some(b)
+            };
+            match self.state {
+                Normal | CompactingLWS if b == CR => {
+                    // It's OK to go to GotCR on CompactingLWS: if it ends up ``CR LF SP`` it'll get
+                    // back to CompactingLWS, and if it ends up ``CR LF`` we didn't need the
+                    // trailing whitespace anyway.
+                    self.state = GotCR;
+                    loop;
+                },
+
+                // TODO: fix up these quoted-string rules, they're probably wrong (CRLF inside it?)
+                Normal if b == DOUBLE_QUOTE => {
+                    self.at_start = false;
+                    self.state = InsideQuotedString;
+                    return Some(b);
+                },
+                InsideQuotedString if b == BACKSLASH => {
+                    self.state = InsideQuotedStringEscape;
+                    return Some(b);
+                }
+                InsideQuotedStringEscape => {
+                    self.state = InsideQuotedString;
+                    return Some(b);
+                }
+                InsideQuotedString if b == DOUBLE_QUOTE => {
+                    self.state = Normal;
+                    return Some(b);
+                }
+                InsideQuotedString => {
+                    return Some(b);
+                }
+
+                GotCR | Normal if b == LF => {
+                    // TODO: check RFC 2616's precise rules, I think it does say that a server
+                    // should also accept missing CR
+                    self.state = GotCRLF;
+                    loop;
+                },
+                GotCR => {
+                    // False alarm, CR without LF. Hmm... was it LWS then? TODO.
+                    // FIXME: this is BAD, but I'm dropping the CR for now;
+                    // when we can have yield it'd be better. Also again, check speck.
+                    self.next_byte = Some(b);
+                    self.state = Normal;
+                    return Some(CR);
+                },
+                GotCRLF if b == SP || b == HT => {
+                    // CR LF SP is a suitable linear whitespace, so don't stop yet
+                    self.state = CompactingLWS;
+                    loop;
+                },
+                GotCRLF => {
+                    // Ooh! We got to a genuine end of line, so we're done.
+                    // But first, we must makes sure not to lose that byte.
+                    self.next_byte = Some(b);
+                    self.state = Finished;
+                    return None;
+                },
+                Normal | CompactingLWS if b == SP || b == HT => {
+                    // Start or continue to compact linear whitespace
+                    self.state = CompactingLWS;
+                    loop;
+                },
+                CompactingLWS => {
+                    // End of LWS, compact it down to a single space, unless it's at the start.
+                    self.state = Normal;
+                    if self.at_start {
+                        return Some(b);
+                    } else {
+                        self.next_byte = Some(b);
+                        return Some(SP);
+                    }
+                },
+                Normal => {
+                    self.at_start = false;
+                    return Some(b);
+                },
+                Finished => unreachable(),
+            };
+        }
     }
 }
 
@@ -296,6 +352,26 @@ impl HeaderConvertible for ~str {
 
     fn http_value(&self) -> ~str {
         self.to_owned()
+    }
+}
+
+impl HeaderConvertible for uint {
+    fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<uint> {
+        FromStr::from_str(reader.collect_to_str())
+    }
+
+    fn http_value(&self) -> ~str {
+        self.to_str()
+    }
+}
+
+impl HeaderConvertible for Url {
+    fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<Url> {
+        FromStr::from_str(reader.collect_to_str())
+    }
+
+    fn http_value(&self) -> ~str {
+        self.to_str()
     }
 }
 
@@ -379,7 +455,8 @@ impl HeaderConvertible for Tm {
     }
 
     fn to_stream<T: Writer>(&self, writer: &mut T) {
-        writer.write(self.to_utc().strftime("%a, %d %b %Y %T GMT").as_bytes());
+        let s = self.to_utc().strftime("%a, %d %b %Y %T GMT");
+        writer.write(s.as_bytes());
     }
 
     fn http_value(&self) -> ~str {

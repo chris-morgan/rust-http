@@ -3,7 +3,6 @@ use std::rt::io::Reader;
 use std::rt::io::extensions::ReaderUtil;
 use std::rt::io::{io_error, OtherIoError, IoError};
 use std::rt;
-use std::either::{Left, Right};
 use client::request::RequestWriter;
 use rfc2616::{CR, LF, SP};
 use common::read_http_version;
@@ -13,7 +12,8 @@ use headers;
 use status::Status;
 
 use buffer::BufTcpStream;
-use server::request::{RequestBuffer, HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeader};
+use server::request::{RequestBuffer};
+use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeader};
 
 struct ResponseReader {
     priv stream: BufTcpStream,

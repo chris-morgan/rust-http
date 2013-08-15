@@ -3,9 +3,9 @@ use extra::url::Url;
 use method::{Method, Options};
 use status;
 use std::rt::io::net::ip::SocketAddr;
-use std::{str, u16};
+use std::u16;
 use std::util::unreachable;
-use rfc2616::{CR, LF, SP, HT, COLON};
+use rfc2616::{CR, LF, SP};
 use headers::Headers;
 use headers::serialization_utils::normalise_header_name;
 use headers::host::Host;
@@ -13,7 +13,7 @@ use headers;
 use buffer::BufTcpStream;
 use common::read_http_version;
 
-pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeader }
+use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeader};
 
 /// Line/header can't be more than 4KB long (note that with the compacting of LWS the actual source
 /// data could be longer than 4KB)
@@ -114,17 +114,18 @@ impl<'self> RequestBuffer<'self> {
     /// - `EndOfFile`: socket was closed unexpectedly; probable best behavour is to drop the request
     /// - `MalformedHeader`: request is bad; you could drop it or try returning 400 Bad Request
     pub fn read_header<T: headers::HeaderEnum>(&mut self) -> Result<T, Option<HeaderLineErr>> {
-        match headers::HeaderEnum::from_stream(self.stream) {
-            (None, None) => Err(Some(EndOfFile)),
-            (None, Some(b)) => {
+        match headers::header_enum_from_stream(self.stream) {
+        //match headers::HeaderEnum::from_stream(self.stream) {
+            (Err(m), None) => Err(Some(m)),
+            (Err(m), Some(b)) => {
                 self.stream.poke_byte(b);
-                Err(Some(MalformedHeader))
+                Err(Some(m))
             },
-            (Some(header), Some(b)) => {
+            (Ok(header), Some(b)) => {
                 self.stream.poke_byte(b);
                 Ok(header)
             }
-            (Some(_header), None) => unreachable()
+            (Ok(_header), None) => unreachable()
         }
     }
 }
