@@ -156,8 +156,8 @@ impl rt::io::Reader for ResponseReader {
 /// TODO: kill this too.
 pub fn read_header_line(rb: &mut RequestBuffer) -> Result<(~str, ~str),
                                                            Either<HeaderLineErr, &'static str>> {
-    match rb.read_header::<headers::AnyResponseHeader>() {
-        Ok(headers::ResponseEntityHeader(headers::ExtensionHeader(k, v))) => Ok((k, v)),
+    match rb.read_header::<headers::response::Header>() {
+        Ok(headers::response::ExtensionHeader(k, v)) => Ok((k, v)),
         Ok(h) => {
             printfln!("[31;1mHeader dropped (TODO):[0m %?", h);
             Err(Right("header interpreted but I can't yet use it: dropped"))

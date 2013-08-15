@@ -92,8 +92,8 @@ impl<'self> RequestBuffer<'self> {
     /// Quick adapter from read_header back into read_header_line to let it compile for now
     pub fn read_header_line(&mut self) -> Result<(~str, ~str),
                                                  Either<HeaderLineErr, &'static str>> {
-        match self.read_header::<headers::AnyRequestHeader>() {
-            Ok(headers::RequestEntityHeader(headers::ExtensionHeader(k, v))) => Ok((k, v)),
+        match self.read_header::<headers::request::Header>() {
+            Ok(headers::request::ExtensionHeader(k, v)) => Ok((k, v)),
             Ok(h) => {
                 printfln!("[31;1mHeader dropped (TODO):[0m %?", h);
                 Err(Right("header interpreted but I can't yet use it: dropped"))
