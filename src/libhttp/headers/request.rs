@@ -25,7 +25,7 @@ pub enum Header {
     Authorization(~str),  //(headers::authorization::Authorization),                  // Section 14.8
     Expect(~str),  //(headers::expect::Expect),                                       // Section 14.20
     From(~str),  //(headers::from::From),                                             // Section 14.22
-    Host(~str),  //(headers::host::Host),                                             // Section 14.23
+    Host(headers::host::Host),                                             // Section 14.23
     IfMatch(~str),  //(headers::if_match::IfMatch),                                   // Section 14.24
     IfModifiedSince(Tm),                                                   // Section 14.25
     IfNoneMatch(~str),  //(headers::if_none_match::IfNoneMatch),                      // Section 14.26
