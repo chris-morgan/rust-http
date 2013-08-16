@@ -38,30 +38,30 @@ impl Server for InfoServer {
             r.request_uri,
             r.version,
             r.close_connection);
-        w.write(s.as_bytes().to_owned());
+        w.write(s.as_bytes());
         w.write(bytes!("<h2>Extension headers</h2>"));
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
         for header in r.headers.iter() {
             let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>",
                             header.header_name(),
                             header.header_value());
-            w.write(line.as_bytes().to_owned());
+            w.write(line.as_bytes());
         }
         w.write(bytes!("</tbody></table>"));
         w.write(bytes!("<h2>Body</h2><pre>"));
-        w.write(r.body.as_bytes().to_owned());
+        w.write(r.body.as_bytes());
         w.write(bytes!("</pre>"));
 
         w.write(bytes!("<h1>Response</h1>"));
         let s = fmt!("<dl><dt>Status</dt><dd>%s</dd></dl>", w.status.to_str());
-        w.write(s.as_bytes().to_owned());
+        w.write(s.as_bytes());
         w.write(bytes!("<h2>Headers</h2>"));
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
         {
             let h = w.headers.clone();
             for (k, v) in h.iter() {
                 let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>", *k, *v);
-                w.write(line.as_bytes().to_owned());
+                w.write(line.as_bytes());
             }
         }
         w.write(bytes!("</tbody></table>"));
