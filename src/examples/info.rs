@@ -10,7 +10,6 @@ use extra::time;
 
 use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};
 use http::headers::HeaderEnum;
-use http::headers::test_utils::to_stream_into_str;
 
 #[deriving(Clone)]
 struct InfoServer;
@@ -21,9 +20,9 @@ impl Server for InfoServer {
     }
 
     fn handle_request(&self, r: &Request, w: &mut ResponseWriter) {
-        w.headers.insert(~"Date", to_stream_into_str(&time::now_utc()));
-        w.headers.insert(~"Content-Type", ~"text/html");
-        w.headers.insert(~"Server", ~"Rust Thingummy/0.0-pre");
+        w.headers.date = Some(time::now_utc());
+        w.headers.content_type = Some(~"text/plain; charset=UTF-8");
+        w.headers.server = Some(~"Rust Thingummy/0.0-pre");
         w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>"));
 
         w.write(bytes!("<h1>Request</h1>"));
@@ -59,8 +58,10 @@ impl Server for InfoServer {
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
         {
             let h = w.headers.clone();
-            for (k, v) in h.iter() {
-                let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>", *k, *v);
+            for header in h.iter() {
+                let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>",
+                                header.header_name(),
+                                header.header_value());
                 w.write(line.as_bytes());
             }
         }

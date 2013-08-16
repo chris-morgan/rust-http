@@ -55,6 +55,7 @@ pub enum Header {
 }
 
 /// Intended to be used as ``request.headers``.
+#[deriving(Clone)]
 pub struct HeaderCollection {
     // General Header Fields
     cache_control: Option<~str>,

@@ -8,7 +8,6 @@ use std::rt::io::Writer;
 use extra::time;
 
 use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};
-use http::headers::test_utils::to_stream_into_str;
 
 #[deriving(Clone)]
 struct HelloWorldServer;
@@ -19,10 +18,10 @@ impl Server for HelloWorldServer {
     }
 
     fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
-        w.headers.insert(~"Date", to_stream_into_str(&time::now_utc()));
-        w.headers.insert(~"Content-Length", ~"15");
-        w.headers.insert(~"Content-Type", ~"text/plain; charset=UTF-8");
-        w.headers.insert(~"Server", ~"Example");
+        w.headers.date = Some(time::now_utc());
+        w.headers.content_length = Some(15);
+        w.headers.content_type = Some(~"text/plain; charset=UTF-8");
+        w.headers.server = Some(~"Example");
 
         w.write(bytes!("Hello, World!"));
     }

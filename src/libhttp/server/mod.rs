@@ -102,7 +102,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                                     // No good user-agent should have caused this, so for the moment
                                     // at least I am content to send no body in the response.
                                     response.status = status;
-                                    response.headers.insert(~"Content-Length", ~"0");
+                                    response.headers.content_length = Some(0);
                                     response.write_headers();
                                 },
                             }

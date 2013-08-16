@@ -1,12 +1,10 @@
-use extra::treemap::TreeMap;
-//use headers::Headers;
 use std::rt;
 use std::rt::io::Writer;
 
 use buffer::BufTcpStream;
 use server::Request;
 use status;
-use headers;
+use headers::response::HeaderCollection;
 
 /**
  * The HTTP version tag which will be used for the response.
@@ -23,7 +21,7 @@ pub struct ResponseWriter<'self> {
     priv writer: &'self mut BufTcpStream,
     priv headers_written: bool,
     request: &'self Request,
-    headers: ~headers::Headers,
+    headers: ~HeaderCollection,
     status: status::Status,
 }
 
@@ -34,8 +32,7 @@ impl<'self> ResponseWriter<'self> {
             writer: writer,
             headers_written: false,
             request: request,
-            //headers: headers::Headers::new(),
-            headers: ~TreeMap::new(),
+            headers: ~HeaderCollection::new(),
             status: status::Ok,
         }
     }
@@ -43,9 +40,9 @@ impl<'self> ResponseWriter<'self> {
     /// Write a response with the specified Content-Type and content; the Content-Length header is
     /// set based upon the contents
     pub fn write_content_auto(&mut self, content_type: ~str, content: ~str) {
-        self.headers.insert(~"Content-Type", content_type);
+        self.headers.content_type = Some(content_type);
         let cbytes = content.as_bytes();
-        self.headers.insert(~"Content-Length", cbytes.len().to_str());
+        self.headers.content_length = Some(cbytes.len());
         self.write_headers();
         self.write(cbytes);
     }
@@ -73,13 +70,7 @@ impl<'self> ResponseWriter<'self> {
         let s = fmt!("HTTP/1.1 %s\r\n", self.status.to_str());
         self.writer.write(s.as_bytes());
 
-        // Write the miscellaneous varieties of headers
-        // XXX: this is not in the slightest bit sufficient; much more filtration is required.
-        for (name, value) in self.headers.iter() {
-            let s = fmt!("%s: %s\r\n", *name, *value);
-            self.writer.write(s.as_bytes());
-        }
-        self.writer.write(bytes!("\r\n"));
+        self.headers.write_all(self.writer);
         self.headers_written = true;
     }
 }
