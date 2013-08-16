@@ -13,7 +13,7 @@ use status::Status;
 
 use buffer::BufTcpStream;
 use server::request::{RequestBuffer};
-use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeader};
+use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeaderSyntax, MalformedHeaderValue};
 
 struct ResponseReader {
     priv stream: BufTcpStream,
@@ -112,17 +112,17 @@ impl ResponseReader {
             let mut headers = ~TreeMap::new();
             loop {
                 match read_header_line(&mut buffer) {
-                    Err(Some(EndOfFile)) => {
+                    Err(EndOfFile) => {
                         io_error::cond.raise(bad_response_err());
                         //fail!("server disconnected, no more response to receive :-(");
                         return Err(request);
                     },
-                    Err(Some(EndOfHeaders)) => break,
-                    Err(Some(MalformedHeader)) => {
+                    Err(EndOfHeaders) => break,
+                    Err(MalformedHeaderSyntax) => {
                         io_error::cond.raise(bad_response_err());
                         return Err(request);
                     },
-                    Err(None) => {
+                    Err(MalformedHeaderValue) => {
                         println("Bad header encountered. TODO: handle this better.");
                         // Now just ignore the header
                     },
@@ -155,12 +155,12 @@ impl rt::io::Reader for ResponseReader {
 }
 
 /// TODO: kill this too.
-pub fn read_header_line(rb: &mut RequestBuffer) -> Result<(~str, ~str), Option<HeaderLineErr>> {
+pub fn read_header_line(rb: &mut RequestBuffer) -> Result<(~str, ~str), HeaderLineErr> {
     match rb.read_header::<headers::response::Header>() {
         Ok(headers::response::ExtensionHeader(k, v)) => Ok((k, v)),
         Ok(h) => {
             printfln!("[31;1mHeader dropped (TODO):[0m %?", h);
-            Err(None)
+            Err(MalformedHeaderValue)
         },
         Err(e) => Err(e),
     }

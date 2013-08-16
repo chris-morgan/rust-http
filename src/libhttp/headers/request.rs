@@ -1,6 +1,7 @@
 use std::util::unreachable;
 use std::rt::io::{Reader, Writer};
 use extra::time::Tm;
+use extra::treemap::TreeMap;
 use headers;
 use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
 use headers::serialization_utils::{push_maybe_quoted_string, maybe_unquote_string};
@@ -51,6 +52,155 @@ pub enum Header {
     Expires(Tm),                                                  // Section 14.21
     LastModified(Tm),                                             // Section 14.29
     ExtensionHeader(~str, ~str),
+}
+
+/// Intended to be used as ``request.headers``.
+pub struct HeaderCollection {
+    // General Header Fields
+    cache_control: Option<~str>,
+    connection: Option<headers::connection::Connection>,
+    date: Option<Tm>,
+    pragma: Option<~str>,
+    trailer: Option<~str>,
+    transfer_encoding: Option<~str>,
+    upgrade: Option<~str>,
+    via: Option<~str>,
+    warning: Option<~str>,
+
+    // Request Header Fields
+    accept: Option<~str>,
+    accept_charset: Option<~str>,
+    accept_encoding: Option<~str>,
+    accept_language: Option<~str>,
+    authorization: Option<~str>,
+    expect: Option<~str>,
+    from: Option<~str>,
+    host: Option<headers::host::Host>,
+    if_match: Option<~str>,
+    if_modified_since: Option<Tm>,
+    if_none_match: Option<~str>,
+    if_range: Option<~str>,
+    if_unmodified_since: Option<Tm>,
+    max_forwards: Option<uint>,
+    proxy_authorization: Option<~str>,
+    range: Option<~str>,
+    referer: Option<~str>,
+    te: Option<~str>,
+    user_agent: Option<~str>,
+
+    // Entity Header Fields
+    allow: Option<headers::allow::Allow>,
+    content_encoding: Option<~str>,
+    content_language: Option<~str>,
+    content_length: Option<uint>,
+    content_location: Option<~str>,
+    content_md5: Option<~str>,
+    content_range: Option<~str>,
+    content_type: Option<~str>,
+    expires: Option<Tm>,
+    last_modified: Option<Tm>,
+    extensions: TreeMap<~str, ~str>,
+}
+
+impl HeaderCollection {
+    pub fn new() -> HeaderCollection {
+        HeaderCollection {
+            // General Header Fields
+            cache_control: None,
+            connection: None,
+            date: None,
+            pragma: None,
+            trailer: None,
+            transfer_encoding: None,
+            upgrade: None,
+            via: None,
+            warning: None,
+
+            // Request Header Fields
+            accept: None,
+            accept_charset: None,
+            accept_encoding: None,
+            accept_language: None,
+            authorization: None,
+            expect: None,
+            from: None,
+            host: None,
+            if_match: None,
+            if_modified_since: None,
+            if_none_match: None,
+            if_range: None,
+            if_unmodified_since: None,
+            max_forwards: None,
+            proxy_authorization: None,
+            range: None,
+            referer: None,
+            te: None,
+            user_agent: None,
+
+            // Entity Header Fields
+            allow: None,
+            content_encoding: None,
+            content_language: None,
+            content_length: None,
+            content_location: None,
+            content_md5: None,
+            content_range: None,
+            content_type: None,
+            expires: None,
+            last_modified: None,
+            extensions: TreeMap::new(),
+        }
+    }
+
+    /// Consume a header, putting it into this structure.
+    pub fn insert(&mut self, header: Header) {
+        match header {
+            // General Header Fields
+            CacheControl(value) => self.cache_control = Some(value),
+            Connection(value) => self.connection = Some(value),
+            Date(value) => self.date = Some(value),
+            Pragma(value) => self.pragma = Some(value),
+            Trailer(value) => self.trailer = Some(value),
+            TransferEncoding(value) => self.transfer_encoding = Some(value),
+            Upgrade(value) => self.upgrade = Some(value),
+            Via(value) => self.via = Some(value),
+            Warning(value) => self.warning = Some(value),
+
+            // Request Header Fields
+            Accept(value) => self.accept = Some(value),
+            AcceptCharset(value) => self.accept_charset = Some(value),
+            AcceptEncoding(value) => self.accept_encoding = Some(value),
+            AcceptLanguage(value) => self.accept_language = Some(value),
+            Authorization(value) => self.authorization = Some(value),
+            Expect(value) => self.expect = Some(value),
+            From(value) => self.from = Some(value),
+            Host(value) => self.host = Some(value),
+            IfMatch(value) => self.if_match = Some(value),
+            IfModifiedSince(value) => self.if_modified_since = Some(value),
+            IfNoneMatch(value) => self.if_none_match = Some(value),
+            IfRange(value) => self.if_range = Some(value),
+            IfUnmodifiedSince(value) => self.if_unmodified_since = Some(value),
+            MaxForwards(value) => self.max_forwards = Some(value),
+            ProxyAuthorization(value) => self.proxy_authorization = Some(value),
+            Range(value) => self.range = Some(value),
+            Referer(value) => self.referer = Some(value),
+            Te(value) => self.te = Some(value),
+            UserAgent(value) => self.user_agent = Some(value),
+
+            // Entity Header Fields
+            Allow(value) => self.allow = Some(value),
+            ContentEncoding(value) => self.content_encoding = Some(value),
+            ContentLanguage(value) => self.content_language = Some(value),
+            ContentLength(value) => self.content_length = Some(value),
+            ContentLocation(value) => self.content_location = Some(value),
+            ContentMd5(value) => self.content_md5 = Some(value),
+            ContentRange(value) => self.content_range = Some(value),
+            ContentType(value) => self.content_type = Some(value),
+            Expires(value) => self.expires = Some(value),
+            LastModified(value) => self.last_modified = Some(value),
+            ExtensionHeader(key, value) => { self.extensions.insert(key, value); },
+        }
+    }
 }
 
 impl HeaderEnum for Header {

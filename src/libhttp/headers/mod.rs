@@ -23,7 +23,7 @@ use rfc2616::{is_token_item, CR, LF, SP, HT, COLON, DOUBLE_QUOTE, BACKSLASH};
 
 use self::serialization_utils::{normalise_header_name};
 
-pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeader }
+pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeaderValue, MalformedHeaderSyntax }
 
 pub mod request;
 pub mod response;
@@ -124,7 +124,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
             },
             (_, Some(b)) if b == SP => NameFinished,
             (_, Some(b)) if b == COLON => break,
-            (_, Some(_)) => return (Err(MalformedHeader), None),
+            (_, Some(_)) => return (Err(MalformedHeaderSyntax), None),
             (_, None) => return (Err(EndOfFile), None),
         }
     }
@@ -135,7 +135,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
     for _ in iter { }
     match header {
         Some(h) => (Ok(h), iter.next_byte),
-        None => (Err(MalformedHeader), iter.next_byte),
+        None => (Err(MalformedHeaderValue), iter.next_byte),
     }
 }
 

@@ -1,19 +1,14 @@
-use extra::treemap::TreeMap;
 use extra::url::Url;
 use method::{Method, Options};
 use status;
 use std::rt::io::net::ip::SocketAddr;
-use std::u16;
 use std::util::unreachable;
 use rfc2616::{CR, LF, SP};
-use headers::Headers;
-use headers::serialization_utils::normalise_header_name;
-use headers::host::Host;
 use headers;
 use buffer::BufTcpStream;
 use common::read_http_version;
 
-use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeader};
+use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeaderSyntax, MalformedHeaderValue};
 
 /// Line/header can't be more than 4KB long (note that with the compacting of LWS the actual source
 /// data could be longer than 4KB)
@@ -90,18 +85,6 @@ impl<'self> RequestBuffer<'self> {
         }
     }
 
-    /// Quick adapter from read_header back into read_header_line to let it compile for now
-    pub fn read_header_line(&mut self) -> Result<(~str, ~str), Option<HeaderLineErr>> {
-        match self.read_header::<headers::request::Header>() {
-            Ok(headers::request::ExtensionHeader(k, v)) => Ok((k, v)),
-            Ok(h) => {
-                printfln!("[31;1mHeader dropped (TODO):[0m %?", h);
-                Err(None)
-            },
-            Err(e) => Err(e),
-        }
-    }
-
     /// Read a header (name, value) pair.
     ///
     /// This is not necessarily just a line ending with CRLF; there are much fancier rules at work.
@@ -112,14 +95,15 @@ impl<'self> RequestBuffer<'self> {
     ///
     /// - `EndOfHeaders`: I have no more headers to give; go forth and conquer on the body!
     /// - `EndOfFile`: socket was closed unexpectedly; probable best behavour is to drop the request
-    /// - `MalformedHeader`: request is bad; you could drop it or try returning 400 Bad Request
-    pub fn read_header<T: headers::HeaderEnum>(&mut self) -> Result<T, Option<HeaderLineErr>> {
+    /// - `MalformedHeaderValue`: header's value is invalid; normally, ignore it.
+    /// - `MalformedHeaderSyntax`: bad request; you could drop it or try returning 400 Bad Request
+    pub fn read_header<T: headers::HeaderEnum>(&mut self) -> Result<T, HeaderLineErr> {
         match headers::header_enum_from_stream(self.stream) {
         //match headers::HeaderEnum::from_stream(self.stream) {
-            (Err(m), None) => Err(Some(m)),
+            (Err(m), None) => Err(m),
             (Err(m), Some(b)) => {
                 self.stream.poke_byte(b);
-                Err(Some(m))
+                Err(m)
             },
             (Ok(header), Some(b)) => {
                 self.stream.poke_byte(b);
@@ -138,10 +122,10 @@ pub struct Request {
     /// The host name and IP address that the request was sent to; this must always be specified for
     /// HTTP/1.1 requests (or the request will be rejected), but for HTTP/1.0 requests the Host
     /// header was not defined, and so this field will probably be None in such cases.
-    host: Option<Host>,
+    //host: Option<Host>,  // Now in headers.host
 
     /// The headers sent with the request.
-    headers: ~Headers,
+    headers: ~headers::request::HeaderCollection,
 
     /// The body of the request; empty for such methods as GET.
     body: ~str,
@@ -222,8 +206,7 @@ impl Request {
         // Start out with dummy values
         let mut request = ~Request {
             remote_addr: buffer.stream.wrapped.peer_name(),
-            host: None,
-            headers: ~TreeMap::new(),
+            headers: ~headers::request::HeaderCollection::new(),
             body: ~"",
             method: Options,
             request_uri: Star,
@@ -248,48 +231,33 @@ impl Request {
         };
 
         loop {
-            match buffer.read_header_line() {
-                Err(Some(EndOfFile)) => fail!("client disconnected, nowhere to send response"),
-                Err(Some(EndOfHeaders)) => break,
-                Err(Some(MalformedHeader)) => {
+            match buffer.read_header() {
+                Err(EndOfFile) => fail!("client disconnected, nowhere to send response"),
+                Err(EndOfHeaders) => break,
+                Err(MalformedHeaderSyntax) => {
+                    println("BAD REQUEST: malformed header (TODO: is this right?)");
                     return (request, Err(status::BadRequest));
                 },
-                Err(None) => {
+                Err(MalformedHeaderValue) => {
                     println("Bad header encountered. TODO: handle this better.");
                     // Now just ignore the header
                 },
-                Ok((name, value)) => {
-                    let normalised = normalise_header_name(name);
-                    if normalised == ~"Host" {
-                        // TODO: this doesn't support IPv6 address access (e.g. "Host: [::1]")
-                        // Not bothering now as this will be thrown away in favour of parse-time
-                        // handling, where it's easier.
-                        let mut hi = value.splitn_iter(':', 1);
-                        request.host = Some(Host {
-                            name: hi.next().unwrap().to_owned(),
-                            port: match hi.next() {
-                                Some(name) => match u16::from_str(name) {
-                                    Some(port) => Some(port),
-                                    None => return (request, Err(status::BadRequest)),
-                                },
-                                None => None,
-                            },
-                        });
-                    }
-                    request.headers.insert(normalise_header_name(name), value);
+                Ok(header) => {
+                    request.headers.insert(header);
                 },
             }
         }
 
         // HTTP/1.0 doesn't have Host, but HTTP/1.1 requires it
-        if request.version == (1, 1) && request.host.is_none() {
+        if request.version == (1, 1) && request.headers.host.is_none() {
+            println("BAD REQUEST: host is none for HTTP/1.1 request");
             return (request, Err(status::BadRequest));
         }
 
-        request.close_connection = match request.headers.find(&~"Connection") {
-            Some(s) => match s.to_ascii().to_lower().to_str_ascii() {
-                ~"close" => true,
-                ~"keep-alive" => false,
+        request.close_connection = match request.headers.connection {
+            Some(headers::connection::Close) => true,
+            Some(headers::connection::Token(ref s)) => match s.as_slice() {
+                "keep-alive" => false,
                 _ => close_connection,
             },
             None => close_connection,

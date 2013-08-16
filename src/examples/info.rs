@@ -33,14 +33,15 @@ impl Server for InfoServer {
             <dt>HTTP version</dt><dd>%?</dd>
             <dt>Close connection</dt><dd>%?</dd></dl>",
             r.method.to_str(),
-            r.host,
+            r.headers.host,
             r.request_uri,
             r.version,
             r.close_connection);
         w.write(s.as_bytes().to_owned());
-        w.write(bytes!("<h2>Headers</h2>"));
+        w.write(bytes!("<h2>Extension headers</h2>"));
+        w.write(bytes!("<p>(TODO: make iterator for HeaderCollection, over all headers.)</p>"));
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
-        for (k, v) in r.headers.iter() {
+        for (k, v) in r.headers.extensions.iter() {
             let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>", *k, *v);
             w.write(line.as_bytes().to_owned());
         }
