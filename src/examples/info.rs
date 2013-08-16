@@ -21,7 +21,7 @@ impl Server for InfoServer {
 
     fn handle_request(&self, r: &Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
-        w.headers.content_type = Some(~"text/plain; charset=UTF-8");
+        w.headers.content_type = Some(~"text/html; charset=UTF-8");
         w.headers.server = Some(~"Rust Thingummy/0.0-pre");
         w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>"));
 
