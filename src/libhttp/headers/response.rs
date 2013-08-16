@@ -2,7 +2,7 @@ use std::util::unreachable;
 use std::rt::io::{Reader, Writer};
 use extra::url::Url;
 use extra::time::Tm;
-use extra::treemap::TreeMap;
+use extra::treemap::{TreeMap, TreeMapIterator};
 use headers;
 use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
 use headers::serialization_utils::{push_maybe_quoted_string, maybe_unquote_string};
@@ -166,6 +166,165 @@ impl HeaderCollection {
             ExtensionHeader(key, value) => { self.extensions.insert(key, value); },
         }
     }
+
+    pub fn iter<'a>(&'a self) -> HeaderCollectionIterator<'a> {
+        HeaderCollectionIterator { pos: 0, coll: self, ext_iter: None }
+    }
+
+    /// Write all the headers to a writer. This includes an extra \r\n at the end to signal end of
+    /// headers.
+    pub fn write_all<W: Writer>(&self, writer: &mut W) {
+        for header in self.iter() {
+            header.write_header(writer);
+        }
+        writer.write(bytes!("\r\n"));
+    }
+}
+
+pub struct HeaderCollectionIterator<'self> {
+    pos: uint,
+    coll: &'self HeaderCollection,
+    ext_iter: Option<TreeMapIterator<'self, ~str, ~str>>
+}
+
+impl<'self> Iterator<Header> for HeaderCollectionIterator<'self> {
+    fn next(&mut self) -> Option<Header> {
+        loop {
+            self.pos += 1;
+
+            match self.pos {
+                // General Header Fields
+                1 => match self.coll.cache_control {
+                    Some(ref v) => return Some(CacheControl(v.clone())),
+                    None => loop,
+                },
+                2 => match self.coll.connection {
+                    Some(ref v) => return Some(Connection(v.clone())),
+                    None => loop,
+                },
+                3 => match self.coll.date {
+                    Some(ref v) => return Some(Date(v.clone())),
+                    None => loop,
+                },
+                4 => match self.coll.pragma {
+                    Some(ref v) => return Some(Pragma(v.clone())),
+                    None => loop,
+                },
+                5 => match self.coll.trailer {
+                    Some(ref v) => return Some(Trailer(v.clone())),
+                    None => loop,
+                },
+                6 => match self.coll.transfer_encoding {
+                    Some(ref v) => return Some(TransferEncoding(v.clone())),
+                    None => loop,
+                },
+                7 => match self.coll.upgrade {
+                    Some(ref v) => return Some(Upgrade(v.clone())),
+                    None => loop,
+                },
+                8 => match self.coll.via {
+                    Some(ref v) => return Some(Via(v.clone())),
+                    None => loop,
+                },
+                9 => match self.coll.warning {
+                    Some(ref v) => return Some(Warning(v.clone())),
+                    None => loop,
+                },
+
+                // Response Header Fields
+                10 => match self.coll.accept_patch {
+                    Some(ref v) => return Some(AcceptPatch(v.clone())),
+                    None => loop,
+                },
+                11 => match self.coll.accept_ranges {
+                    Some(ref v) => return Some(AcceptRanges(v.clone())),
+                    None => loop,
+                },
+                12 => match self.coll.age {
+                    Some(ref v) => return Some(Age(v.clone())),
+                    None => loop,
+                },
+                13 => match self.coll.etag {
+                    Some(ref v) => return Some(ETag(v.clone())),
+                    None => loop,
+                },
+                14 => match self.coll.location {
+                    Some(ref v) => return Some(Location(v.clone())),
+                    None => loop,
+                },
+                15 => match self.coll.proxy_authenticate {
+                    Some(ref v) => return Some(ProxyAuthenticate(v.clone())),
+                    None => loop,
+                },
+                16 => match self.coll.retry_after {
+                    Some(ref v) => return Some(RetryAfter(v.clone())),
+                    None => loop,
+                },
+                17 => match self.coll.server {
+                    Some(ref v) => return Some(Server(v.clone())),
+                    None => loop,
+                },
+                18 => match self.coll.vary {
+                    Some(ref v) => return Some(Vary(v.clone())),
+                    None => loop,
+                },
+                19 => match self.coll.www_authenticate {
+                    Some(ref v) => return Some(WwwAuthenticate(v.clone())),
+                    None => loop,
+                },
+
+                // Entity Header Fields
+                20 => match self.coll.allow {
+                    Some(ref v) => return Some(Allow(v.clone())),
+                    None => loop,
+                },
+                21 => match self.coll.content_encoding {
+                    Some(ref v) => return Some(ContentEncoding(v.clone())),
+                    None => loop,
+                },
+                22 => match self.coll.content_language {
+                    Some(ref v) => return Some(ContentLanguage(v.clone())),
+                    None => loop,
+                },
+                23 => match self.coll.content_length {
+                    Some(ref v) => return Some(ContentLength(v.clone())),
+                    None => loop,
+                },
+                24 => match self.coll.content_location {
+                    Some(ref v) => return Some(ContentLocation(v.clone())),
+                    None => loop,
+                },
+                25 => match self.coll.content_md5 {
+                    Some(ref v) => return Some(ContentMd5(v.clone())),
+                    None => loop,
+                },
+                26 => match self.coll.content_range {
+                    Some(ref v) => return Some(ContentRange(v.clone())),
+                    None => loop,
+                },
+                27 => match self.coll.content_type {
+                    Some(ref v) => return Some(ContentType(v.clone())),
+                    None => loop,
+                },
+                28 => match self.coll.expires {
+                    Some(ref v) => return Some(Expires(v.clone())),
+                    None => loop,
+                },
+                29 => match self.coll.last_modified {
+                    Some(ref v) => return Some(LastModified(v.clone())),
+                    None => loop,
+                },
+                30 => {
+                    self.ext_iter = Some(self.coll.extensions.iter());
+                    loop
+                },
+                _ => match self.ext_iter.get_mut_ref().next() {
+                    Some((k, v)) => return Some(ExtensionHeader(k.to_owned(), v.to_owned())),
+                    None => return None,
+                },
+            }
+        }
+    }
 }
 
 impl HeaderEnum for Header {
@@ -206,6 +365,46 @@ impl HeaderEnum for Header {
             Expires(*) =>         ~"Expires",
             LastModified(*) =>    ~"Last-Modified",
             ExtensionHeader(ref name, _) => name.to_owned(),
+        }
+    }
+
+    fn header_value(&self) -> ~str {
+        match *self {
+            // General headers
+            CacheControl(ref h) =>     h.http_value(),
+            Connection(ref h) =>       h.http_value(),
+            Date(ref h) =>             h.http_value(),
+            Pragma(ref h) =>           h.http_value(),
+            Trailer(ref h) =>          h.http_value(),
+            TransferEncoding(ref h) => h.http_value(),
+            Upgrade(ref h) =>          h.http_value(),
+            Via(ref h) =>              h.http_value(),
+            Warning(ref h) =>          h.http_value(),
+
+            // Response headers
+            AcceptPatch(ref h) =>       h.http_value(),
+            AcceptRanges(ref h) =>      h.http_value(),
+            Age(ref h) =>               h.http_value(),
+            ETag(ref h) =>              h.http_value(),
+            Location(ref h) =>          h.http_value(),
+            ProxyAuthenticate(ref h) => h.http_value(),
+            RetryAfter(ref h) =>        h.http_value(),
+            Server(ref h) =>            h.http_value(),
+            Vary(ref h) =>              h.http_value(),
+            WwwAuthenticate(ref h) =>   h.http_value(),
+
+            // Entity headers
+            Allow(ref h) =>           h.http_value(),
+            ContentEncoding(ref h) => h.http_value(),
+            ContentLanguage(ref h) => h.http_value(),
+            ContentLength(ref h) =>   h.http_value(),
+            ContentLocation(ref h) => h.http_value(),
+            ContentMd5(ref h) =>      h.http_value(),
+            ContentRange(ref h) =>    h.http_value(),
+            ContentType(ref h) =>     h.http_value(),
+            Expires(ref h) =>         h.http_value(),
+            LastModified(ref h) =>    h.http_value(),
+            ExtensionHeader(_, ref value) => value.to_owned(),
         }
     }
 

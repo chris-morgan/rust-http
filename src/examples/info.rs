@@ -9,6 +9,7 @@ use std::rt::io::Writer;
 use extra::time;
 
 use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};
+use http::headers::HeaderEnum;
 use http::headers::test_utils::to_stream_into_str;
 
 #[deriving(Clone)]
@@ -39,10 +40,11 @@ impl Server for InfoServer {
             r.close_connection);
         w.write(s.as_bytes().to_owned());
         w.write(bytes!("<h2>Extension headers</h2>"));
-        w.write(bytes!("<p>(TODO: make iterator for HeaderCollection, over all headers.)</p>"));
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
-        for (k, v) in r.headers.extensions.iter() {
-            let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>", *k, *v);
+        for header in r.headers.iter() {
+            let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>",
+                            header.header_name(),
+                            header.header_value());
             w.write(line.as_bytes().to_owned());
         }
         w.write(bytes!("</tbody></table>"));

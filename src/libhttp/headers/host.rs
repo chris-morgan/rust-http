@@ -4,6 +4,7 @@ use std::u16;
 use std::rt::io::Reader;
 
 /// A simple little thing for the host of a request
+#[deriving(Clone)]
 pub struct Host {
 
     /// The name of the host that was requested

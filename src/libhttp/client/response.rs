@@ -10,7 +10,7 @@ use status::Status;
 
 use buffer::BufTcpStream;
 use server::request::{RequestBuffer};
-use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeaderSyntax, MalformedHeaderValue};
+use headers::{EndOfFile, EndOfHeaders, MalformedHeaderSyntax, MalformedHeaderValue};
 
 struct ResponseReader {
     priv stream: BufTcpStream,

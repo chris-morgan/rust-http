@@ -1,7 +1,7 @@
 /// HTTP methods, as defined in RFC 2616, §5.1.1.
 ///
 /// Method names are case-sensitive.
-#[deriving(Eq)]
+#[deriving(Eq,Clone)]
 pub enum Method {
     Options,
     Get,

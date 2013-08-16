@@ -1,4 +1,3 @@
-use extra::treemap::TreeMap;
 use extra::url::Url;
 use method::Method;
 use std::rt;
@@ -6,7 +5,7 @@ use std::rt::io::Writer;
 use std::rt::io::net::ip::SocketAddr;
 use std::rt::io::net::tcp::TcpStream;
 use buffer::{BufTcpStream, BufferedStream};
-use headers::Headers;
+use headers::request::HeaderCollection;
 use headers::host::Host;
 
 use client::response::ResponseReader;
@@ -39,10 +38,10 @@ pub struct RequestWriter {
     /// The host name and IP address that the request was sent to; this must always be specified for
     /// HTTP/1.1 requests (or the request will be rejected), but for HTTP/1.0 requests the Host
     /// header was not defined, and so this field will probably be None in such cases.
-    host: Host,
+    //host: Host,  // Now headers.host
 
     /// The headers sent with the request.
-    headers: ~Headers,
+    headers: ~HeaderCollection,
 
     /// The HTTP method for the request.
     method: Method,
@@ -72,15 +71,16 @@ impl RequestWriter {
             },
         };
 
-        RequestWriter {
+        let mut request = RequestWriter {
             stream: None,
             headers_written: false,
             remote_addr: None,
-            host: host,
-            headers: ~TreeMap::new(),
+            headers: ~HeaderCollection::new(),
             method: method,
             url: url,
-        }
+        };
+        request.headers.host = Some(host);
+        request
     }
 
     /// Connect to the remote host if not already connected.
@@ -134,17 +134,7 @@ impl RequestWriter {
         let s = fmt!("%s %s HTTP/1.0\r\n", self.method.to_str(), self.url.to_str());
         self.stream.write(s.as_bytes());
 
-        // Write known headers
-        let s = fmt!("Host: %s\r\n", self.host.to_str());
-        self.stream.write(s.as_bytes());
-
-        // Write the miscellaneous varieties of headers
-        // XXX: this is not in the slightest bit sufficient; much more filtration is required.
-        for (name, value) in self.headers.iter() {
-            let s = fmt!("%s: %s\r\n", *name, *value);
-            self.stream.write(s.as_bytes());
-        }
-        self.stream.write(bytes!("\r\n"));
+        self.headers.write_all(&mut self.stream);
         self.headers_written = true;
     }
 

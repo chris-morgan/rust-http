@@ -3,6 +3,7 @@
 use std::ascii::StrAsciiExt;
 use std::rt::io::Reader;
 
+#[deriving(Clone)]
 pub enum RangeUnit {
     Unknown(~str),
     Bytes,
@@ -16,6 +17,7 @@ impl ToStr for RangeUnit {
     }
 }
 // More correct name would be AcceptableRanges, but I want to be consistent.
+#[deriving(Clone)]
 pub enum AcceptRanges {
     RangeUnit(RangeUnit),
     NoAcceptableRanges,  // Strictly, this is not a range-unit.

@@ -85,7 +85,7 @@ pub type DeltaSeconds = u64;
 
 pub trait HeaderEnum {
     fn header_name(&self) -> ~str;
-
+    fn header_value(&self) -> ~str;
     fn write_header<T: Writer>(&self, writer: &mut T);
 
     // FIXME: this method combination is temporary, to be merged with an efficient parser like that

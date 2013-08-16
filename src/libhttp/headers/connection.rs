@@ -7,6 +7,7 @@
 use std::ascii::StrAsciiExt;
 use std::rt::io::{Reader, Writer};
 
+#[deriving(Clone)]
 pub enum Connection {
     Token(~str),
     Close,
