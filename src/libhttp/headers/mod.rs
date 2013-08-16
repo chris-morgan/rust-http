@@ -1,22 +1,12 @@
 //! Types and utilities for working with headers in HTTP requests and responses.
 //!
-//! Notably, HTTP headers are case insensitive; headers are represented as a `TreeMap`, and so there
-//! is, at present, scope for mistakes in providing multiple values for a header under different
-//! cases. You should, of course, avoid this.
-//!
-//! Headers can be normalised into the canonical case employed in this library with
-//! `normalise_header_name`; that function defines the canonical case. Notably, this will mean that
-//! the naming conventions are *not* followed for certain headers: `Content-MD5` would be sent as
-//! `Content-Md5`, `TE` as `Te` and `WWW-Authenticate` as `Www-Authenticate`.
-//!
-//! Another common convention among HTTP headers is to use comma-separated values,
-//! e.g. `Accept: text/html, text/plain;q=0.8, text/*;q=0.1`. For transforming to and from these
-//! values we have `comma_split` and `comma_join`.
+//! This HTTP system is Special in that it uses lots of strong typing for its header system. All
+//! known HTTP headers are type checked, rather than being dealt with as strings all the time. Only
+//! unknown headers are stored in a map in the traditional way.
 
 use std::rt::io::{Reader, Writer};
 use std::rt::io::extensions::ReaderUtil;
 use std::util::unreachable;
-use extra::treemap::TreeMap;
 use extra::time::{Tm, strptime};
 use extra::url::Url;
 use rfc2616::{is_token_item, CR, LF, SP, HT, COLON, DOUBLE_QUOTE, BACKSLASH};
@@ -29,14 +19,6 @@ pub mod request;
 pub mod response;
 pub mod test_utils;
 pub mod serialization_utils;
-
-pub type Headers = TreeMap<~str, ~str>;
-
-/*impl Headers {
-    fn new() -> ~Headers {
-        ~Headers(*TreeMap::new::<~str, ~str>())
-    }
-}*/
 
 /* TODO: ensure we've got all standard HTTP headers, not just those in RFC 2616.
 
