@@ -1,4 +1,3 @@
-use extra::treemap::TreeMap;
 use std::rt::io::Reader;
 use std::rt::io::extensions::ReaderUtil;
 use std::rt::io::{io_error, OtherIoError, IoError};
@@ -6,8 +5,6 @@ use std::rt;
 use client::request::RequestWriter;
 use rfc2616::{CR, LF, SP};
 use common::read_http_version;
-use headers::Headers;
-use headers::serialization_utils::normalise_header_name;
 use headers;
 use status::Status;
 
@@ -28,7 +25,7 @@ struct ResponseReader {
     status: Status,
 
     /// The headers received in the response.
-    headers: ~Headers,
+    headers: ~headers::response::HeaderCollection,
 }
 
 fn bad_response_err() -> IoError {
@@ -109,9 +106,9 @@ impl ResponseReader {
         // between a request and response.
         let headers = {
             let mut buffer = RequestBuffer::new(&mut stream);
-            let mut headers = ~TreeMap::new();
+            let mut headers = ~headers::response::HeaderCollection::new();
             loop {
-                match read_header_line(&mut buffer) {
+                match buffer.read_header::<headers::response::Header>() {
                     Err(EndOfFile) => {
                         io_error::cond.raise(bad_response_err());
                         //fail!("server disconnected, no more response to receive :-(");
@@ -126,8 +123,8 @@ impl ResponseReader {
                         println("Bad header encountered. TODO: handle this better.");
                         // Now just ignore the header
                     },
-                    Ok((name, value)) => {
-                        headers.insert(normalise_header_name(name), value);
+                    Ok(header) => {
+                        headers.insert(header);
                     },
                 }
             }
@@ -151,17 +148,5 @@ impl rt::io::Reader for ResponseReader {
 
     fn eof(&mut self) -> bool {
         self.stream.eof()
-    }
-}
-
-/// TODO: kill this too.
-pub fn read_header_line(rb: &mut RequestBuffer) -> Result<(~str, ~str), HeaderLineErr> {
-    match rb.read_header::<headers::response::Header>() {
-        Ok(headers::response::ExtensionHeader(k, v)) => Ok((k, v)),
-        Ok(h) => {
-            printfln!("[31;1mHeader dropped (TODO):[0m %?", h);
-            Err(MalformedHeaderValue)
-        },
-        Err(e) => Err(e),
     }
 }

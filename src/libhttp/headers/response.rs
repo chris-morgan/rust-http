@@ -2,6 +2,7 @@ use std::util::unreachable;
 use std::rt::io::{Reader, Writer};
 use extra::url::Url;
 use extra::time::Tm;
+use extra::treemap::TreeMap;
 use headers;
 use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
 use headers::serialization_utils::{push_maybe_quoted_string, maybe_unquote_string};
@@ -43,6 +44,128 @@ pub enum Header {
     Expires(Tm),                                                  // Section 14.21
     LastModified(Tm),                                             // Section 14.29
     ExtensionHeader(~str, ~str),
+}
+
+/// Intended to be used as ``response.headers``.
+pub struct HeaderCollection {
+    // General Header Fields
+    cache_control: Option<~str>,
+    connection: Option<headers::connection::Connection>,
+    date: Option<Tm>,
+    pragma: Option<~str>,
+    trailer: Option<~str>,
+    transfer_encoding: Option<~str>,
+    upgrade: Option<~str>,
+    via: Option<~str>,
+    warning: Option<~str>,
+
+    // Response Header Fields
+    accept_patch: Option<~str>,
+    accept_ranges: Option<headers::accept_ranges::AcceptRanges>,
+    age: Option<~str>,
+    etag: Option<~str>,
+    location: Option<Url>,
+    proxy_authenticate: Option<~str>,
+    retry_after: Option<~str>,
+    server: Option<~str>,
+    vary: Option<~str>,
+    www_authenticate: Option<~str>,
+
+    // Entity Header Fields
+    allow: Option<headers::allow::Allow>,
+    content_encoding: Option<~str>,
+    content_language: Option<~str>,
+    content_length: Option<uint>,
+    content_location: Option<~str>,
+    content_md5: Option<~str>,
+    content_range: Option<~str>,
+    content_type: Option<~str>,
+    expires: Option<Tm>,
+    last_modified: Option<Tm>,
+    extensions: TreeMap<~str, ~str>,
+}
+
+impl HeaderCollection {
+    pub fn new() -> HeaderCollection {
+        HeaderCollection {
+            // General Header Fields
+            cache_control: None,
+            connection: None,
+            date: None,
+            pragma: None,
+            trailer: None,
+            transfer_encoding: None,
+            upgrade: None,
+            via: None,
+            warning: None,
+
+            // Response Header Fields
+            accept_patch: None,
+            accept_ranges: None,
+            age: None,
+            etag: None,
+            location: None,
+            proxy_authenticate: None,
+            retry_after: None,
+            server: None,
+            vary: None,
+            www_authenticate: None,
+
+            // Entity Header Fields
+            allow: None,
+            content_encoding: None,
+            content_language: None,
+            content_length: None,
+            content_location: None,
+            content_md5: None,
+            content_range: None,
+            content_type: None,
+            expires: None,
+            last_modified: None,
+            extensions: TreeMap::new(),
+        }
+    }
+
+    /// Consume a header, putting it into this structure.
+    pub fn insert(&mut self, header: Header) {
+        match header {
+            // General Header Fields
+            CacheControl(value) => self.cache_control = Some(value),
+            Connection(value) => self.connection = Some(value),
+            Date(value) => self.date = Some(value),
+            Pragma(value) => self.pragma = Some(value),
+            Trailer(value) => self.trailer = Some(value),
+            TransferEncoding(value) => self.transfer_encoding = Some(value),
+            Upgrade(value) => self.upgrade = Some(value),
+            Via(value) => self.via = Some(value),
+            Warning(value) => self.warning = Some(value),
+
+            // Response Header Fields
+            AcceptPatch(value) => self.accept_patch = Some(value),
+            AcceptRanges(value) => self.accept_ranges = Some(value),
+            Age(value) => self.age = Some(value),
+            ETag(value) => self.etag = Some(value),
+            Location(value) => self.location = Some(value),
+            ProxyAuthenticate(value) => self.proxy_authenticate = Some(value),
+            RetryAfter(value) => self.retry_after = Some(value),
+            Server(value) => self.server = Some(value),
+            Vary(value) => self.vary = Some(value),
+            WwwAuthenticate(value) => self.www_authenticate = Some(value),
+
+            // Entity Header Fields
+            Allow(value) => self.allow = Some(value),
+            ContentEncoding(value) => self.content_encoding = Some(value),
+            ContentLanguage(value) => self.content_language = Some(value),
+            ContentLength(value) => self.content_length = Some(value),
+            ContentLocation(value) => self.content_location = Some(value),
+            ContentMd5(value) => self.content_md5 = Some(value),
+            ContentRange(value) => self.content_range = Some(value),
+            ContentType(value) => self.content_type = Some(value),
+            Expires(value) => self.expires = Some(value),
+            LastModified(value) => self.last_modified = Some(value),
+            ExtensionHeader(key, value) => { self.extensions.insert(key, value); },
+        }
+    }
 }
 
 impl HeaderEnum for Header {

@@ -16,8 +16,8 @@ fn main() {
     };
     println("Yay! Started to get the response.");
     printfln!("Status: %s", response.status.to_str());
-    println("Headers:");
-    for (name, value) in response.headers.iter() {
+    println("Headers: [extension headers only; TODO HeaderCollection.iter()]");
+    for (name, value) in response.headers.extensions.iter() {
         printfln!(" - %s: %s", *name, *value);
     }
     print("\n");
