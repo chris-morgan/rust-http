@@ -4,7 +4,7 @@ use extra::time::Tm;
 use extra::treemap::{TreeMap, TreeMapIterator};
 use headers;
 use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
-use headers::serialization_utils::{push_maybe_quoted_string, maybe_unquote_string};
+use headers::serialization_utils::push_maybe_quoted_string;
 
 pub enum Header {
 
@@ -772,10 +772,7 @@ impl HeaderEnum for Header {
                 Some(v) => Some(LastModified(v)),
                 None => None,
             },
-            _ => match maybe_unquote_string(value.collect_to_str()) {
-                Some(v) => Some(ExtensionHeader(name, v)),
-                None => None,
-            }
+            _ => Some(ExtensionHeader(name, value.collect_to_str())),
         }
     }
 }
