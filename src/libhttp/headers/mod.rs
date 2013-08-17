@@ -111,13 +111,16 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
         }
     }
     let mut iter = HeaderValueByteIterator::new(reader);
-    header_name = normalise_header_name(header_name);
-    let header = HeaderEnum::value_from_stream(header_name, &mut iter);
+    let header = HeaderEnum::value_from_stream(normalise_header_name(header_name), &mut iter);
     // Ensure that the entire header line is consumed (don't want to mess up next header!)
     for _ in iter { }
     match header {
         Some(h) => (Ok(h), iter.next_byte),
-        None => (Err(MalformedHeaderValue), iter.next_byte),
+        None => {
+            debug!("malformed header value for %s", header_name);
+            // Alas, I can't tell you what the value actually was... TODO: improve that situation
+            (Err(MalformedHeaderValue), iter.next_byte)
+        },
     }
 }
 
