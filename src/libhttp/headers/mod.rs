@@ -178,6 +178,32 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
         }*/
         out
     }
+
+    /// Read a quoted-string from the current position.
+    /// If the quoted-string is not begun immediately or the header ends before it is completed,
+    /// then None is returned; TODO: decide if I can return the bytes read (at present, escapes and
+    /// double quote would be lost if I did that).
+    pub fn read_quoted_string(&mut self, already_opened: bool) -> Option<~str> {
+        enum State { Start, Normal, Escaping }
+
+        let mut state = if already_opened { Start, Normal };
+        let mut output = ~"";
+        loop {
+            match self.next() {
+                None => return None,
+                Some(b) => {
+                    state = match state {
+                        Start if c == '"' as u8 => Normal,
+                        Start => return None,
+                        Normal if c == '\\' as u8 => Escaping,
+                        Normal if c == '"' as u8 => break,
+                        Normal | Escaping => { output.push_char(c); Normal },
+                    }
+                }
+            }
+        }
+        Some(output)
+    }
 }
 
 impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {

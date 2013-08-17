@@ -24,7 +24,7 @@ pub enum Header {
     AcceptPatch(~str),  //(headers::accept_patch::AcceptPatch),                    // RFC 5789, Section 3.1
     AcceptRanges(headers::accept_ranges::AcceptRanges),                 // Section 14.5
     Age(~str),  //(headers::age::Age),                                             // Section 14.6
-    ETag(~str),  //(headers::etag::ETag),                                          // Section 14.19
+    ETag(headers::etag::EntityTag),                                     // Section 14.19
     Location(Url),                                                      // Section 14.30
     ProxyAuthenticate(~str),  //(headers::proxy_authenticate::ProxyAuthenticate),  // Section 14.33
     RetryAfter(~str),  //(headers::retry_after::RetryAfter),                       // Section 14.37
@@ -64,7 +64,7 @@ pub struct HeaderCollection {
     accept_patch: Option<~str>,
     accept_ranges: Option<headers::accept_ranges::AcceptRanges>,
     age: Option<~str>,
-    etag: Option<~str>,
+    etag: Option<headers::etag::EntityTag>,
     location: Option<Url>,
     proxy_authenticate: Option<~str>,
     retry_after: Option<~str>,

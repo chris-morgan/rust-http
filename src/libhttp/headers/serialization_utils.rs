@@ -53,6 +53,49 @@ pub fn comma_split_iter<'a>(value: &'a str)
     value.split_iter(',').map(|w| w.trim_left())
 }
 
+pub trait WriterUtil {
+    fn write_maybe_quoted_string(&mut self, s: &str);
+    fn write_quoted_string(&mut self, s: &str);
+    fn write_key_value_pair(&mut self, k: &str, v: &str);
+    // TODO: &Str instead of ~str?
+    fn write_key_value_pairs(&mut self, parameters: &[(~str, ~str)]);
+}
+
+impl WriterUtil for Writer {
+    fn write_maybe_quoted_string(&mut self, s: &str) {
+        if is_token(s) {
+            self.write(s.as_bytes());
+        } else {
+            self.write_quoted_string(s);
+        }
+    }
+
+    fn write_quoted_string(&mut self, s: &str) {
+        self.write(['"' as u8]);
+        for b in s.byte_iter() {
+            if b == '\\' as u8 || c == '"' as u8 {
+                self.write(['\\' as u8]);
+            }
+            self.write([b]);
+        }
+        self.write(['"' as u8]);
+    }
+
+    fn write_key_value_pair(&mut self, k: &str, v: &str) {
+        self.write([';' as u8]);
+        self.write(k.as_bytes());
+        self.write(['=' as u8]);
+        self.write_maybe_quoted_string(v);
+    }
+
+    // TODO: &Str instead of ~str?
+    fn write_key_value_pairs(&mut self, parameters: &[(~str, ~str)]) {
+        for &(ref k, ref v) in parameters.iter() {
+            self.write_key_value_pair(*k, *v);
+        }
+    }
+}
+
 /// Join a vector of values with commas, as is common for HTTP headers.
 ///
 /// # Examples
