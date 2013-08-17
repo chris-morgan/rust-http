@@ -1,4 +1,5 @@
 use headers::serialization_utils::{unquote_string, push_quoted_string, quoted_string, WriterUtil};
+use std::rt::io::{Reader, Writer};
 
 #[deriving(Clone)]
 pub struct EntityTag {
@@ -18,12 +19,11 @@ impl ToStr for EntityTag {
 
 impl super::HeaderConvertible for EntityTag {
     fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>) -> Option<EntityTag> {
-        let s = reader.collect_to_str();
         let weak;
         let opaque_tag;
         match reader.next() {
             Some(b) if b == 'W' as u8 => match reader.next() {
-                Some(b) if b == '/' as u8 => match reader.next() {
+                Some(b) if b == '/' as u8 => {
                     weak = true;
                     match reader.read_quoted_string(false) {
                         Some(tag) => opaque_tag = tag,
@@ -40,7 +40,7 @@ impl super::HeaderConvertible for EntityTag {
                 }
             },
             _ => {
-                return None,
+                return None;
             }
         };
         Some(EntityTag {

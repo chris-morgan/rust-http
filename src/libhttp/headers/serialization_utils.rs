@@ -2,6 +2,7 @@
 
 use std::vec;
 use std::ascii::Ascii;
+use std::rt::io::Writer;
 use rfc2616::{is_token, is_token_item};
 
 /// Normalise an HTTP header name.
@@ -61,7 +62,7 @@ pub trait WriterUtil {
     fn write_key_value_pairs(&mut self, parameters: &[(~str, ~str)]);
 }
 
-impl WriterUtil for Writer {
+impl<W: Writer> WriterUtil for W {
     fn write_maybe_quoted_string(&mut self, s: &str) {
         if is_token(s) {
             self.write(s.as_bytes());
@@ -73,7 +74,7 @@ impl WriterUtil for Writer {
     fn write_quoted_string(&mut self, s: &str) {
         self.write(['"' as u8]);
         for b in s.byte_iter() {
-            if b == '\\' as u8 || c == '"' as u8 {
+            if b == '\\' as u8 || b == '"' as u8 {
                 self.write(['\\' as u8]);
             }
             self.write([b]);

@@ -60,7 +60,7 @@ pub mod connection;
 //pub mod content_encoding;
 //pub mod content_range;
 //pub mod content_type;
-//pub mod etag;
+pub mod etag;
 pub mod host;
 
 pub type DeltaSeconds = u64;
@@ -186,18 +186,18 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
     pub fn read_quoted_string(&mut self, already_opened: bool) -> Option<~str> {
         enum State { Start, Normal, Escaping }
 
-        let mut state = if already_opened { Start, Normal };
+        let mut state = if already_opened { Start } else { Normal };
         let mut output = ~"";
         loop {
             match self.next() {
                 None => return None,
                 Some(b) => {
                     state = match state {
-                        Start if c == '"' as u8 => Normal,
+                        Start if b == '"' as u8 => Normal,
                         Start => return None,
-                        Normal if c == '\\' as u8 => Escaping,
-                        Normal if c == '"' as u8 => break,
-                        Normal | Escaping => { output.push_char(c); Normal },
+                        Normal if b == '\\' as u8 => Escaping,
+                        Normal if b == '"' as u8 => break,
+                        Normal | Escaping => { output.push_char(b as char); Normal },
                     }
                 }
             }

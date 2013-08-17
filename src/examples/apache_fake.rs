@@ -38,7 +38,9 @@ impl Server for ApacheFakeServer {
             tm_zone: ~"GMT", // timezone abbreviation
             tm_nsec: 0, // nanoseconds
         });
-        w.headers.etag = Some(~"501b29-b1-4a285ed47404a");
+        w.headers.etag = Some(headers::etag::EntityTag {
+                                weak: false,
+                                opaque_tag: ~"501b29-b1-4a285ed47404a" });
         w.headers.accept_ranges = Some(headers::accept_ranges::RangeUnit(
                                             headers::accept_ranges::Bytes));
         w.headers.content_length = Some(177);
