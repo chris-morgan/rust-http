@@ -510,6 +510,7 @@ impl HeaderEnum for Header {
                 s.push_str(": ");
                 let s = push_maybe_quoted_string(s, *value);
                 writer.write(s.as_bytes());
+                writer.write(bytes!("\r\n"));
                 return
             },
             _ => (),
