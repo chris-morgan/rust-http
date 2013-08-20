@@ -478,10 +478,11 @@ impl HeaderConvertible for Tm {
 #[cfg(test)]
 mod test {
     use super::*;
+    use extra::time::Tm;
     use headers::test_utils::{from_stream_with_str, to_stream_into_str};
 
-    fn sample_tm(zone: ~str) -> Option<Date> {
-        Ok(Date {
+    fn sample_tm(zone: ~str) -> Tm {
+        Tm {
             tm_sec: 37,
             tm_min: 49,
             tm_hour: 8,
@@ -494,25 +495,25 @@ mod test {
             tm_gmtoff: 0,
             tm_zone: zone,
             tm_nsec: 0
-        })
+        }
     }
 
     /// Test `from_stream` with an RFC 822 time (updated by RFC 1123)
     #[test]
     fn test_from_stream_rfc822() {
-        assert_eq!(from_stream_with_str("Sun, 06 Nov 1994 08:49:37 GMT"), sample_tm(~"UTC"));
+        assert_eq!(from_stream_with_str("Sun, 06 Nov 1994 08:49:37 GMT"), Some(sample_tm(~"UTC")));
     }
 
     /// Test `from_stream` with an RFC 850 time (obsoleted by RFC 1036)
     #[test]
     fn test_from_stream_rfc850() {
-        assert_eq!(from_stream_with_str("Sunday, 06-Nov-94 08:49:37 GMT"), sample_tm(~"UTC"));
+        assert_eq!(from_stream_with_str("Sunday, 06-Nov-94 08:49:37 GMT"), Some(sample_tm(~"UTC")));
     }
 
     /// Test `from_stream` with the ANSI C's asctime() format
     #[test]
     fn test_from_stream_asctime() {
-        assert_eq!(from_stream_with_str("Sun Nov  6 08:49:37 1994"), sample_tm(~""));
+        assert_eq!(from_stream_with_str("Sun Nov  6 08:49:37 1994"), Some(sample_tm(~"")));
     }
 
     /// Test `http_value`, which outputs an RFC 1123 time
@@ -524,6 +525,6 @@ mod test {
     /// Test `to_stream`, which outputs an RFC 1123 time
     #[test]
     fn test_to_stream() {
-        assert_eq!(to_stream_into_str(sample_tm(~"UTC")), ~"Sun, 06 Nov 1994 08:49:37 GMT");
+        assert_eq!(to_stream_into_str(&sample_tm(~"UTC")), ~"Sun, 06 Nov 1994 08:49:37 GMT");
     }
 }

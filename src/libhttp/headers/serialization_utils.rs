@@ -295,17 +295,17 @@ mod test {
     fn test_comma_split_iter() {
         // These are the same cases as in test_comma_split above.
         let s = "";
-        assert_eq!(comma_split_iter(s).collect(), ~[""]);
+        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~[""]);
         let s = "foo";
-        assert_eq!(comma_split_iter(s).collect(), ~["foo"]);
+        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~["foo"]);
         let s = "foo,bar";
-        assert_eq!(comma_split_iter(s).collect(), ~["foo", "bar"]);
+        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~["foo", "bar"]);
         let s = "foo,bar,baz,quux";
-        assert_eq!(comma_split_iter(s).collect(), ~["foo", "bar", "baz", "quux"]);
+        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~["foo", "bar", "baz", "quux"]);
         let s = "\"foo,bar\",baz";
-        assert_eq!(comma_split_iter(s).collect(), ~["\"foo", "bar\"", "baz"]);
+        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~["\"foo", "bar\"", "baz"]);
         let s = " foo;q=0.8 , bar/* ";
-        assert_eq!(comma_split_iter(s).collect(), ~["foo;q=0.8 ", "bar/* "]);
+        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~["foo;q=0.8 ", "bar/* "]);
     }
 
     #[test]
