@@ -2,7 +2,7 @@
 
 use std::rt::io::{Reader, Writer, Stream};
 use std::rt::io::net::tcp::TcpStream;
-use std::cast::transmute_mut;
+//use std::cast::transmute_mut;
 use std::cmp::min;
 use std::ptr;
 

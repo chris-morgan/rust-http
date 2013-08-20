@@ -1,7 +1,6 @@
 use std::rt::io::{Reader, Writer};
 use std::rt::io::extensions::ReaderUtil;
 use std::rt::io::{io_error, OtherIoError, IoError};
-use std::rt;
 use client::request::RequestWriter;
 use rfc2616::{CR, LF, SP};
 use common::read_http_version;

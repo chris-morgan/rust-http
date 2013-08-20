@@ -1,4 +1,4 @@
-use headers::serialization_utils::{unquote_string, push_quoted_string, quoted_string, WriterUtil};
+use headers::serialization_utils::{push_quoted_string, quoted_string, WriterUtil};
 use std::rt::io::{Reader, Writer};
 
 #[deriving(Clone)]

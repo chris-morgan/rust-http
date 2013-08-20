@@ -1,6 +1,5 @@
 use extra::url::Url;
 use method::Method;
-use std::rt;
 use std::rt::io::{Reader, Writer};
 use std::rt::io::net::ip::SocketAddr;
 use std::rt::io::net::tcp::TcpStream;
