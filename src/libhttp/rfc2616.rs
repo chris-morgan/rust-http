@@ -10,11 +10,11 @@ pub fn is_char(octet: u8) -> bool { octet < 128 }
 
 /// UPALPHA: any US-ASCII uppercase letter "A".."Z">
 #[inline]
-pub fn is_upalpha(octet: u8) -> bool { octet >= 65 && octet <= 90 }
+pub fn is_upalpha(octet: u8) -> bool { octet >= 'A' as u8 && octet <= 'Z' as u8 }
 
 /// LOALPHA: any US-ASCII lowercase letter "a".."z">
 #[inline]
-pub fn is_loalpha(octet: u8) -> bool { octet >= 97 && octet <= 122 }
+pub fn is_loalpha(octet: u8) -> bool { octet >= 'a' as u8 && octet <= 'z' as u8 }
 
 /// ALPHA: UPALPHA | LOALPHA
 #[inline]
@@ -22,35 +22,32 @@ pub fn is_alpha(octet: u8) -> bool { is_upalpha(octet) || is_loalpha(octet) }
 
 /// DIGIT: any US-ASCII digit "0".."9"
 #[inline]
-pub fn is_digit(octet: u8) -> bool { octet >= 48 && octet <= 57 }
+pub fn is_digit(octet: u8) -> bool { octet >= '0' as u8 && octet <= '9' as u8 }
 
 /// CTL: any US-ASCII control character (octets 0 - 31) and DEL (127)
 #[inline]
 pub fn is_ctl(octet: u8) -> bool { octet < 32 || octet == 127 }
 
 /// CR: US-ASCII CR, carriage return (13)
-pub static CR: u8 = 13;
+pub static CR: u8 = '\r' as u8;
 
 /// LF: US-ASCII LF, linefeed (10)
-pub static LF: u8 = 10;
+pub static LF: u8 = '\n' as u8;
 
 /// SP: US-ASCII SP, space (32)
-pub static SP: u8 = 32;
+pub static SP: u8 = ' ' as u8;
 
 /// HT: US-ASCII HT, horizontal-tab (9)
-pub static HT: u8 = 9;
+pub static HT: u8 = '\t' as u8;
 
 /// US-ASCII colon (58)
-pub static COLON: u8 = 58;
+pub static COLON: u8 = ':' as u8;
 
 /// <">: US-ASCII double-quote mark (34)
-pub static DOUBLE_QUOTE: u8 = 34;
+pub static DOUBLE_QUOTE: u8 = '"' as u8;
 
-/// TODO: check naming in RFC 2616. US-ASCII backslash (92)
+/// "\": US-ASCII backslash (92)
 pub static BACKSLASH: u8 = '\\' as u8;
-
-#[inline]
-pub fn is_sp_or_ht(octet: u8) -> bool { octet == SP || octet == HT }
 
 // CRLF: CR LF
 //static CRLF: [u8] = [CR, LF];
@@ -88,7 +85,9 @@ fn is_lws(octets: &[u8]) -> bool {
 /// HEX: "A" | "B" | "C" | "D" | "E" | "F" | "a" | "b" | "c" | "d" | "e" | "f" | DIGIT
 #[inline]
 pub fn is_hex(octet: u8) -> bool {
-    (octet >= 65 && octet <= 70) || (octet >= 97 && octet <= 102) || is_digit(octet)
+    (octet >= 'A' as u8 && octet <= 'F' as u8) ||
+    (octet >= 'a' as u8 && octet <= 'f' as u8) ||
+    is_digit(octet)
 }
 
 /// token          = 1*<any CHAR except CTLs or separators>
@@ -99,7 +98,7 @@ pub fn is_token_item(o: u8) -> bool {
 
 #[inline]
 pub fn is_token(s: &str) -> bool {
-    s.iter().all(|c| is_token_item(c as u8))
+    s.byte_iter().all(|b| is_token_item(b))
 }
 
 
@@ -108,9 +107,10 @@ pub fn is_token(s: &str) -> bool {
 ///           | "}" | SP | HT
 #[inline]
 pub fn is_separator(o: u8) -> bool {
-    o == 40 || o == 41 || o == 60 || o == 62 || o == 64 || o == 44 || o == 59 || o == 58 || o == 92
-        || o == 34 || o == 47 || o == 91 || o == 93 || o == 63 || o == 61 || o == 123 ||
-        o == 125 || o == SP || o == HT
+    o == '(' as u8 || o == ')' as u8 || o == '<' as u8 || o == '>' as u8 || o == '@' as u8 ||
+    o == ',' as u8 || o == ';' as u8 || o == ':' as u8 || o == '\\' as u8 || o == '"' as u8 ||
+    o == '/' as u8 || o == '[' as u8 || o == ']' as u8 || o == '?' as u8 || o == '=' as u8 ||
+    o == '{' as u8 || o == '}' as u8 || o == SP || o == HT
 }
 
 /*
