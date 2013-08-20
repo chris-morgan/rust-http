@@ -57,9 +57,11 @@ pub fn comma_split_iter<'a>(value: &'a str)
 pub trait WriterUtil {
     fn write_maybe_quoted_string(&mut self, s: &str);
     fn write_quoted_string(&mut self, s: &str);
-    fn write_key_value_pair(&mut self, k: &str, v: &str);
+    fn write_parameter(&mut self, k: &str, v: &str);
     // TODO: &Str instead of ~str?
-    fn write_key_value_pairs(&mut self, parameters: &[(~str, ~str)]);
+    fn write_parameters(&mut self, parameters: &[(~str, ~str)]);
+    fn write_quality(&mut self, quality: Option<float>);
+    fn write_token(&mut self, token: &str);
 }
 
 impl<W: Writer> WriterUtil for W {
@@ -82,18 +84,37 @@ impl<W: Writer> WriterUtil for W {
         self.write(['"' as u8]);
     }
 
-    fn write_key_value_pair(&mut self, k: &str, v: &str) {
-        self.write([';' as u8]);
+    fn write_parameter(&mut self, k: &str, v: &str) {
         self.write(k.as_bytes());
         self.write(['=' as u8]);
         self.write_maybe_quoted_string(v);
     }
 
     // TODO: &Str instead of ~str?
-    fn write_key_value_pairs(&mut self, parameters: &[(~str, ~str)]) {
+    fn write_parameters(&mut self, parameters: &[(~str, ~str)]) {
         for &(ref k, ref v) in parameters.iter() {
-            self.write_key_value_pair(*k, *v);
+            self.write([';' as u8]);
+            self.write_parameter(*k, *v);
         }
+    }
+
+    fn write_quality(&mut self, quality: Option<float>) {
+        // TODO: remove second and third decimal places if zero, and use a better quality type anyway
+        match quality {
+            Some(qvalue) => {
+                self.write(bytes!(";q="));
+                // TODO: don't use fmt! for this!
+                let s = fmt!("%0.3f", qvalue);
+                self.write(s.as_bytes());
+            },
+            None => (),
+        }
+    }
+
+    #[inline]
+    fn write_token(&mut self, token: &str) {
+        assert!(is_token(token));
+        self.write(token.as_bytes());
     }
 }
 
@@ -244,17 +265,17 @@ pub fn maybe_unquote_string(s: &str) -> Option<~str> {
 }
 
 // Takes and emits the ~str instead of the &mut str for a simpler, fluid interface
-pub fn push_key_value_pair(mut s: ~str, k: &str, v: &str) -> ~str {
-    s.push_char(';');
+pub fn push_parameter(mut s: ~str, k: &str, v: &str) -> ~str {
     s.push_str(k);
     s.push_char('=');
     push_maybe_quoted_string(s, v)
 }
 
 // TODO: &Str instead of ~str?
-pub fn push_key_value_pairs(mut s: ~str, parameters: &[(~str, ~str)]) -> ~str {
+pub fn push_parameters(mut s: ~str, parameters: &[(~str, ~str)]) -> ~str {
     for &(ref k, ref v) in parameters.iter() {
-        s = push_key_value_pair(s, *k, *v);
+        s.push_char(';');
+        s = push_parameter(s, *k, *v);
     }
     s
 }
@@ -393,21 +414,21 @@ mod test {
     }
 
     #[test]
-    fn test_push_key_value_pair() {
-        assert_eq!(push_key_value_pair(~"foo", "bar", "baz"), ~"foo;bar=baz");
-        assert_eq!(push_key_value_pair(~"foo", "bar", "baz/quux"), ~"foo;bar=\"baz/quux\"");
+    fn test_push_parameter() {
+        assert_eq!(push_parameter(~"foo", "bar", "baz"), ~"foobar=baz");
+        assert_eq!(push_parameter(~"foo", "bar", "baz/quux"), ~"foobar=\"baz/quux\"");
     }
 
     #[test]
-    fn test_push_key_value_pairs() {
-        assert_eq!(push_key_value_pairs(~"foo", []), ~"foo");
-        assert_eq!(push_key_value_pairs(~"foo", [(~"bar", ~"baz")]), ~"foo;bar=baz");
-        assert_eq!(push_key_value_pairs(~"foo", [(~"bar", ~"baz/quux")]), ~"foo;bar=\"baz/quux\"");
-        assert_eq!(push_key_value_pairs(~"foo", [(~"bar", ~"baz"), (~"quux", ~"fuzz")]),
+    fn test_push_parameters() {
+        assert_eq!(push_parameters(~"foo", []), ~"foo");
+        assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz")]), ~"foo;bar=baz");
+        assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz/quux")]), ~"foo;bar=\"baz/quux\"");
+        assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz"), (~"quux", ~"fuzz")]),
                    ~"foo;bar=baz;quux=fuzz");
-        assert_eq!(push_key_value_pairs(~"foo", [(~"bar", ~"baz"), (~"quux", ~"fuzz zee")]),
+        assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz"), (~"quux", ~"fuzz zee")]),
                    ~"foo;bar=baz;quux=\"fuzz zee\"");
-        assert_eq!(push_key_value_pairs(~"foo", [(~"bar", ~"baz/quux"), (~"fuzz", ~"zee")]),
+        assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz/quux"), (~"fuzz", ~"zee")]),
                    ~"foo;bar=\"baz quux\";fuzz=zee");
     }
 }

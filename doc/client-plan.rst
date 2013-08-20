@@ -8,7 +8,12 @@ In the first stage of The Plan, I will have ``http::client`` (new code) and
 ``http::server`` (currently most of ``rusthttpserver``). Some things currently
 in ``rusthttpserver`` which are definitely common to client and server with no
 difference, such as the ``headers`` and ``method`` modules, will go in a shared
-location (``http::*``, probably).
+location (``http::*``, probably). *Package separation state:* complete.
+
+Types:
+
+- ``RequestWriter``, which satisfies ``std::rt::io::Writer``, but also provides
+  various convenience methods for managing other ways of doing things.
 
 To begin with, the client user will formulate an ``http::client::Request``.
 (Initially it will be different from ``http::server::Request``, though the two

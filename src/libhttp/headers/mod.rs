@@ -164,6 +164,13 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
             state: Normal,
         }
     }
+
+    /// Verify that the header value has been entirely consumed.
+    #[inline]
+    fn is_finished(&self) -> bool {
+        self.state == Finished
+    }
+
     // TODO: can we have collect() implemented for ~str? That would negate the need for this.
     fn collect_to_str(&mut self) -> ~str {
         // TODO: be more efficient (char cast is a little unnecessary)
@@ -206,6 +213,34 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
             }
         }
         Some(output)
+    }
+
+    /// Read a token (RFC 2616 definition) from the header value.
+    ///
+    /// If no token begins at the current point of the header, ``None`` will also be returned.
+    pub fn read_token(&mut self) -> Option<~str> {
+        let mut output = ~"";
+        loop {
+            match self.next() {
+                None => break,
+                Some(b) if is_separator(b) => {
+                    assert_eq!(self.next_byte, None);
+                    self.next_byte = Some(b);
+                },
+                Some(b) if is_token_item(b) => {
+                    output.push_char(b as char);
+                },
+                Some(b) => {
+                    printfln!("TODO: what should be done with a token ended with a non-separator? \
+(With token %?, %? was read.)", output, b as char);
+                }
+            }
+        }
+        if output.len() == 0 {
+            None
+        } else {
+            Some(output)
+        }
     }
 }
 

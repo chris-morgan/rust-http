@@ -48,7 +48,7 @@ pub enum Header {
     ContentLocation(~str),  //(headers::content_location::ContentLocation),  // Section 14.14
     ContentMd5(~str),  //(headers::content_md5::ContentMd5),                 // Section 14.15
     ContentRange(~str),  //(headers::content_range::ContentRange),           // Section 14.16
-    ContentType(~str),  //(headers::content_type::ContentType),              // Section 14.17
+    ContentType(headers::content_type::MediaType),                // Section 14.17
     Expires(Tm),                                                  // Section 14.21
     LastModified(Tm),                                             // Section 14.29
     ExtensionHeader(~str, ~str),
@@ -97,7 +97,7 @@ pub struct HeaderCollection {
     content_location: Option<~str>,
     content_md5: Option<~str>,
     content_range: Option<~str>,
-    content_type: Option<~str>,
+    content_type: Option<headers::content_type::MediaType>,
     expires: Option<Tm>,
     last_modified: Option<Tm>,
     extensions: TreeMap<~str, ~str>,
