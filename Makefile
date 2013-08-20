@@ -1,6 +1,6 @@
 RUST=rust
 RUSTC=rustc
-RUSTFLAGS=-O
+RUSTFLAGS=-O -Z debug-info
 VERSION=0.1-pre
 
 libhttp_so=build/libhttp-20af9b1d3441fe5a-$(VERSION).so
