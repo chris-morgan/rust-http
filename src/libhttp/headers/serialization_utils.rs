@@ -364,32 +364,32 @@ mod test {
 
     #[test]
     fn test_quoted_string() {
-        assert_eq!(quoted_string(~"bar"), ~"\"bar\"");
-        assert_eq!(quoted_string(~"bar/baz \"yay\\\""), ~"\"bar/baz \\\"yay\\\\\\\"\"");
+        assert_eq!(quoted_string("bar"), ~"\"bar\"");
+        assert_eq!(quoted_string("bar/baz \"yay\\\""), ~"\"bar/baz \\\"yay\\\\\\\"\"");
     }
 
     #[test]
     fn test_unquote_string() {
-        assert_eq!(unquote_string(~"bar"), None);
-        assert_eq!(unquote_string(~"\"bar\""), Some(~"bar"));
-        assert_eq!(unquote_string(~"\"bar/baz \\\"yay\\\\\\\"\""), Some(~"bar/baz \"yay\\\""));
-        assert_eq!(unquote_string(~"\"bar"), None);
-        assert_eq!(unquote_string(~" \"bar\""), None);
-        assert_eq!(unquote_string(~"\"bar\" "), None);
-        assert_eq!(unquote_string(~"\"bar\" \"baz\""), None);
-        assert_eq!(unquote_string(~"\"bar/baz \\\"yay\\\\\"\""), None);
+        assert_eq!(unquote_string("bar"), None);
+        assert_eq!(unquote_string("\"bar\""), Some(~"bar"));
+        assert_eq!(unquote_string("\"bar/baz \\\"yay\\\\\\\"\""), Some(~"bar/baz \"yay\\\""));
+        assert_eq!(unquote_string("\"bar"), None);
+        assert_eq!(unquote_string(" \"bar\""), None);
+        assert_eq!(unquote_string("\"bar\" "), None);
+        assert_eq!(unquote_string("\"bar\" \"baz\""), None);
+        assert_eq!(unquote_string("\"bar/baz \\\"yay\\\\\"\""), None);
     }
 
     #[test]
     fn test_maybe_unquote_string() {
-        assert_eq!(maybe_unquote_string(~"bar"), Some(~"bar"));
-        assert_eq!(maybe_unquote_string(~"\"bar\""), Some(~"bar"));
-        assert_eq!(maybe_unquote_string(~"\"bar/baz \\\"yay\\\\\\\"\""), Some(~"bar/baz \"yay\\\""));
-        assert_eq!(maybe_unquote_string(~"\"bar"), None);
-        assert_eq!(maybe_unquote_string(~" \"bar\""), None);
-        assert_eq!(maybe_unquote_string(~"\"bar\" "), None);
-        assert_eq!(maybe_unquote_string(~"\"bar\" \"baz\""), None);
-        assert_eq!(maybe_unquote_string(~"\"bar/baz \\\"yay\\\\\"\""), None);
+        assert_eq!(maybe_unquote_string("bar"), Some(~"bar"));
+        assert_eq!(maybe_unquote_string("\"bar\""), Some(~"bar"));
+        assert_eq!(maybe_unquote_string("\"bar/baz \\\"yay\\\\\\\"\""), Some(~"bar/baz \"yay\\\""));
+        assert_eq!(maybe_unquote_string("\"bar"), None);
+        assert_eq!(maybe_unquote_string(" \"bar\""), None);
+        assert_eq!(maybe_unquote_string("\"bar\" "), None);
+        assert_eq!(maybe_unquote_string("\"bar\" \"baz\""), None);
+        assert_eq!(maybe_unquote_string("\"bar/baz \\\"yay\\\\\"\""), None);
     }
 
     #[test]
