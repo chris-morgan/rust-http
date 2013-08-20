@@ -1,10 +1,10 @@
 use extra::url::Url;
 use method::Method;
 use std::rt;
-use std::rt::io::Writer;
+use std::rt::io::{Reader, Writer};
 use std::rt::io::net::ip::SocketAddr;
 use std::rt::io::net::tcp::TcpStream;
-use buffer::{BufTcpStream, BufferedStream};
+use buffer::BufferedStream;
 use headers::request::HeaderCollection;
 use headers::host::Host;
 
@@ -27,9 +27,9 @@ use client::response::ResponseReader;
     }
 }*/
 
-pub struct RequestWriter {
+pub struct RequestWriter<S> {
     // The place to write to (typically a TCP stream, rt::io::net::tcp::TcpStream)
-    priv stream: Option<BufTcpStream>,
+    priv stream: Option<BufferedStream<S>>,
     priv headers_written: bool,
 
     /// The originating IP address of the request.
@@ -56,9 +56,9 @@ pub struct RequestWriter {
 /// take place until writing is completed.
 ///
 /// At present, this only supports making one request per connection.
-impl RequestWriter {
+impl<S: Reader + Writer> RequestWriter<S> {
     /// Create a `RequestWriter` writing to the specified location
-    pub fn new(method: Method, url: Url) -> RequestWriter {
+    pub fn new(method: Method, url: Url) -> RequestWriter<S> {
         let host = match url.port {
             None => Host {
                 name: url.host.to_owned(),
@@ -82,6 +82,9 @@ impl RequestWriter {
         request.headers.host = Some(host);
         request
     }
+}
+
+impl RequestWriter<TcpStream> {
 
     /// Connect to the remote host if not already connected.
     pub fn try_connect(&mut self) {
@@ -140,7 +143,7 @@ impl RequestWriter {
 
     // FIXME: ~self rather than self to work around a Rust bug in by-val self at present leading to
     // a segfault on calling construct().
-    pub fn read_response(~self) -> Result<ResponseReader, ~RequestWriter> {
+    pub fn read_response(~self) -> Result<ResponseReader<TcpStream>, ~RequestWriter<TcpStream>> {
         let mut mut_self = self;
         mut_self.try_write_headers();
         mut_self.flush();
@@ -151,7 +154,7 @@ impl RequestWriter {
     }
 }
 
-impl rt::io::Writer for RequestWriter {
+impl Writer for RequestWriter<TcpStream> {
     fn write(&mut self, buf: &[u8]) {
         if (!self.headers_written) {
             self.write_headers();

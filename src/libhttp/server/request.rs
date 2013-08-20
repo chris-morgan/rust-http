@@ -1,11 +1,12 @@
 use extra::url::Url;
 use method::{Method, Options};
 use status;
+use std::rt::io::{Reader, Writer};
 use std::rt::io::net::ip::SocketAddr;
 use std::util::unreachable;
 use rfc2616::{CR, LF, SP};
 use headers;
-use buffer::BufTcpStream;
+use buffer::{BufferedStream, BufTcpStream};
 use common::read_http_version;
 
 use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeaderSyntax, MalformedHeaderValue};
@@ -21,16 +22,16 @@ static MAX_HTTP_VERSION_LEN: uint = 1024;
 /// Moderately arbitrary figure: read in 64KB chunks. GET requests should never be this large.
 static BUF_SIZE: uint = 0x10000;  // Let's try 64KB chunks
 
-pub struct RequestBuffer<'self> {
+pub struct RequestBuffer<'self, S> {
     /// The socket connection to read from
-    stream: &'self mut BufTcpStream,
+    stream: &'self mut BufferedStream<S>,
 
     /// A working space for 
     line_bytes: ~[u8],
 }
 
-impl<'self> RequestBuffer<'self> {
-    pub fn new<'a>(stream: &'a mut BufTcpStream) -> RequestBuffer<'a> {
+impl<'self, S: Reader + Writer> RequestBuffer<'self, S> {
+    pub fn new<'a>(stream: &'a mut BufferedStream<S>) -> RequestBuffer<'a, S> {
         RequestBuffer {
             stream: stream,
             line_bytes: ~[0u8, ..MAX_LINE_LEN],
