@@ -22,7 +22,7 @@ pub enum Header {
 
     // RFC 2616, Section 6.2: Response Header Fields
     AcceptPatch(~str),  //(headers::accept_patch::AcceptPatch),                    // RFC 5789, Section 3.1
-    AcceptRanges(headers::accept_ranges::AcceptRanges),                 // Section 14.5
+    AcceptRanges(headers::accept_ranges::AcceptableRanges),             // Section 14.5
     Age(~str),  //(headers::age::Age),                                             // Section 14.6
     ETag(headers::etag::EntityTag),                                     // Section 14.19
     Location(Url),                                                      // Section 14.30
@@ -62,7 +62,7 @@ pub struct HeaderCollection {
 
     // Response Header Fields
     accept_patch: Option<~str>,
-    accept_ranges: Option<headers::accept_ranges::AcceptRanges>,
+    accept_ranges: Option<headers::accept_ranges::AcceptableRanges>,
     age: Option<~str>,
     etag: Option<headers::etag::EntityTag>,
     location: Option<Url>,

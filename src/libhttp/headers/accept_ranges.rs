@@ -1,48 +1,62 @@
-//! The Accept-Ranges request header, defined in RFC 2616, Section 14.4.
+//! The Accept-Ranges request header, defined in RFC 2616, Section 14.5.
 
 use std::ascii::StrAsciiExt;
 use std::rt::io::Reader;
 
-#[deriving(Clone)]
+#[deriving(Clone,Eq)]
+// RFC 2616: range-unit = bytes-unit | other-range-unit
 pub enum RangeUnit {
-    Unknown(~str),
-    Bytes,
+    Bytes,                   // bytes-unit       = "bytes"
+    UnknownRangeUnit(~str),  // other-range-unit = token
 }
-impl ToStr for RangeUnit {
-    fn to_str(&self) -> ~str {
-        match *self {
-            Unknown(ref s) => s.clone(),
-            Bytes => ~"bytes",
-        }
-    }
-}
-// More correct name would be AcceptableRanges, but I want to be consistent.
-#[deriving(Clone)]
-pub enum AcceptRanges {
-    RangeUnit(RangeUnit),
-    NoAcceptableRanges,  // Strictly, this is not a range-unit.
-}
-impl ToStr for AcceptRanges {
-    fn to_str(&self) -> ~str {
-        match *self {
-            RangeUnit(ref ru) => ru.to_str(),
-            NoAcceptableRanges => ~"none",
-        }
-    }
+
+#[deriving(Clone,Eq)]
+// RFC 2616: acceptable-ranges = 1#range-unit | "none"
+pub enum AcceptableRanges {
+    RangeUnits(~[RangeUnit]),
+    NoAcceptableRanges,
 }
 
 impl super::HeaderConvertible for AcceptRanges {
     fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
             -> Option<AcceptRanges> {
-        let s = reader.collect_to_str();
-        Some(match s.to_ascii_lower().as_slice() {
-            "none" => NoAcceptableRanges,
-            "bytes" => RangeUnit(Bytes),
-            _ => RangeUnit(Unknown(s)),
-        })
+        let mut range_units = ~[];
+        loop {
+            let token = reader.read_token().to_ascii_lower();
+            match token.as_bytes() {
+                "bytes" => range_units.push(Bytes),
+                "none" if range_units.len() == 0 => return Some(NoAcceptableRanges),
+                _ => range_units.push(OtherRangeUnit(token)),
+            }
+        }
+        Some(RangeUnits(range_units))
+    }
+
+    fn to_stream<T: Writer>(&self, writer: &mut T) {
+        match *self {
+            NoAcceptableRanges => writer.write(bytes!("none")),
+            RangeUnits(range_units) => for ru in range_units {
+                match ru {
+                    Bytes => writer.write(bytes!("bytes")),
+                    UnknownRangeUnit(ref ru) => writer.write(ru.as_bytes()),
+                }
+            },
+        }
     }
 
     fn http_value(&self) -> ~str {
-        self.to_str()
+        match *self {
+            NoAcceptableRanges => ~"none",
+            RangeUnits(range_units) => {
+                let mut result = ~"";
+                for ru in range_units {
+                    match ru {
+                        Bytes => result.push_str("bytes"),
+                        UnknownRangeUnit(ref ru) => result.push_str(ru),
+                    }
+                }
+                result
+            },
+        }
     }
 }
