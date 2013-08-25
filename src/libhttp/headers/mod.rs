@@ -165,10 +165,24 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
         }
     }
 
-    /// Verify that the header value has been entirely consumed.
+    /// Check that the entire header value has been consumed.
+    ///
+    /// Be cautious using this function as it is destructive, losing a character in the case where
+    /// the value has not been entirely consumed.
+    ///
+    /// This should only be called when finished with a value and ensuring that there aren't
+    /// unexpected characters
+    ///
+    /// Suggested usage is in a ``from_stream`` method::
+    ///
+    ///     if reader.verify_consumed() {
+    ///         Some(header)
+    ///     } else {
+    ///         None
+    ///     }
     #[inline]
-    fn is_finished(&self) -> bool {
-        self.state == Finished
+    fn verify_consumed(&mut self) -> bool {
+        self.next() == None
     }
 
     // TODO: can we have collect() implemented for ~str? That would negate the need for this.

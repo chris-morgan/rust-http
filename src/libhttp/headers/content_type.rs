@@ -32,7 +32,7 @@ impl super::HeaderConvertible for MediaType {
         }
         let subtype = reader.read_token();
         match reader.read_parameters() {
-            Some(parameters) if reader.is_finished() =>
+            Some(parameters) if reader.verify_consumed() =>
                 Some(MediaType {
                     type_: type_,
                     subtype: subtype,
