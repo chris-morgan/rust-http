@@ -530,6 +530,41 @@ mod test {
     use extra::time::Tm;
     use headers::test_utils::{from_stream_with_str, to_stream_into_str};
 
+    fn test_from_stream_str() {
+        assert_eq!(from_stream_with_str(""), Some(~""));
+        assert_eq!(from_stream_with_str("foo \"bar baz\", yay"),
+                                  Some(~"foo \"bar baz\", yay"));
+    }
+
+    fn test_http_value_str() {
+        assert_eq!(~"".http_value(), ~"");
+        assert_eq!(~"foo \"bar baz\", yay".http_value(), ~"foo \"bar baz\", yay"));
+    }
+
+    fn test_to_stream_str() {
+        let s = ~"";
+        assert_eq!(to_stream_into_str(&s, ~""));
+        let s = ~"foo \"bar baz\", yay";
+        assert_eq!(to_stream_into_str(&s, ~"foo \"bar baz\", yay"));
+    }
+
+    fn test_from_stream_uint() {
+        assert_eq!(from_stream_with_str::<uint>("foo bar"), None);
+        assert_eq!(from_stream_with_str::<uint>("-1"), None);
+        assert_eq!(from_stream_with_str("0"), Some(0u));
+        assert_eq!(from_stream_with_str("123456789"), Some(123456789u));
+    }
+
+    fn test_http_value_uint() {
+        assert_eq!(0u.http_value(), ~"0");
+        assert_eq!(123456789u.http_value(), ~"123456789"));
+    }
+
+    fn test_to_stream_uint() {
+        assert_eq!(to_stream_into_str(&0u, ~"0"));
+        assert_eq!(to_stream_into_str(&123456789u, ~"123456789"));
+    }
+
     fn sample_tm(zone: ~str) -> Tm {
         Tm {
             tm_sec: 37,
