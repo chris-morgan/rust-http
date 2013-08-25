@@ -13,8 +13,6 @@ libhttp_files=\
 			  src/libhttp/headers/mod.rs \
 			  src/libhttp/headers/serialization_utils.rs \
 			  src/libhttp/headers/test_utils.rs \
-			  src/libhttp/headers/request.rs \
-			  src/libhttp/headers/response.rs \
 			  src/libhttp/headers/accept_ranges.rs \
 			  src/libhttp/headers/allow.rs \
 			  src/libhttp/headers/connection.rs \

@@ -15,8 +15,6 @@ use self::serialization_utils::{normalise_header_name};
 
 pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeaderValue, MalformedHeaderSyntax }
 
-pub mod request;
-pub mod response;
 pub mod test_utils;
 pub mod serialization_utils;
 
@@ -611,4 +609,271 @@ mod test {
     fn test_to_stream() {
         assert_eq!(to_stream_into_str(&sample_tm(~"UTC")), ~"Sun, 06 Nov 1994 08:49:37 GMT");
     }
+}
+
+macro_rules! headers_mod {
+    {
+        $attr:attr
+        // Not using this because of a "local ambiguity" bug
+        //$($attrs:attr)*
+        pub mod $mod_name:ident;
+        num_headers: $num_headers:pat;
+        $(
+            $num_id:pat,
+            $output_name:expr,
+            $input_name:pat,
+            $caps_ident:ident,
+            $lower_ident:ident,
+            $htype:ty;
+        )*
+    } => {
+        pub mod $mod_name {
+            //$($attrs;)*
+            $attr;
+
+            use extra;
+            use std::util::unreachable;
+            use std::rt::io::{Reader, Writer};
+            use extra::treemap::{TreeMap, TreeMapIterator};
+            use headers;
+            use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
+            use headers::serialization_utils::push_maybe_quoted_string;
+
+            pub enum Header {
+                $($caps_ident($htype),)*
+                ExtensionHeader(~str, ~str),
+            }
+
+            // Can't use #[deriving(Clone)] because of https://github.com/mozilla/rust/issues/6976
+            pub struct HeaderCollection {
+                $($lower_ident: Option<$htype>,)*
+                extensions: TreeMap<~str, ~str>,
+            }
+
+            impl Clone for HeaderCollection {
+                fn clone(&self) -> HeaderCollection {
+                    HeaderCollection {
+                        $($lower_ident: self.$lower_ident.clone(),)*
+                        extensions: self.extensions.clone(),
+                    }
+                }
+            }
+
+            impl HeaderCollection {
+                pub fn new() -> HeaderCollection {
+                    HeaderCollection {
+                        $($lower_ident: None,)*
+                        extensions: TreeMap::new(),
+                    }
+                }
+
+                /// Consume a header, putting it into this structure.
+                pub fn insert(&mut self, header: Header) {
+                    match header {
+                        $($caps_ident(value) => self.$lower_ident = Some(value),)*
+                        ExtensionHeader(key, value) => { self.extensions.insert(key, value); },
+                    }
+                }
+
+                pub fn iter<'a>(&'a self) -> HeaderCollectionIterator<'a> {
+                    HeaderCollectionIterator {
+                        pos: 0,
+                        coll: self,
+                        ext_iter: None
+                    }
+                }
+
+                /// Write all the headers to a writer. This includes an extra \r\n at the end to
+                /// signal end of headers.
+                pub fn write_all<W: Writer>(&self, writer: &mut W) {
+                    for header in self.iter() {
+                        header.write_header(writer);
+                    }
+                    writer.write(bytes!("\r\n"));
+                }
+            }
+
+            pub struct HeaderCollectionIterator<'self> {
+                pos: uint,
+                coll: &'self HeaderCollection,
+                ext_iter: Option<TreeMapIterator<'self, ~str, ~str>>
+            }
+
+            impl<'self> Iterator<Header> for HeaderCollectionIterator<'self> {
+                fn next(&mut self) -> Option<Header> {
+                    loop {
+                        self.pos += 1;
+                        match self.pos - 1 {
+                            $($num_id => match self.coll.$lower_ident {
+                                Some(ref v) => return Some($caps_ident(v.clone())),
+                                None => loop,
+                            },)*
+                            $num_headers => {
+                                self.ext_iter = Some(self.coll.extensions.iter());
+                                loop
+                            },
+                            _ => match self.ext_iter.get_mut_ref().next() {
+                                Some((k, v)) =>
+                                    return Some(ExtensionHeader(k.to_owned(), v.to_owned())),
+                                None => return None,
+                            },
+                        }
+                    }
+                }
+            }
+
+            impl HeaderEnum for Header {
+                fn header_name(&self) -> ~str {
+                    match *self {
+                        // FIXME: $output_name is "...", I want ~"..." rather than "...".to_owned()
+                        $($caps_ident(*) => $output_name.to_owned(),)*
+                        ExtensionHeader(ref name, _) => name.to_owned(),
+                    }
+                }
+
+                fn header_value(&self) -> ~str {
+                    match *self {
+                        $($caps_ident(ref h) => h.http_value(),)*
+                        ExtensionHeader(_, ref value) => value.to_owned(),
+                    }
+                }
+
+                fn write_header<T: Writer>(&self, writer: &mut T) {
+                    match *self {
+                        ExtensionHeader(ref name, ref value) => {
+                            // TODO: be more efficient
+                            let mut s = ~"";
+                            // Allocate for name, ": " and quoted value (typically an overallocation
+                            // of 2 bytes, occasionally an underallocation in case of needing to
+                            // escape double quotes)
+                            s.reserve(name.len() + 4 + value.len());
+                            s.push_str(*name);
+                            s.push_str(": ");
+                            let s = push_maybe_quoted_string(s, *value);
+                            writer.write(s.as_bytes());
+                            writer.write(bytes!("\r\n"));
+                            return
+                        },
+                        _ => (),
+                    }
+
+                    writer.write(match *self {
+                        $($caps_ident(*) => bytes!($output_name, ": "),)*
+                        ExtensionHeader(*) => unreachable(),  // Already returned
+                    });
+
+                    // FIXME: all the `h` cases satisfy HeaderConvertible, can it be simplified?
+                    match *self {
+                        $($caps_ident(ref h) => h.to_stream(writer),)*
+                        ExtensionHeader(*) =>     unreachable(),  // Already returned
+                    };
+                    writer.write(bytes!("\r\n"));
+                }
+
+                fn value_from_stream<T: Reader>(name: ~str, value: &mut HeaderValueByteIterator<T>)
+                        -> Option<Header> {
+                    match name.as_slice() {
+                        $($input_name => match HeaderConvertible::from_stream(value) {
+                            Some(v) => Some($caps_ident(v)),
+                            None => None,
+                        },)*
+                        _ => Some(ExtensionHeader(name, value.collect_to_str())),
+                    }
+                }
+            }
+        }
+    }
+}
+
+headers_mod! {
+    #[doc = "Request whatnottery."]
+    pub mod request;
+
+    num_headers: 38;
+
+    // RFC 2616, Section 4.5: General Header Fields
+     0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     ~str;
+     1, "Connection",        "Connection",        Connection,       connection,        headers::connection::Connection;
+     2, "Date",              "Date",              Date,             date,              extra::time::Tm;
+     3, "Pragma",            "Pragma",            Pragma,           pragma,            ~str;
+     4, "Trailer",           "Trailer",           Trailer,          trailer,           ~str;
+     5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, ~str;
+     6, "Upgrade",           "Upgrade",           Upgrade,          upgrade,           ~str;
+     7, "Via",               "Via",               Via,              via,               ~str;
+     8, "Warning",           "Warning",           Warning,          warning,           ~str;
+
+    // RFC 2616, Section 5.3: Request Header Fields
+     9, "Accept",              "Accept",              Accept,             accept,              ~str;
+    10, "Accept-Charset",      "Accept-Charset",      AcceptCharset,      accept_charset,      ~str;
+    11, "Accept-Encoding",     "Accept-Encoding",     AcceptEncoding,     accept_encoding,     ~str;
+    12, "Accept-Language",     "Accept-Language",     AcceptLanguage,     accept_language,     ~str;
+    13, "Authorization",       "Authorization",       Authorization,      authorization,       ~str;
+    14, "Expect",              "Expect",              Expect,             expect,              ~str;
+    15, "From",                "From",                From,               from,                ~str;
+    16, "Host",                "Host",                Host,               host,                headers::host::Host;
+    17, "If-Match",            "If-Match",            IfMatch,            if_match,            ~str;
+    18, "If-Modified-Since",   "If-Modified-Since",   IfModifiedSince,    if_modified_since,   extra::time::Tm;
+    19, "If-None-Match",       "If-None-Match",       IfNoneMatch,        if_none_match,       ~str;
+    20, "If-Range",            "If-Range",            IfRange,            if_range,            ~str;
+    21, "If-Unmodified-Since", "If-Unmodified-Since", IfUnmodifiedSince,  if_unmodifiedSince,  extra::time::Tm;
+    22, "Max-Forwards",        "Max-Forwards",        MaxForwards,        max_forwards,        uint;
+    23, "Proxy-Authorization", "Proxy-Authorization", ProxyAuthorization, proxy_authorization, ~str;
+    24, "Range",               "Range",               Range,              range,               ~str;
+    25, "Referer",             "Referer",             Referer,            referer,             ~str;
+    26, "TE",                  "Te",                  Te,                 te,                  ~str;
+    27, "User-Agent",          "User-Agent",          UserAgent,          user_agent,          ~str;
+
+    // RFC 2616, Section 7.1: Entity Header Fields
+    28, "Allow",            "Allow",            Allow,           allow,            headers::allow::Allow;
+    29, "Content-Encoding", "Content-Encoding", ContentEncoding, content_encoding, ~str;
+    30, "Content-Language", "Content-Language", ContentLanguage, content_language, ~str;
+    31, "Content-Length",   "Content-Length",   ContentLength,   content_length,   uint;
+    32, "Content-Location", "Content-Location", ContentLocation, content_location, ~str;
+    33, "Content-MD5",      "Content-Md5",      ContentMd5,      content_md5,      ~str;
+    34, "Content-Range",    "Content-Range",    ContentRange,    content_range,    ~str;
+    35, "Content-Type",     "Content-Type",     ContentType,     content_type,     headers::content_type::MediaType;
+    36, "Expires",          "Expires",          Expires,         expires,          extra::time::Tm;
+    37, "Last-Modified",    "Last-Modified",    LastModified,    last_modified,    extra::time::Tm;
+}
+
+headers_mod! {
+    #[doc = "Response whatnottery."]
+    pub mod response;
+
+    num_headers: 29;
+
+    // RFC 2616, Section 4.5: General Header Fields
+     0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     ~str;
+     1, "Connection",        "Connection",        Connection,       connection,        headers::connection::Connection;
+     2, "Date",              "Date",              Date,             date,              extra::time::Tm;
+     3, "Pragma",            "Pragma",            Pragma,           pragma,            ~str;
+     4, "Trailer",           "Trailer",           Trailer,          trailer,           ~str;
+     5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, ~str;
+     6, "Upgrade",           "Upgrade",           Upgrade,          upgrade,           ~str;
+     7, "Via",               "Via",               Via,              via,               ~str;
+     8, "Warning",           "Warning",           Warning,          warning,           ~str;
+
+    // RFC 2616, Section 6.2: Response Header Fields
+     9, "Accept-Patch",       "Accept-Patch",       AcceptPatch,       accept_patch,       ~str;
+    10, "Accept-Ranges",      "Accept-Ranges",      AcceptRanges,      accept_ranges,      headers::accept_ranges::AcceptableRanges;
+    11, "Age",                "Age",                Age,               age,                ~str;
+    12, "ETag",               "Etag",               ETag,              etag,               headers::etag::EntityTag;
+    13, "Location",           "Location",           Location,          location,           extra::url::Url;
+    14, "Proxy-Authenticate", "Proxy-Authenticate", ProxyAuthenticate, proxy_authenticate, ~str;
+    15, "Retry-After",        "Retry-After",        RetryAfter,        retry_after,        ~str;
+    16, "Server",             "Server",             Server,            server,             ~str;
+    17, "Vary",               "Vary",               Vary,              vary,               ~str;
+    18, "WWW-Authenticate",   "Www-Authenticate",   WwwAuthenticate,   www_authenticate,   ~str;
+
+    // RFC 2616, Section 7.1: Entity Header Fields
+    19, "Allow",            "Allow",            Allow,           allow,            headers::allow::Allow;
+    20, "Content-Encoding", "Content-Encoding", ContentEncoding, content_encoding, ~str;
+    21, "Content-Language", "Content-Language", ContentLanguage, content_language, ~str;
+    22, "Content-Length",   "Content-Length",   ContentLength,   content_length,   uint;
+    23, "Content-Location", "Content-Location", ContentLocation, content_location, ~str;
+    24, "Content-MD5",      "Content-Md5",      ContentMd5,      content_md5,      ~str;
+    25, "Content-Range",    "Content-Range",    ContentRange,    content_range,    ~str;
+    26, "Content-Type",     "Content-Type",     ContentType,     content_type,     headers::content_type::MediaType;
+    27, "Expires",          "Expires",          Expires,         expires,          extra::time::Tm;
+    28, "Last-Modified",    "Last-Modified",    LastModified,    last_modified,    extra::time::Tm;
 }
