@@ -9,7 +9,7 @@ use std::rt::io::extensions::ReaderUtil;
 use std::util::unreachable;
 use extra::time::{Tm, strptime};
 use extra::url::Url;
-use rfc2616::{is_token_item, CR, LF, SP, HT, COLON, DOUBLE_QUOTE, BACKSLASH};
+use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON, DOUBLE_QUOTE, BACKSLASH};
 
 use self::serialization_utils::{normalise_header_name};
 
@@ -57,7 +57,7 @@ pub mod allow;
 pub mod connection;
 //pub mod content_encoding;
 //pub mod content_range;
-//pub mod content_type;
+pub mod content_type;
 pub mod etag;
 pub mod host;
 
@@ -225,6 +225,99 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
             }
         }
         Some(output)
+    }
+
+    fn read_parameter(&mut self, already_read_semicolon: bool) -> Option<(~str, ~str)> {
+        if !already_read_semicolon && self.next() != Some(';' as u8) {
+            return None;
+        }
+        let key = match self.read_token() {
+            Some(t) => t,
+            None => return None,
+        };
+        if self.next() != Some('=' as u8) {
+            return None;
+        }
+        let value = match self.read_token_or_quoted_string() {
+            Some(t) => t,
+            None => return None,
+        };
+        Some((key, value))
+    }
+
+    /// Read parameters from the current position.
+    ///
+    /// The return value ``None`` is reserved for syntax errors in parameters that exist; a mere
+    /// absense of parameters will lead to returning an empty vector instead.
+    fn read_parameters(&mut self) -> Option<~[(~str, ~str)]> {
+        let mut result = ~[];
+        loop {
+            match self.next() {
+                Some(b) if b == ';' as u8 => {
+                    match self.read_parameter(true) {
+                        Some(parameter) => result.push(parameter),
+                        None => return None,
+                    }
+                },
+                Some(b) => {
+                    // TODO: manually prove this; can LWS trip it up?
+                    assert_eq!(self.next_byte, None);
+                    self.next_byte = Some(b);
+                    return Some(result);
+                },
+                None => return Some(result),
+            }
+        }
+    }
+
+    /// Read a token (RFC 2616 definition) from the header value.
+    ///
+    /// If no token begins at the current point of the header, ``None`` will also be returned.
+    pub fn read_token_or_quoted_string(&mut self) -> Option<~str> {
+
+        let mut output = ~"";
+        match self.next() {
+            Some(b) if b == '"' as u8 => {
+                // It is a quoted-string.
+                enum State { Normal, Escaping }
+                let mut state = Normal;
+                loop {
+                    match self.next() {
+                        None => return None,
+                        Some(b) => state = match state {
+                            Normal if b == '\\' as u8 => Escaping,
+                            Normal if b == '"' as u8 => break,
+                            Normal | Escaping => { output.push_char(b as char); Normal },
+                        }
+                    }
+                }
+                return Some(output);
+            },
+            Some(b) => self.next_byte = Some(b),
+            None => return None,
+        }
+        // OK, it wasn't a quoted-string. Must be a token.
+        loop {
+            match self.next() {
+                None => break,
+                Some(b) if is_separator(b) => {
+                    assert_eq!(self.next_byte, None);
+                    self.next_byte = Some(b);
+                },
+                Some(b) if is_token_item(b) => {
+                    output.push_char(b as char);
+                },
+                Some(b) => {
+                    printfln!("TODO: what should be done with a token ended with a non-separator? \
+(With token %?, %? was read.)", output, b as char);
+                }
+            }
+        }
+        if output.len() == 0 {
+            None
+        } else {
+            Some(output)
+        }
     }
 
     /// Read a token (RFC 2616 definition) from the header value.
@@ -536,7 +629,7 @@ mod test {
 
     fn test_http_value_str() {
         assert_eq!(~"".http_value(), ~"");
-        assert_eq!(~"foo \"bar baz\", yay".http_value(), ~"foo \"bar baz\", yay"));
+        assert_eq!(~"foo \"bar baz\", yay".http_value(), ~"foo \"bar baz\", yay");
     }
 
     fn test_to_stream_str() {
@@ -555,7 +648,7 @@ mod test {
 
     fn test_http_value_uint() {
         assert_eq!(0u.http_value(), ~"0");
-        assert_eq!(123456789u.http_value(), ~"123456789"));
+        assert_eq!(123456789u.http_value(), ~"123456789");
     }
 
     fn test_to_stream_uint() {

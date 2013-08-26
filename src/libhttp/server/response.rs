@@ -5,6 +5,7 @@ use buffer::BufTcpStream;
 use server::Request;
 use status;
 use headers::response::HeaderCollection;
+use headers::content_type::MediaType;
 
 /**
  * The HTTP version tag which will be used for the response.
@@ -39,7 +40,7 @@ impl<'self> ResponseWriter<'self> {
 
     /// Write a response with the specified Content-Type and content; the Content-Length header is
     /// set based upon the contents
-    pub fn write_content_auto(&mut self, content_type: ~str, content: ~str) {
+    pub fn write_content_auto(&mut self, content_type: MediaType, content: ~str) {
         self.headers.content_type = Some(content_type);
         let cbytes = content.as_bytes();
         self.headers.content_length = Some(cbytes.len());

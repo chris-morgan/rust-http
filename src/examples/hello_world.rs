@@ -8,6 +8,7 @@ use std::rt::io::Writer;
 use extra::time;
 
 use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};
+use http::headers::content_type::MediaType;
 
 #[deriving(Clone)]
 struct HelloWorldServer;
@@ -20,7 +21,11 @@ impl Server for HelloWorldServer {
     fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
         w.headers.content_length = Some(15);
-        w.headers.content_type = Some(~"text/plain; charset=UTF-8");
+        w.headers.content_type = Some(MediaType {
+            type_: ~"text",
+            subtype: ~"plain",
+            parameters: ~[(~"charset", ~"UTF-8")]
+        });
         w.headers.server = Some(~"Example");
 
         w.write(bytes!("Hello, World!"));

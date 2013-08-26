@@ -26,19 +26,32 @@ impl ToStr for MediaType {
 
 impl super::HeaderConvertible for MediaType {
     fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>) -> Option<MediaType> {
-        let type_ = reader.read_token();
-        if reader.next() != '/' as u8 {
+        let type_ = match reader.read_token() {
+            Some(v) => v,
+            None => return None,
+        };
+        if reader.next() != Some('/' as u8) {
             return None;
         }
-        let subtype = reader.read_token();
+        let subtype = match reader.read_token() {
+            Some(v) => v,
+            None => return None,
+        };
         match reader.read_parameters() {
-            Some(parameters) if reader.verify_consumed() =>
-                Some(MediaType {
-                    type_: type_,
-                    subtype: subtype,
-                    parameters: parameters,
-                }),
-            _ => None,
+            // At the time of writing, ``Some(parameters) if reader.verify_consumed()`` was not
+            // permitted: "cannot bind by-move into a pattern guard"
+            Some(parameters) => {
+                if reader.verify_consumed() {
+                    None
+                } else {
+                    Some(MediaType {
+                        type_: type_,
+                        subtype: subtype,
+                        parameters: parameters,
+                    })
+                }
+            },
+            None => None,
         }
     }
 
