@@ -208,7 +208,7 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
     pub fn read_quoted_string(&mut self, already_opened: bool) -> Option<~str> {
         enum State { Start, Normal, Escaping }
 
-        let mut state = if already_opened { Start } else { Normal };
+        let mut state = if already_opened { Normal } else { Start };
         let mut output = ~"";
         loop {
             match self.next() {
