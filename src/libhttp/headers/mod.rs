@@ -628,15 +628,15 @@ mod test {
     }
 
     fn test_http_value_str() {
-        assert_eq!(~"".http_value(), ~"");
-        assert_eq!(~"foo \"bar baz\", yay".http_value(), ~"foo \"bar baz\", yay");
+        assert_eq!((~"").http_value(), ~"");
+        assert_eq!((~"foo \"bar baz\", yay").http_value(), ~"foo \"bar baz\", yay");
     }
 
     fn test_to_stream_str() {
         let s = ~"";
-        assert_eq!(to_stream_into_str(&s, ~""));
+        assert_eq!(to_stream_into_str(&s), ~"");
         let s = ~"foo \"bar baz\", yay";
-        assert_eq!(to_stream_into_str(&s, ~"foo \"bar baz\", yay"));
+        assert_eq!(to_stream_into_str(&s), ~"foo \"bar baz\", yay");
     }
 
     fn test_from_stream_uint() {
@@ -652,8 +652,8 @@ mod test {
     }
 
     fn test_to_stream_uint() {
-        assert_eq!(to_stream_into_str(&0u, ~"0"));
-        assert_eq!(to_stream_into_str(&123456789u, ~"123456789"));
+        assert_eq!(to_stream_into_str(&0u), ~"0");
+        assert_eq!(to_stream_into_str(&123456789u), ~"123456789");
     }
 
     fn sample_tm(zone: ~str) -> Tm {
