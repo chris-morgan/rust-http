@@ -44,15 +44,14 @@ build/%:: src/%.rs $(libhttp_so)
 
 examples: build/examples/apache_fake build/examples/hello_world build/examples/info build/examples/client/client
 
-check: $(libhttp_files)
+build/tests: $(libhttp_files)
 	$(RUSTC) $(RUSTFLAGS) --test -o build/tests src/libhttp/lib.rs
+
+check: build/tests
 	build/tests --test
 
-clean-tests:
-	rm -f build/tests
-
-clean: clean-tests
+clean:
 	rm -rf src/libhttp/generated/ src/libhttp/codegen/codegen
 	rm -rf build/
 
-.PHONY: all examples clean check clean-tests
+.PHONY: all examples clean check
