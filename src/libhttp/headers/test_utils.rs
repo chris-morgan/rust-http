@@ -5,7 +5,6 @@ use headers::{HeaderConvertible, HeaderValueByteIterator};
 pub fn from_stream_with_str<T: HeaderConvertible>(s: &str) -> Option<T> {
     let bytes = s.as_bytes();
     let mut reader = MemReader::new(bytes.into_owned());
-    reader.buf.push_all(s.as_bytes());
     reader.buf.push_all(bytes!("\r\n/"));
     let mut iter = HeaderValueByteIterator::new(&mut reader);
     HeaderConvertible::from_stream(&mut iter)

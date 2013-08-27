@@ -599,7 +599,26 @@ impl HeaderConvertible for Tm {
             Err(*) => ()
         }
 
-        match strptime(value, "%c") {  // ANSI C's asctime() format
+        // FIXME: remove this if/when I take automatic LWS collapsing out of
+        // HeaderValueByteIterator.next(). This is a nasty hack. asctime is formatted with a leading
+        // zero on a single-digit day of month, so:
+        //
+        //     Sun Nov  6 08:49:37 1994
+        //
+        // But the LWS collapsing currently (and unsatisfactorily) employed breaks that.
+        // There's no suitable format for this in strptime, so we must (gulp) add it back in.
+
+        let mut asctime_value;
+        if value[9] == ' ' as u8 {
+            // Single digit day of month
+            asctime_value = value.slice_to(8).to_owned();
+            asctime_value.push_char(' ');
+            asctime_value.push_str(value.slice_from(8));
+        } else {
+            // Double digit day of month
+            asctime_value = value.to_owned();
+        }
+        match strptime(asctime_value, "%c") {  // ANSI C's asctime() format
             Ok(time) => Some(time),
             Err(*) => None
         }
@@ -689,6 +708,10 @@ mod test {
     #[test]
     fn test_from_stream_asctime() {
         assert_eq!(from_stream_with_str("Sun Nov  6 08:49:37 1994"), Some(sample_tm(~"")));
+        // According to the spec, this should fail; but at present it succeeds. See
+        // HeaderConvertible::from_stream<Tm> above for more info.
+        // This is here so that I don't leave slowing-down code in there when I fix it. :-)
+        assert_eq!(from_stream_with_str("Sun Nov 6 08:49:37 1994"), Some(sample_tm(~"")));
     }
 
     /// Test `http_value`, which outputs an RFC 1123 time

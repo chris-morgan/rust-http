@@ -3,7 +3,7 @@
 use std::vec;
 use std::ascii::Ascii;
 use std::rt::io::Writer;
-use rfc2616::{is_token, is_token_item};
+use rfc2616::is_token;
 
 /// Normalise an HTTP header name.
 ///
@@ -130,60 +130,6 @@ pub fn comma_join(values: &[&str]) -> ~str {
     values.connect(", ")
 }
 
-pub fn parameter_split(input: &str) -> Option<~[(~str, ~str)]> {
-    enum State { Start, Key, KeyEnd, Token, QuotedString, QuotedStringEscape, QuotedStringEnd }
-    let mut state = Start;
-    let mut output = ~[];
-    let mut key = ~"";
-    let mut value = ~"";
-    for c in input.iter() {
-        if c > '\x7f' {
-            // Non-ASCII (TODO: better way to check?)
-            return None;
-        }
-        state = match state {
-            Start | Key if is_token_item(c as u8) => {
-                key.push_char(c);
-                Key
-            },
-            Key if c == '=' => KeyEnd,
-            Token if is_token_item(c as u8) => {
-                value.push_char(c);
-                Token
-            },
-            KeyEnd if c == '"' => QuotedString,
-            KeyEnd if is_token_item(c as u8) => {
-                value.push_char(c);
-                Token
-            },
-            QuotedString if c == '\\' => QuotedStringEscape,
-            QuotedString if c == '"' => QuotedStringEnd,
-            QuotedString => {
-                value.push_char(c);
-                QuotedStringEnd
-            },
-            QuotedStringEscape => {
-                value.push_char(c);
-                QuotedString
-            },
-            Token | QuotedStringEnd if c == ';' => {
-                output.push((key, value));
-                key = ~"";
-                value = ~"";
-                Start
-            },
-            _ => return None,
-        }
-    }
-    match state {
-        Token | QuotedStringEnd => {
-            output.push((key, value));
-        },
-        _ => return None,
-    }
-    Some(output)
-}
-
 pub fn push_quality(mut s: ~str, quality: Option<float>) -> ~str {
     // TODO: remove second and third decimal places if zero, and use a better quality type anyway
     match quality {
@@ -242,17 +188,19 @@ pub fn unquote_string(s: &str) -> Option<~str> {
     let mut output = ~"";
     // Strings with escapes cause overallocation, but it's not worth a second pass to avoid this!
     output.reserve(s.len() - 2);
-    for c in s.iter() {
-        state = match state {
-            Start if c == '"' => Normal,
-            Start => return None,
-            Normal if c == '\\' => Escaping,
-            Normal if c == '"' => End,
-            Normal | Escaping => { output.push_char(c); Normal },
-            End => return None,
+    let mut iter = s.iter();
+    loop {
+        state = match (state, iter.next()) {
+            (Start, Some(c)) if c == '"' => Normal,
+            (Start, Some(_)) => return None,
+            (Normal, Some(c)) if c == '\\' => Escaping,
+            (Normal, Some(c)) if c == '"' => End,
+            (Normal, Some(c)) | (Escaping, Some(c)) => { output.push_char(c); Normal },
+            (End, Some(_)) => return None,
+            (End, None) => return Some(output),
+            (_, None) => return None,
         }
     }
-    Some(output)
 }
 
 /// Parse a ( token | quoted-string ). Returns ``None`` if it is not valid.
@@ -340,22 +288,6 @@ mod test {
     }
 
     #[test]
-    fn test_parameter_split() {
-        assert_eq!(parameter_split(""), None);
-        assert_eq!(parameter_split("foo=bar"), None);
-        assert_eq!(parameter_split(";foo=bar"), Some(~[(~"foo", ~"bar")]));
-        assert_eq!(parameter_split(";foo=not/a/token"), None);
-        assert_eq!(parameter_split(";foo=bar;baz=quux"),
-                   Some(~[(~"foo", ~"bar"), (~"baz", ~"quux")]));
-        assert_eq!(parameter_split(";foo=bar;baz=quux;"), None);
-        assert_eq!(parameter_split(";foo=bar baz;quux=zog"), None);
-        assert_eq!(parameter_split(";foo=\"bar baz\";quux=zog"),
-                   Some(~[(~"foo", ~"bar baz"), (~"quux", ~"zog")]));
-        assert_eq!(parameter_split(";foo=\"bar baz\";quux=\"don't panic\""),
-                   Some(~[(~"foo", ~"bar baz"), (~"quux", ~"don't panic")]));
-    }
-
-    #[test]
     fn test_push_quality() {
         assert_eq!(push_quality(~"foo", None), ~"foo");
         assert_eq!(push_quality(~"foo", Some(0f)), ~"foo;q=0.000");
@@ -429,6 +361,6 @@ mod test {
         assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz"), (~"quux", ~"fuzz zee")]),
                    ~"foo;bar=baz;quux=\"fuzz zee\"");
         assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz/quux"), (~"fuzz", ~"zee")]),
-                   ~"foo;bar=\"baz quux\";fuzz=zee");
+                   ~"foo;bar=\"baz/quux\";fuzz=zee");
     }
 }
