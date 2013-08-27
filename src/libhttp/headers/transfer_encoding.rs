@@ -3,7 +3,9 @@
 //! Transfer-Encoding       = "Transfer-Encoding" ":" 1#transfer-coding
 
 use std::ascii::StrAsciiExt;
-use std::rt::io::Reader;
+use std::rt::io::{Reader, Writer};
+use headers::serialization_utils::{WriterUtil, push_parameters};
+use headers::{CommaConsumed, EndOfValue, ErrCommaNotFound};
 
 /// RFC 2616, section 3.6:
 ///
@@ -24,14 +26,15 @@ impl super::HeaderConvertible for ~[TransferCoding] {
                 Some(token) => {
                     let token = token.to_ascii_lower();
                     if token.as_slice() == "chunked" {
-                        result.append(Chunked);
+                        result.push(Chunked);
                     } else {
                         match reader.read_parameters() {
-                            Some(parameters) => result.append(TransferExtension(token, parameters)),
+                            Some(parameters) => result.push(TransferExtension(token, parameters)),
                             None => return None,
                         }
                     }
                 }
+                None => return None,
             }
             match reader.consume_comma_lws() {
                 CommaConsumed => loop,
@@ -44,25 +47,25 @@ impl super::HeaderConvertible for ~[TransferCoding] {
 
     fn to_stream<T: Writer>(&self, writer: &mut T) {
         for tc in self.iter() {
-            match tc {
+            match *tc {
                 Chunked => writer.write(bytes!("chunked")),
-                TransferExtension(token, parameters) => {
-                    writer.write_token(token);
-                    writer.write_parameters(parameters);
+                TransferExtension(ref token, ref parameters) => {
+                    writer.write_token(*token);
+                    writer.write_parameters(*parameters);
                 }
             }
-            out.write(bytes!(", "));
+            writer.write(bytes!(", "));
         }
     }
 
     fn http_value(&self) -> ~str {
-        let out = ~"";
+        let mut out = ~"";
         for tc in self.iter() {
-            match tc {
+            match *tc {
                 Chunked => out.push_str("chunked"),
-                TransferExtension(token, parameters) => {
-                    out.push_token(token);
-                    out.push_parameters(parameters);
+                TransferExtension(ref token, ref parameters) => {
+                    out.push_str(*token);
+                    out = push_parameters(out, *parameters);
                 }
             }
             out.push_str(", ");

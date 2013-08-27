@@ -64,6 +64,13 @@ pub mod transfer_encoding;
 
 pub type DeltaSeconds = u64;
 
+#[deriving(Clone, DeepClone, Eq)]
+pub enum ConsumeCommaLWSResult {
+    CommaConsumed,
+    EndOfValue,
+    ErrCommaNotFound,
+}
+
 pub trait HeaderEnum {
     fn header_name(&self) -> ~str;
     fn header_value(&self) -> ~str;
@@ -200,6 +207,37 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
             out.push_char(b as char);
         }*/
         out
+    }
+
+    fn consume_optional_lws(&mut self) {
+        match self.next() {
+            Some(b) if b != ' ' as u8 => {
+                // TODO: manually verify this holds
+                assert_eq!(self.next_byte, None);
+                self.next_byte = Some(b);
+            },
+            _ => (),
+        }
+    }
+
+    /// Return values:
+    /// - CommaConsumed if there was a comma and it was consumed;
+    /// - EndOfValue if the header value has been completely consumed;
+    /// - ErrCommaNotFound if the next thing wasn't a comma (this is an error state)
+    fn consume_comma_lws(&mut self) -> ConsumeCommaLWSResult {
+        self.consume_optional_lws();
+        match self.next() {
+            Some(b) if b == ',' as u8 => {
+                self.consume_optional_lws();
+                CommaConsumed
+            },
+            Some(_) => {
+                ErrCommaNotFound
+            },
+            None => {
+                EndOfValue
+            }
+        }
     }
 
     /// Read a quoted-string from the current position.
