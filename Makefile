@@ -17,6 +17,7 @@ libhttp_files=\
 			  src/libhttp/headers/allow.rs \
 			  src/libhttp/headers/connection.rs \
 			  src/libhttp/headers/host.rs \
+		      src/libhttp/memstream.rs \
 		      src/libhttp/method.rs \
 		      src/libhttp/rfc2616.rs \
 		      src/libhttp/client/mod.rs \
