@@ -60,6 +60,7 @@ pub mod connection;
 pub mod content_type;
 pub mod etag;
 pub mod host;
+pub mod transfer_encoding;
 
 pub type DeltaSeconds = u64;
 
@@ -913,7 +914,7 @@ headers_mod! {
      2, "Date",              "Date",              Date,             date,              extra::time::Tm;
      3, "Pragma",            "Pragma",            Pragma,           pragma,            ~str;
      4, "Trailer",           "Trailer",           Trailer,          trailer,           ~str;
-     5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, ~str;
+     5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, ~[headers::transfer_encoding::TransferCoding];
      6, "Upgrade",           "Upgrade",           Upgrade,          upgrade,           ~str;
      7, "Via",               "Via",               Via,              via,               ~str;
      8, "Warning",           "Warning",           Warning,          warning,           ~str;
@@ -964,7 +965,7 @@ headers_mod! {
      2, "Date",              "Date",              Date,             date,              extra::time::Tm;
      3, "Pragma",            "Pragma",            Pragma,           pragma,            ~str;
      4, "Trailer",           "Trailer",           Trailer,          trailer,           ~str;
-     5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, ~str;
+     5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, ~[headers::transfer_encoding::TransferCoding];
      6, "Upgrade",           "Upgrade",           Upgrade,          upgrade,           ~str;
      7, "Via",               "Via",               Via,              via,               ~str;
      8, "Warning",           "Warning",           Warning,          warning,           ~str;

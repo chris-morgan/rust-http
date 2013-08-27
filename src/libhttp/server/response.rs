@@ -6,6 +6,7 @@ use server::Request;
 use status;
 use headers::response::HeaderCollection;
 use headers::content_type::MediaType;
+use headers::transfer_encoding::Chunked;
 
 /**
  * The HTTP version tag which will be used for the response.
@@ -81,7 +82,7 @@ impl<'self> ResponseWriter<'self> {
         // apply. In such a case, chunked MUST come last. This way prevents it from being extensible
         // thus, which is suboptimal.
         if self.headers.content_length == None {
-            self.headers.transfer_encoding = Some(~[headers::transfer_encoding::Chunked]);
+            self.headers.transfer_encoding = Some(~[Chunked]);
         } else {
             self.headers.transfer_encoding = None;
         }
