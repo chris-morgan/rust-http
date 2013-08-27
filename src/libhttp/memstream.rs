@@ -11,13 +11,13 @@ impl MemWriterFakeStream {
 }
 
 impl Writer for MemWriterFakeStream {
-    fn write(&mut self, buf: &[u8]) { (*self).write(buf) }
-    fn flush(&mut self) { (*self).flush() }
+    fn write(&mut self, buf: &[u8]) { (**self).write(buf) }
+    fn flush(&mut self) { (**self).flush() }
 }
 
 impl Seek for MemWriterFakeStream {
-    fn tell(&self) -> u64 { (*self).tell() }
-    fn seek(&mut self, pos: i64, style: SeekStyle) { (*self).seek(pos, style) }
+    fn tell(&self) -> u64 { (**self).tell() }
+    fn seek(&mut self, pos: i64, style: SeekStyle) { (**self).seek(pos, style) }
 }
 
 impl Reader for MemWriterFakeStream {
@@ -39,13 +39,13 @@ impl MemReaderFakeStream {
 }
 
 impl Reader for MemReaderFakeStream {
-    fn read(&mut self, buf: &mut [u8]) -> Option<uint> { (*self).read(buf) }
-    fn eof(&mut self) -> bool { (*self).eof() }
+    fn read(&mut self, buf: &mut [u8]) -> Option<uint> { (**self).read(buf) }
+    fn eof(&mut self) -> bool { (**self).eof() }
 }
 
 impl Seek for MemReaderFakeStream {
-    fn tell(&self) -> u64 { (*self).tell() }
-    fn seek(&mut self, pos: i64, style: SeekStyle) { (*self).seek(pos, style) }
+    fn tell(&self) -> u64 { (**self).tell() }
+    fn seek(&mut self, pos: i64, style: SeekStyle) { (**self).seek(pos, style) }
 }
 
 impl Writer for MemReaderFakeStream {
@@ -75,7 +75,7 @@ mod test {
     }
 
     #[test]
-    fn test_mem_reader() {
+    fn test_mem_reader_fake_stream() {
         let mut reader = MemReaderFakeStream::new(~[0, 1, 2, 3, 4, 5, 6, 7]);
         let mut buf = [];
         assert_eq!(reader.read(buf), Some(0));
