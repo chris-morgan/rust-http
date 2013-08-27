@@ -57,6 +57,10 @@ impl<'self> ResponseWriter<'self> {
 
     /// Write the Status-Line and headers of the response, in preparation for writing the body.
     ///
+    /// This also overrides the value of the Transfer-Encoding header
+    /// (``self.headers.transfer_encoding``), ensuring it is ``None`` if the Content-Length header
+    /// has been specified, or to ``chunked`` if it has not, thus switching to the chunked coding.
+    ///
     /// If the headers have already been written, this will fail. See also `try_write_headers`.
     pub fn write_headers(&mut self) {
         // This marks the beginning of the response (RFC2616 §6)
@@ -71,8 +75,25 @@ impl<'self> ResponseWriter<'self> {
         let s = fmt!("HTTP/1.1 %s\r\n", self.status.to_str());
         self.writer.write(s.as_bytes());
 
+        // FIXME: this is not an impressive way of handling it, but so long as chunked is the only
+        // transfer-coding we want to deal with it's tolerable. However, it is *meant* to be an
+        // extensible thing, whereby client and server could agree upon extra transformations to
+        // apply. In such a case, chunked MUST come last. This way prevents it from being extensible
+        // thus, which is suboptimal.
+        if self.headers.content_length == None {
+            self.headers.transfer_encoding = Some(~[headers::transfer_encoding::Chunked]);
+        } else {
+            self.headers.transfer_encoding = None;
+        }
         self.headers.write_all(self.writer);
         self.headers_written = true;
+        self.writer.writing_chunked_body = self.headers.content_length == None;
+    }
+
+    pub fn finish_response(&mut self) {
+        self.writer.finish_response();
+        // Ensure that we switch away from chunked in case another request comes on the same socket
+        self.writer.writing_chunked_body = false;
     }
 }
 

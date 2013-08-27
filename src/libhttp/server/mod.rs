@@ -106,12 +106,8 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                                     response.write_headers();
                                 },
                             }
-                            // This should not be necessary, but is, because of the Drop bug
-                            // apparent in BufferedStream. When that is fixed up, then it *may* be
-                            // suitable to remove flush() from here. I say "may" as it would mean
-                            // that time_finished might not include writing all the response (a
-                            // non-trivial time interval).
-                            response.flush();
+                            // Ensure the request is flushed, any Transfer-Encoding completed, etc.
+                            response.finish_response();
                             let time_finished = precise_time_ns();
                             child_perf_ch.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
 

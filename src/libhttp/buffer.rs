@@ -2,7 +2,6 @@
 
 use std::rt::io::{Reader, Writer, Stream};
 use std::rt::io::net::tcp::TcpStream;
-//use std::cast::transmute_mut;
 use std::cmp::min;
 use std::ptr;
 
@@ -27,6 +26,8 @@ struct BufferedStream<T> {
     /// The BufferedReader may need to be flushed for good control, but let it provide for such
     /// cases by not calling the wrapped object's flush method in turn.
     call_wrapped_flush: bool,
+
+    writing_chunked_body: bool,
 }
 
 impl<T: Reader + Writer /*Stream*/> BufferedStream<T> {
@@ -39,6 +40,7 @@ impl<T: Reader + Writer /*Stream*/> BufferedStream<T> {
             write_buffer: [0u8, ..WRITE_BUF_SIZE],
             write_len: 0u,
             call_wrapped_flush: call_wrapped_flush,
+            writing_chunked_body: false,
         }
     }
 }
@@ -87,6 +89,18 @@ impl<T: Reader> BufferedStream<T> {
         self.read_pos += 1;
         Some(self.read_buffer[self.read_pos - 1])
     }
+
+    /// Finish off writing a response: this flushes the writer and in case of chunked
+    /// Transfer-Encoding writes the ending zero-length chunk to indicate completion.
+    ///
+    /// At the time of calling this, headers MUST have been written, including the
+    /// ending CRLF, or else an invalid HTTP response may be written.
+    pub fn finish_response(&mut self) {
+        self.flush();
+        if self.writing_chunked_body {
+            self.wrapped.write(bytes!("0\r\n\r\n"));
+        }
+    }
 }
 
 impl<T: Reader> Reader for BufferedStream<T> {
@@ -118,28 +132,24 @@ impl<T: Reader> Reader for BufferedStream<T> {
     }
 }
 
-#[unsafe_destructor]
-impl<T: Writer> Drop for BufferedStream<T> {
-    fn drop(&self) {
-        // Clearly wouldn't be a good idea to finish without flushing!
-
-        // TODO: blocked on https://github.com/mozilla/rust/issues/4252
-        // Also compare usage of response.flush() in server.rs
-        //unsafe { transmute_mut(self) }.flush();
-    }
-}
-
 impl<T: Writer> Writer for BufferedStream<T> {
     fn write(&mut self, buf: &[u8]) {
         if buf.len() + self.write_len > self.write_buffer.len() {
             // This is the lazy approach which may involve two writes where it's really not
             // warranted. Maybe deal with that later.
+            if self.writing_chunked_body {
+                let s = fmt!("%u\r\n", self.write_len + buf.len());
+                self.wrapped.write(s.as_bytes());
+            }
             if self.write_len > 0 {
                 self.wrapped.write(self.write_buffer.slice_to(self.write_len));
                 self.write_len = 0;
             }
             self.wrapped.write(buf);
             self.write_len = 0;
+            if self.writing_chunked_body {
+                self.wrapped.write(bytes!("\r\n"));
+            }
         } else {
             // Safely copy buf onto the "end" of self.buffer
             unsafe {
@@ -153,7 +163,14 @@ impl<T: Writer> Writer for BufferedStream<T> {
             }
             self.write_len += buf.len();
             if self.write_len == self.write_buffer.len() {
-                self.wrapped.write(self.write_buffer);
+                if self.writing_chunked_body {
+                    let s = fmt!("%u\r\n", self.write_len);
+                    self.wrapped.write(s.as_bytes());
+                    self.wrapped.write(self.write_buffer);
+                    self.wrapped.write(bytes!("\r\n"));
+                } else {
+                    self.wrapped.write(self.write_buffer);
+                }
                 self.write_len = 0;
             }
         }
