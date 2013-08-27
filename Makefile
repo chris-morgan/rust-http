@@ -10,22 +10,12 @@ libhttp_files=\
 		      src/libhttp/common.rs \
 		      src/libhttp/generated/read_method.rs \
 		      src/libhttp/generated/status.rs \
-			  src/libhttp/headers/mod.rs \
-			  src/libhttp/headers/serialization_utils.rs \
-			  src/libhttp/headers/test_utils.rs \
-			  src/libhttp/headers/accept_ranges.rs \
-			  src/libhttp/headers/allow.rs \
-			  src/libhttp/headers/connection.rs \
-			  src/libhttp/headers/host.rs \
+		      $(wildcard src/libhttp/headers/*.rs) \
+		      $(wildcard src/libhttp/client/*.rs) \
+		      $(wildcard src/libhttp/server/*.rs) \
 		      src/libhttp/memstream.rs \
 		      src/libhttp/method.rs \
-		      src/libhttp/rfc2616.rs \
-		      src/libhttp/client/mod.rs \
-		      src/libhttp/client/request.rs \
-		      src/libhttp/client/response.rs \
-		      src/libhttp/server/mod.rs \
-		      src/libhttp/server/request.rs \
-		      src/libhttp/server/response.rs
+		      src/libhttp/rfc2616.rs
 
 all: $(libhttp_so) examples
 
