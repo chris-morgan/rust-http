@@ -71,10 +71,6 @@ impl Server for InfoServer {
             }
         }
         w.write(bytes!("</tbody></table>"));
-        // Server doesn't yet support the chunked transfer coding, nor was Content-Length specified,
-        // so we'd better close the connection to ensure the page finishes loading.
-        // DON'T COPY THIS WAY OF DOING THINGS. EVER. OR ELSE.
-        unsafe { ::std::cast::transmute::<&Request, &mut Request>(r).close_connection = true; }
     }
 }
 

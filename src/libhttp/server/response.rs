@@ -88,7 +88,13 @@ impl<'self> ResponseWriter<'self> {
         }
         self.headers.write_all(self.writer);
         self.headers_written = true;
-        self.writer.writing_chunked_body = self.headers.content_length == None;
+        if self.headers.content_length == None {
+            // Flush so that the chunked body stuff can start working correctly. TODO: don't
+            // actually flush it entirely, or else it'll send the headers in a separate TCP packet,
+            // which is bad for performance.
+            self.writer.flush();
+            self.writer.writing_chunked_body = true;
+        }
     }
 
     pub fn finish_response(&mut self) {

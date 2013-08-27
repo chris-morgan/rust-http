@@ -46,7 +46,10 @@ impl super::HeaderConvertible for ~[TransferCoding] {
     }
 
     fn to_stream<T: Writer>(&self, writer: &mut T) {
-        for tc in self.iter() {
+        for (i, tc) in self.iter().enumerate() {
+            if i != 0 {
+                writer.write(bytes!(", "));
+            }
             match *tc {
                 Chunked => writer.write(bytes!("chunked")),
                 TransferExtension(ref token, ref parameters) => {
@@ -54,13 +57,15 @@ impl super::HeaderConvertible for ~[TransferCoding] {
                     writer.write_parameters(*parameters);
                 }
             }
-            writer.write(bytes!(", "));
         }
     }
 
     fn http_value(&self) -> ~str {
         let mut out = ~"";
-        for tc in self.iter() {
+        for (i, tc) in self.iter().enumerate() {
+            if i != 0 {
+                out.push_str(", ");
+            }
             match *tc {
                 Chunked => out.push_str("chunked"),
                 TransferExtension(ref token, ref parameters) => {
@@ -68,7 +73,6 @@ impl super::HeaderConvertible for ~[TransferCoding] {
                     out = push_parameters(out, *parameters);
                 }
             }
-            out.push_str(", ");
         }
         out
     }

@@ -89,7 +89,9 @@ impl<T: Reader> BufferedStream<T> {
         self.read_pos += 1;
         Some(self.read_buffer[self.read_pos - 1])
     }
+}
 
+impl<T: Writer> BufferedStream<T> {
     /// Finish off writing a response: this flushes the writer and in case of chunked
     /// Transfer-Encoding writes the ending zero-length chunk to indicate completion.
     ///
@@ -135,10 +137,10 @@ impl<T: Reader> Reader for BufferedStream<T> {
 impl<T: Writer> Writer for BufferedStream<T> {
     fn write(&mut self, buf: &[u8]) {
         if buf.len() + self.write_len > self.write_buffer.len() {
-            // This is the lazy approach which may involve two writes where it's really not
+            // This is the lazy approach which may involve multiple writes where it's really not
             // warranted. Maybe deal with that later.
             if self.writing_chunked_body {
-                let s = fmt!("%u\r\n", self.write_len + buf.len());
+                let s = fmt!("%s\r\n", (self.write_len + buf.len()).to_str_radix(16));
                 self.wrapped.write(s.as_bytes());
             }
             if self.write_len > 0 {
@@ -164,7 +166,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
             self.write_len += buf.len();
             if self.write_len == self.write_buffer.len() {
                 if self.writing_chunked_body {
-                    let s = fmt!("%u\r\n", self.write_len);
+                    let s = fmt!("%s\r\n", self.write_len.to_str_radix(16));
                     self.wrapped.write(s.as_bytes());
                     self.wrapped.write(self.write_buffer);
                     self.wrapped.write(bytes!("\r\n"));
@@ -178,7 +180,14 @@ impl<T: Writer> Writer for BufferedStream<T> {
 
     fn flush(&mut self) {
         if self.write_len > 0 {
+            if self.writing_chunked_body {
+                let s = fmt!("%s\r\n", self.write_len.to_str_radix(16));
+                self.wrapped.write(s.as_bytes());
+            }
             self.wrapped.write(self.write_buffer.slice_to(self.write_len));
+            if self.writing_chunked_body {
+                self.wrapped.write(bytes!("\r\n"));
+            }
             self.write_len = 0;
         }
         if self.call_wrapped_flush {
