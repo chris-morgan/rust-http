@@ -219,7 +219,7 @@ impl Status {
     for &entry in entries.iter() {
         match entry {
             Left(heading) => out.write_str(fmt!("\n            // %s\n", heading)),
-            Right(status) => out.write_str(fmt!("            (%?, \"%s\")%s => %s,\n",
+            Right(status) => out.write_str(fmt!("            (%u, \"%s\")%s => %s,\n",
                                                 status.code,
                                                 status.reason.to_ascii_lower(),
                                                 status.reason_padding_spaces(),

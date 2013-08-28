@@ -1,4 +1,5 @@
 *~
+*.dSYM/
 src/libhttp/codegen/codegen
 src/libhttp/generated/
 build/
