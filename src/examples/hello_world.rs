@@ -20,7 +20,7 @@ impl Server for HelloWorldServer {
 
     fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
-        w.headers.content_length = Some(15);
+        w.headers.content_length = Some(14);
         w.headers.content_type = Some(MediaType {
             type_: ~"text",
             subtype: ~"plain",
@@ -28,7 +28,7 @@ impl Server for HelloWorldServer {
         });
         w.headers.server = Some(~"Example");
 
-        w.write(bytes!("Hello, World!"));
+        w.write(bytes!("Hello, World!\n"));
     }
 }
 
