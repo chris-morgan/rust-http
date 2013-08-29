@@ -255,14 +255,22 @@ impl Request {
             return (request, Err(status::BadRequest));
         }
 
-        request.close_connection = match request.headers.connection {
-            Some(headers::connection::Close) => true,
-            Some(headers::connection::Token(ref s)) => match s.as_slice() {
-                "keep-alive" => false,
-                _ => close_connection,
+        request.close_connection = close_connection;
+        match request.headers.connection {
+            Some(h) => for v in h {
+                match v {
+                    headers::connection::Close => {
+                        request.close_connection = true;
+                        break;
+                    },
+                    headers::connection::Token(ref s) if s.as_slice() == "keep-alive" => {
+                        request.close_connection = false;
+                        // No break; let it be overridden by close should some weird person do that
+                    },
+                }
             },
-            None => close_connection,
-        };
+            None => (),
+        }
 
         (request, Ok(()))
     }

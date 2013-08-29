@@ -7,7 +7,9 @@
 use std::ascii::StrAsciiExt;
 use std::rt::io::{Reader, Writer};
 
-#[deriving(Clone)]
+/// A value for the Connection header. Note that should it be a ``Token``, the string is in
+/// normalised header case (e.g. "Keep-Alive").
+#[deriving(Clone, DeepClone, Eq)]
 pub enum Connection {
     Token(~str),
     Close,
@@ -21,11 +23,13 @@ impl ToStr for Connection {
     }
 }
 
+impl super::CommaListHeaderConvertible for Connection;
+
 impl super::HeaderConvertible for Connection {
     fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
             -> Option<Connection> {
-        let s = reader.collect_to_str();
-        let slower = s.to_ascii_lower();
+        let s = reader.read_token();
+        let slower = normalise_header_name(s);
         if slower.as_slice() == "close" {
             Some(Close)
         } else {
@@ -46,4 +50,33 @@ impl super::HeaderConvertible for Connection {
             Token(ref s) => s.to_owned(),
         }
     }
+}
+
+#[test]
+fn test_connection() {
+    use headers::test_utils::*;
+    assert_conversion_correct("close", ~[Close]);
+    assert_conversion_correct("Foo", ~[Token(~"Foo")]);
+    assert_conversion_correct("Foo, Keep-Alive", ~[Token(~"Foo"), Token(~"Keep-Alive")]);
+    assert_conversion_correct("Foo, close", ~[Token(~"Foo"), Close]);
+    assert_conversion_correct("close, Bar", ~[Close, Token(~"Bar")]);
+    assert_interpretation_correct("close", ~[Close]);
+    assert_interpretation_correct("foo", ~[Token(~"Foo")]);
+    assert_interpretation_correct("foo \r\n , keep-alive", ~[Token(~"Foo"), Token(~"Keep-Alive")]);
+    assert_interpretation_correct("foo,close", ~[Token(~"Foo"), Close]);
+    assert_interpretation_correct("close, bar", ~[Close, Token(~"Bar")]);
+    assert_invalid("foo bar");
+}
+
+#[test]
+fn test_connection() {
+    assert_invalid::<Connection>("foo bar");
+    assert_invalid::<Connection>("foo, bar baz");
+    assert_invalid::<Connection>("foo, , baz");
+    assert_interpretation_correct("CLOSE", Close);
+    assert_conversion_correct("close", Close);
+    assert_conversion_correct("foo", Token(~"Foo"));
+    assert_conversion_correct("Keep-Alive", Token(~"Keep-Alive"));
+    assert_conversion_correct("close, Foo, Bar", ~[Close, Token(~"Foo"), Token("Bar")]);
+    assert_interpretation_correct("foo \r\n ,BAR,close", ~[Token(~"Foo"), Token("Bar"), Close]);
 }

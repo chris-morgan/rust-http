@@ -15,3 +15,24 @@ pub fn to_stream_into_str<T: HeaderConvertible>(v: &T) -> ~str {
     v.to_stream(&mut writer);
     str::from_bytes(writer.buf)
 }
+
+// Verify that a value cannot be successfully interpreted as a header value of the specified type.
+#[inline]
+pub fn assert_invalid<T: HeaderConvertible>(string: &str) {
+    assert_eq!(from_stream_with_str::<T>(string), None);
+}
+
+// Verify that all of the methods from the HeaderConvertible trait work correctly for the given
+// valid header value and correct decoded value.
+#[inline]
+pub fn assert_conversion_correct<T: HeaderConvertible>(string: &'static str, value: T) {
+    assert_eq!(from_stream_with_str(string), Some(value));
+    assert_eq!(to_stream_into_str(value), string);
+    assert_eq!(value.http_value(), string);
+}
+
+// Verify that from_stream interprets the given valid header value correctly.
+#[inline]
+pub fn assert_interpretation_correct<T: HeaderConvertible>(string: &'static str, value: T) {
+    assert_eq!(from_stream_with_str(string), Some(value));
+}

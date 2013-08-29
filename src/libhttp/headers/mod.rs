@@ -991,7 +991,7 @@ headers_mod! {
 
     // RFC 2616, Section 4.5: General Header Fields
      0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     ~str;
-     1, "Connection",        "Connection",        Connection,       connection,        headers::connection::Connection;
+     1, "Connection",        "Connection",        Connection,       connection,        ~[headers::connection::Connection];
      2, "Date",              "Date",              Date,             date,              extra::time::Tm;
      3, "Pragma",            "Pragma",            Pragma,           pragma,            ~str;
      4, "Trailer",           "Trailer",           Trailer,          trailer,           ~str;
@@ -1042,7 +1042,7 @@ headers_mod! {
 
     // RFC 2616, Section 4.5: General Header Fields
      0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     ~str;
-     1, "Connection",        "Connection",        Connection,       connection,        headers::connection::Connection;
+     1, "Connection",        "Connection",        Connection,       connection,        ~[headers::connection::Connection];
      2, "Date",              "Date",              Date,             date,              extra::time::Tm;
      3, "Pragma",            "Pragma",            Pragma,           pragma,            ~str;
      4, "Trailer",           "Trailer",           Trailer,          trailer,           ~str;
