@@ -17,63 +17,44 @@ pub enum TransferCoding {
     TransferExtension(~str, ~[(~str, ~str)]),
 }
 
-impl super::HeaderConvertible for ~[TransferCoding] {
+impl super::CommaListHeaderConvertible for TransferCoding;
+
+impl super::HeaderConvertible for TransferCoding {
     fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
             -> Option<~[TransferCoding]> {
-        let mut result = ~[];
-        loop {
-            match reader.read_token() {
-                Some(token) => {
-                    let token = token.to_ascii_lower();
-                    if token.as_slice() == "chunked" {
-                        result.push(Chunked);
-                    } else {
-                        match reader.read_parameters() {
-                            Some(parameters) => result.push(TransferExtension(token, parameters)),
-                            None => return None,
-                        }
+        match reader.read_token() {
+            Some(token) => {
+                let token = token.to_ascii_lower();
+                if token.as_slice() == "chunked" {
+                    Some(Chunked)
+                } else {
+                    match reader.read_parameters() {
+                        Some(parameters) => Some(TransferExtension(token, parameters)),
+                        None => None,
                     }
                 }
-                None => return None,
             }
-            match reader.consume_comma_lws() {
-                CommaConsumed => loop,
-                EndOfValue => break,
-                ErrCommaNotFound => return None,
-            }
+            None => None,
         }
-        Some(result)
     }
 
     fn to_stream<T: Writer>(&self, writer: &mut T) {
-        for (i, tc) in self.iter().enumerate() {
-            if i != 0 {
-                writer.write(bytes!(", "));
-            }
-            match *tc {
-                Chunked => writer.write(bytes!("chunked")),
-                TransferExtension(ref token, ref parameters) => {
-                    writer.write_token(*token);
-                    writer.write_parameters(*parameters);
-                }
+        match self {
+            Chunked => writer.write(bytes!("chunked")),
+            TransferExtension(ref token, ref parameters) => {
+                writer.write_token(*token);
+                writer.write_parameters(*parameters);
             }
         }
     }
 
     fn http_value(&self) -> ~str {
-        let mut out = ~"";
-        for (i, tc) in self.iter().enumerate() {
-            if i != 0 {
-                out.push_str(", ");
-            }
-            match *tc {
-                Chunked => out.push_str("chunked"),
-                TransferExtension(ref token, ref parameters) => {
-                    out.push_str(*token);
-                    out = push_parameters(out, *parameters);
-                }
+        match self {
+            Chunked => ~"chunked",
+            TransferExtension(ref token, ref parameters) => {
+                let out = token.to_owned();
+                push_parameters(out, *parameters)
             }
         }
-        out
     }
 }

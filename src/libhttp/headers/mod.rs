@@ -529,6 +529,49 @@ pub trait HeaderConvertible {
     fn http_value(&self) -> ~str;
 }
 
+/// A header with multiple comma-separated values. Implement this and a HeaderConvertible
+/// implementation for ~[T] is yours for free—just make sure your reading does not consume the
+/// comma.
+pub trait CommaListHeaderConvertible: HeaderConvertible;
+
+impl<T: CommaListHeaderConvertible> HeaderConvertible for ~[T] {
+    fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<~[T]> {
+        let mut result = ~[];
+        loop {
+            match HeaderConvertible::from_stream(reader) {
+                Some(h) => result.push(h),
+                None => return None,
+            };
+            match reader.consume_comma_lws() {
+                CommaConsumed => loop,
+                EndOfValue => break,
+                ErrCommaNotFound => return None,
+            }
+        }
+        Some(result)
+    }
+
+    fn to_stream<W: Writer>(&self, writer: &mut W) {
+        for (i, item) in self.iter().enumerate() {
+            if i != 0 {
+                writer.write(bytes!(", "));
+            }
+            item.to_stream(writer);
+        }
+    }
+
+    fn http_value(&self) -> ~str {
+        let mut out = ~"";
+        for (i, item) in self.iter().enumerate() {
+            if i != 0 {
+                out.push_str(", ");
+            }
+            out.push_str(item.http_value())
+        }
+        out
+    }
+}
+
 // Now let's have some common implementation types.
 // Some header types really are arbitrary strings. Let's cover that case here.
 impl HeaderConvertible for ~str {
