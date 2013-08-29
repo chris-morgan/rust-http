@@ -5,6 +5,7 @@ use std::rt::io::net::tcp::TcpStream;
 use std::cmp::min;
 use std::ptr;
 use common::read_uint;
+use rfc2616::{CR, LF};
 
 pub type BufTcpStream = BufferedStream<TcpStream>;
 
@@ -197,8 +198,8 @@ impl<T: Writer> Writer for BufferedStream<T> {
     }
 }
 
-struct ChunkedReader<R: Reader> {
-    reader: &mut BufferedStream<R>,
+struct ChunkedReader<'self, R> {
+    reader: &'self mut BufferedStream<R>,
     // Number of bytes remaining of the current chunk.
     // This INCLUDES the CRLF at the end of it.
     // The following guards apply when read() is not being called:
@@ -210,8 +211,8 @@ struct ChunkedReader<R: Reader> {
     finished: bool,
 }
 
-impl<R: Reader> ChunkedReader<R> {
-    pub fn new(reader: &mut BufferedStream<R>) {
+impl<'self, R: Reader> ChunkedReader<'self, R> {
+    pub fn new(reader: &'self mut BufferedStream<R>) -> ChunkedReader<'self, R> {
         ChunkedReader {
             reader: reader,
             chunk_size: 0,
@@ -224,7 +225,7 @@ impl<R: Reader> ChunkedReader<R> {
         // it. Why am I writing it?
         match read_uint(self.reader, 19, CR) {
             Some(n) => {
-                if self.reader.next_byte() == LF {
+                if self.reader.read_byte() == Some(LF) {
                     Some(n)
                 } else {
                     None
@@ -235,14 +236,14 @@ impl<R: Reader> ChunkedReader<R> {
     }
 }
 
-impl<R: Reader> Reader for ChunkedReader<R> {
+impl<'self, R: Reader> Reader for ChunkedReader<'self, R> {
     fn read(&mut self, buf: &mut [u8]) -> Option<uint> {
         if self.finished {
             return None;
         }
         if self.chunk_size == 0 {
             match self.read_chunk_header() {
-                Some(0) => {
+                Some(0) | None => {
                     self.finished = true;
                     return None;
                 },
@@ -253,7 +254,7 @@ impl<R: Reader> Reader for ChunkedReader<R> {
         }
         // Now I have a guarantee that self.chunk_size > 2. (The 2 being for the CR LF.)
         let buf_len = buf.len();
-        let chunk_size_available = chunk_size - 2;
+        let chunk_size_available = self.chunk_size - 2;
         match self.reader.read(buf.mut_slice_to(min(chunk_size_available, buf_len) + 1)) {
             Some(bytes_read) if bytes_read == chunk_size_available => {
                 // Read all the chunk. Now ensure the CR LF is there.

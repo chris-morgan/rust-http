@@ -1,9 +1,8 @@
 //! The Content-Type entity header, defined in RFC 2616, Section 14.17.
 use headers::serialization_utils::{push_parameters, WriterUtil};
-use rfc2616::is_token;
 use std::rt::io::{Reader, Writer};
 
-#[deriving(Clone)]
+#[deriving(Clone, Eq)]
 pub struct MediaType {
     type_: ~str,
     subtype: ~str,

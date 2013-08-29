@@ -4,8 +4,8 @@
 // whether they should be interpreted (I recall its being a header name thing for legacy code,
 // perhaps I should normalise header case or some such thing?)
 
-use std::ascii::StrAsciiExt;
 use std::rt::io::{Reader, Writer};
+use headers::serialization_utils::normalise_header_name;
 
 /// A value for the Connection header. Note that should it be a ``Token``, the string is in
 /// normalised header case (e.g. "Keep-Alive").
@@ -28,9 +28,11 @@ impl super::CommaListHeaderConvertible for Connection;
 impl super::HeaderConvertible for Connection {
     fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
             -> Option<Connection> {
-        let s = reader.read_token();
-        let slower = normalise_header_name(s);
-        if slower.as_slice() == "close" {
+        let s = match reader.read_token() {
+            Some(s) => normalise_header_name(s),
+            None => return None,
+        };
+        if s.as_slice() == "Close" {
             Some(Close)
         } else {
             Some(Token(s))
@@ -56,27 +58,74 @@ impl super::HeaderConvertible for Connection {
 fn test_connection() {
     use headers::test_utils::*;
     assert_conversion_correct("close", ~[Close]);
-    assert_conversion_correct("Foo", ~[Token(~"Foo")]);
-    assert_conversion_correct("Foo, Keep-Alive", ~[Token(~"Foo"), Token(~"Keep-Alive")]);
-    assert_conversion_correct("Foo, close", ~[Token(~"Foo"), Close]);
-    assert_conversion_correct("close, Bar", ~[Close, Token(~"Bar")]);
-    assert_interpretation_correct("close", ~[Close]);
-    assert_interpretation_correct("foo", ~[Token(~"Foo")]);
-    assert_interpretation_correct("foo \r\n , keep-alive", ~[Token(~"Foo"), Token(~"Keep-Alive")]);
-    assert_interpretation_correct("foo,close", ~[Token(~"Foo"), Close]);
-    assert_interpretation_correct("close, bar", ~[Close, Token(~"Bar")]);
-    assert_invalid("foo bar");
 }
-
 #[test]
-fn test_connection() {
-    assert_invalid::<Connection>("foo bar");
-    assert_invalid::<Connection>("foo, bar baz");
-    assert_invalid::<Connection>("foo, , baz");
+fn test_connection_2() {
+    use headers::test_utils::*;
+    assert_conversion_correct("Foo", ~[Token(~"Foo")]);
+}
+#[test]
+fn test_connection_3() {
+    use headers::test_utils::*;
+    assert_conversion_correct("Foo, Keep-Alive", ~[Token(~"Foo"), Token(~"Keep-Alive")]);
+}
+#[test]
+fn test_connection_4() {
+    use headers::test_utils::*;
+    assert_conversion_correct("Foo, close", ~[Token(~"Foo"), Close]);
+}
+#[test]
+fn test_connection_5() {
+    use headers::test_utils::*;
+    assert_conversion_correct("close, Bar", ~[Close, Token(~"Bar")]);
+}
+#[test]
+fn test_connection_6() {
+    use headers::test_utils::*;
+    assert_interpretation_correct("close", ~[Close]);
+}
+#[test]
+fn test_connection_7() {
+    use headers::test_utils::*;
+    assert_interpretation_correct("foo", ~[Token(~"Foo")]);
+}
+#[test]
+fn test_connection_8() {
+    use headers::test_utils::*;
+    assert_interpretation_correct("close \r\n , keep-ALIVE", ~[Close, Token(~"Keep-Alive")]);
+}
+#[test]
+fn test_connection_9() {
+    use headers::test_utils::*;
+    assert_interpretation_correct("foo,close", ~[Token(~"Foo"), Close]);
+}
+#[test]
+fn test_connection_10() {
+    use headers::test_utils::*;
+    assert_interpretation_correct("close, bar", ~[Close, Token(~"Bar")]);
+}
+#[test]
+fn test_connection_11() {
+    use headers::test_utils::*;
     assert_interpretation_correct("CLOSE", Close);
-    assert_conversion_correct("close", Close);
-    assert_conversion_correct("foo", Token(~"Foo"));
-    assert_conversion_correct("Keep-Alive", Token(~"Keep-Alive"));
-    assert_conversion_correct("close, Foo, Bar", ~[Close, Token(~"Foo"), Token("Bar")]);
-    assert_interpretation_correct("foo \r\n ,BAR,close", ~[Token(~"Foo"), Token("Bar"), Close]);
+}
+#[test]
+fn test_connection_12() {
+    use headers::test_utils::*;
+    assert_invalid::<~[Connection]>("foo bar");
+}
+#[test]
+fn test_connection_13() {
+    use headers::test_utils::*;
+    assert_invalid::<~[Connection]>("foo bar");
+}
+#[test]
+fn test_connection_14() {
+    use headers::test_utils::*;
+    assert_invalid::<~[Connection]>("foo, bar baz");
+}
+#[test]
+fn test_connection_15() {
+    use headers::test_utils::*;
+    assert_invalid::<~[Connection]>("foo, , baz");
 }

@@ -26,9 +26,11 @@ pub fn assert_invalid<T: HeaderConvertible>(string: &str) {
 // valid header value and correct decoded value.
 #[inline]
 pub fn assert_conversion_correct<T: HeaderConvertible>(string: &'static str, value: T) {
-    assert_eq!(from_stream_with_str(string), Some(value));
-    assert_eq!(to_stream_into_str(value), string);
-    assert_eq!(value.http_value(), string);
+    assert_eq!(from_stream_with_str(string), Some(value.clone()));
+    let s = to_stream_into_str(&value);
+    assert_eq!(s.as_slice(), string);
+    let s = value.http_value();
+    assert_eq!(s.as_slice(), string);
 }
 
 // Verify that from_stream interprets the given valid header value correctly.

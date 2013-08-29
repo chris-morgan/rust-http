@@ -257,8 +257,8 @@ impl Request {
 
         request.close_connection = close_connection;
         match request.headers.connection {
-            Some(h) => for v in h {
-                match v {
+            Some(ref h) => for v in h.iter() {
+                match *v {
                     headers::connection::Close => {
                         request.close_connection = true;
                         break;
@@ -267,6 +267,7 @@ impl Request {
                         request.close_connection = false;
                         // No break; let it be overridden by close should some weird person do that
                     },
+                    headers::connection::Token(_) => (),
                 }
             },
             None => (),

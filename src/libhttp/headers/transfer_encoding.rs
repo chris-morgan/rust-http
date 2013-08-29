@@ -5,7 +5,6 @@
 use std::ascii::StrAsciiExt;
 use std::rt::io::{Reader, Writer};
 use headers::serialization_utils::{WriterUtil, push_parameters};
-use headers::{CommaConsumed, EndOfValue, ErrCommaNotFound};
 
 /// RFC 2616, section 3.6:
 ///
@@ -21,7 +20,7 @@ impl super::CommaListHeaderConvertible for TransferCoding;
 
 impl super::HeaderConvertible for TransferCoding {
     fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
-            -> Option<~[TransferCoding]> {
+            -> Option<TransferCoding> {
         match reader.read_token() {
             Some(token) => {
                 let token = token.to_ascii_lower();
@@ -39,7 +38,7 @@ impl super::HeaderConvertible for TransferCoding {
     }
 
     fn to_stream<T: Writer>(&self, writer: &mut T) {
-        match self {
+        match *self {
             Chunked => writer.write(bytes!("chunked")),
             TransferExtension(ref token, ref parameters) => {
                 writer.write_token(*token);
@@ -49,7 +48,7 @@ impl super::HeaderConvertible for TransferCoding {
     }
 
     fn http_value(&self) -> ~str {
-        match self {
+        match *self {
             Chunked => ~"chunked",
             TransferExtension(ref token, ref parameters) => {
                 let out = token.to_owned();

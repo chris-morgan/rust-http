@@ -1,7 +1,7 @@
 use headers::serialization_utils::{push_quoted_string, quoted_string, WriterUtil};
 use std::rt::io::{Reader, Writer};
 
-#[deriving(Clone)]
+#[deriving(Clone, Eq)]
 pub struct EntityTag {
     weak: bool,
     opaque_tag: ~str,

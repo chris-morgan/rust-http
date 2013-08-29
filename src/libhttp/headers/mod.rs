@@ -10,6 +10,7 @@ use std::util::unreachable;
 use extra::time::{Tm, strptime};
 use extra::url::Url;
 use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON, DOUBLE_QUOTE, BACKSLASH};
+use method::Method;
 
 use self::serialization_utils::{normalise_header_name};
 
@@ -52,7 +53,6 @@ be the more canonical source.
 //pub mod accept_encoding;
 //pub mod accept_language;
 pub mod accept_ranges;
-pub mod allow;
 //pub mod cache_control;
 pub mod connection;
 //pub mod content_encoding;
@@ -370,6 +370,7 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
                 Some(b) if is_separator(b) => {
                     assert_eq!(self.next_byte, None);
                     self.next_byte = Some(b);
+                    break;
                 },
                 Some(b) if is_token_item(b) => {
                     output.push_char(b as char);
@@ -493,7 +494,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
 /**
  * A datatype for headers.
  */
-pub trait HeaderConvertible {
+pub trait HeaderConvertible: Eq + Clone {
     /**
      * Read a header value from an iterator over the raw value. That iterator compacts linear white
      * space to a single SP, so this static method should just expect a single SP. There will be no
@@ -532,7 +533,7 @@ pub trait HeaderConvertible {
 /// A header with multiple comma-separated values. Implement this and a HeaderConvertible
 /// implementation for ~[T] is yours for free—just make sure your reading does not consume the
 /// comma.
-pub trait CommaListHeaderConvertible: HeaderConvertible;
+pub trait CommaListHeaderConvertible: HeaderConvertible {}
 
 impl<T: CommaListHeaderConvertible> HeaderConvertible for ~[T] {
     fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<~[T]> {
@@ -601,6 +602,21 @@ impl HeaderConvertible for uint {
 impl HeaderConvertible for Url {
     fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<Url> {
         FromStr::from_str(reader.collect_to_str())
+    }
+
+    fn http_value(&self) -> ~str {
+        self.to_str()
+    }
+}
+
+impl CommaListHeaderConvertible for Method;
+
+impl HeaderConvertible for Method {
+    fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<Method> {
+        match reader.read_token() {
+            Some(s) => Method::from_str_or_new(s),
+            None => None,
+        }
     }
 
     fn http_value(&self) -> ~str {
@@ -1022,7 +1038,7 @@ headers_mod! {
     27, "User-Agent",          "User-Agent",          UserAgent,          user_agent,          ~str;
 
     // RFC 2616, Section 7.1: Entity Header Fields
-    28, "Allow",            "Allow",            Allow,           allow,            headers::allow::Allow;
+    28, "Allow",            "Allow",            Allow,           allow,            ~[::method::Method];
     29, "Content-Encoding", "Content-Encoding", ContentEncoding, content_encoding, ~str;
     30, "Content-Language", "Content-Language", ContentLanguage, content_language, ~str;
     31, "Content-Length",   "Content-Length",   ContentLength,   content_length,   uint;
@@ -1064,7 +1080,7 @@ headers_mod! {
     18, "WWW-Authenticate",   "Www-Authenticate",   WwwAuthenticate,   www_authenticate,   ~str;
 
     // RFC 2616, Section 7.1: Entity Header Fields
-    19, "Allow",            "Allow",            Allow,           allow,            headers::allow::Allow;
+    19, "Allow",            "Allow",            Allow,           allow,            ~[::method::Method];
     20, "Content-Encoding", "Content-Encoding", ContentEncoding, content_encoding, ~str;
     21, "Content-Language", "Content-Language", ContentLanguage, content_language, ~str;
     22, "Content-Length",   "Content-Length",   ContentLength,   content_length,   uint;
