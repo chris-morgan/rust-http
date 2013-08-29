@@ -1,6 +1,7 @@
 extern mod http;
 use http::client::RequestWriter;
 use http::method::Get;
+use http::headers::HeaderEnum;
 use std::str;
 use std::rt::io::Reader;
 use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
@@ -16,9 +17,9 @@ fn main() {
     };
     println("Yay! Started to get the response.");
     printfln!("Status: %s", response.status.to_str());
-    println("Headers: [extension headers only; TODO HeaderCollection.iter()]");
-    for (name, value) in response.headers.extensions.iter() {
-        printfln!(" - %s: %s", *name, *value);
+    println("Headers:");
+    for header in response.headers.iter() {
+        printfln!(" - %s: %s", header.header_name(), header.header_value());
     }
     print("\n");
     println("First 1024 bytes of response:");
