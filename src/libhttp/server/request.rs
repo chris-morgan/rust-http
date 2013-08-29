@@ -80,7 +80,7 @@ impl<'self, S: Reader + Writer> RequestBuffer<'self, S> {
                 }
             }
         }
-        match FromStr::from_str::<RequestUri>(request_uri) {
+        match FromStr::from_str(request_uri) {
             Some(r) => Ok(r),
             None => Err(status::BadRequest),
         }
@@ -187,7 +187,7 @@ impl FromStr for RequestUri {
             Some(AbsolutePath(request_uri.to_owned()))
         } else if request_uri.contains("/") {
             // An authority can't have a slash in it
-            match FromStr::from_str::<Url>(request_uri) {
+            match FromStr::from_str(request_uri) {
                 Some(url) => Some(AbsoluteUri(url)),
                 None => None,
             }

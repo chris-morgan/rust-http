@@ -104,7 +104,7 @@ impl<S: Reader + Writer> ResponseReader<S> {
         // to provide fast loading of standard headers, and the set of defined headers is distinct
         // between a request and response.
         let headers = {
-            let mut buffer = RequestBuffer::new::<S>(&mut stream);
+            let mut buffer = RequestBuffer::new(&mut stream);
             let mut headers = ~headers::response::HeaderCollection::new();
             loop {
                 let xxx = buffer.read_header::<headers::response::Header>();

@@ -255,7 +255,7 @@ impl IntConvertible for Status {
     fn from_int(n: int) -> Status {
         match n {
 ");
-    let mut matched_numbers = HashSet::new::<uint>();
+    let mut matched_numbers = HashSet::new();
     for &entry in entries.iter() {
         match entry {
             Left(heading) => out.write_str(fmt!("\n            // %s\n", heading)),
