@@ -236,7 +236,7 @@ impl ToStr for Status {
     /// Produce the HTTP status message incorporating both code and message,
     /// e.g. `ImATeapot.to_str() == \"418 I'm a teapot\"`
 	fn to_str(&self) -> ~str {
-		fmt!(\"%? %s\", self.code(), self.reason())
+		fmt!(\"%s %s\", self.code().to_str(), self.reason())
 	}
 }
 
