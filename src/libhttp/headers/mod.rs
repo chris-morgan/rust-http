@@ -6,7 +6,6 @@
 
 use std::rt::io::{Reader, Writer};
 use std::rt::io::extensions::ReaderUtil;
-use std::util::unreachable;
 use extra::time::{Tm, strptime};
 use extra::url::Url;
 use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON, DOUBLE_QUOTE, BACKSLASH};
@@ -485,7 +484,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.at_start = false;
                     return Some(b);
                 },
-                Finished => unreachable(),
+                Finished => unreachable!(),
             };
         }
     }
@@ -846,7 +845,6 @@ macro_rules! headers_mod {
             $attr;
 
             use extra;
-            use std::util::unreachable;
             use std::rt::io::{Reader, Writer};
             use extra::treemap::{TreeMap, TreeMapIterator};
             use headers;
@@ -973,13 +971,13 @@ macro_rules! headers_mod {
 
                     writer.write(match *self {
                         $($caps_ident(*) => bytes!($output_name, ": "),)*
-                        ExtensionHeader(*) => unreachable(),  // Already returned
+                        ExtensionHeader(*) => unreachable!(),  // Already returned
                     });
 
                     // FIXME: all the `h` cases satisfy HeaderConvertible, can it be simplified?
                     match *self {
                         $($caps_ident(ref h) => h.to_stream(writer),)*
-                        ExtensionHeader(*) =>     unreachable(),  // Already returned
+                        ExtensionHeader(*) =>     unreachable!(),  // Already returned
                     };
                     writer.write(bytes!("\r\n"));
                 }

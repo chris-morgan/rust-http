@@ -3,7 +3,6 @@ use method::{Method, Options};
 use status;
 use std::rt::io::{Reader, Writer};
 use std::rt::io::net::ip::SocketAddr;
-use std::util::unreachable;
 use rfc2616::{CR, LF, SP};
 use headers;
 use buffer::{BufferedStream, BufTcpStream};
@@ -110,7 +109,7 @@ impl<'self, S: Reader + Writer> RequestBuffer<'self, S> {
                 self.stream.poke_byte(b);
                 Ok(header)
             }
-            (Ok(_header), None) => unreachable()
+            (Ok(_header), None) => unreachable!()
         }
     }
 }

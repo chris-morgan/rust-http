@@ -1,6 +1,5 @@
 use std::io::{file_writer, Create, Truncate};
 use std::os;
-use std::util::unreachable;
 
 pub mod branchify;
 pub mod status;
@@ -12,7 +11,10 @@ fn main() {
 
     let args = os::args();
     match args.len() {
-        0 => unreachable(),
+        0 => {
+            println("usage: codegen [read_method|status].rs");
+            os::set_exit_status(1);
+        },
         2 => match args[1] {
             ~"read_method.rs" => read_method::generate(),
             ~"status.rs" => status::generate(),

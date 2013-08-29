@@ -10,7 +10,11 @@
 #[deny(non_camel_case_types)];
 //#[deny(missing_doc)];
 
+#[macro_escape];
+
 extern mod extra;
+
+macro_rules! unreachable(() => (fail!("internal error: entered unreachable code")))
 
 pub mod buffer;
 pub mod client;
