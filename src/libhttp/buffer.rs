@@ -4,6 +4,7 @@ use std::rt::io::{Reader, Writer, Stream};
 use std::rt::io::net::tcp::TcpStream;
 use std::cmp::min;
 use std::ptr;
+use common::read_uint;
 
 pub type BufTcpStream = BufferedStream<TcpStream>;
 
@@ -193,5 +194,92 @@ impl<T: Writer> Writer for BufferedStream<T> {
         if self.call_wrapped_flush {
             self.wrapped.flush();
         }
+    }
+}
+
+struct ChunkedReader<R: Reader> {
+    reader: &mut BufferedStream<R>,
+    // Number of bytes remaining of the current chunk.
+    // This INCLUDES the CRLF at the end of it.
+    // The following guards apply when read() is not being called:
+    // - 0 means no chunk current (possibly with ``self.finished == true``)
+    // - 1 cannot occur
+    // - 2 cannot occur
+    // - N means a chunk of (N - 2) bytes.
+    chunk_size: uint,
+    finished: bool,
+}
+
+impl<R: Reader> ChunkedReader<R> {
+    pub fn new(reader: &mut BufferedStream<R>) {
+        ChunkedReader {
+            reader: reader,
+            chunk_size: 0,
+            finished: false,
+        }
+    }
+
+    fn read_chunk_header(&mut self) -> Option<uint> {
+        // 20 is the maximal size of uint on 64-bit platform. I REALLY don't like this way of doing
+        // it. Why am I writing it?
+        match read_uint(self.reader, 19, CR) {
+            Some(n) => {
+                if self.reader.next_byte() == LF {
+                    Some(n)
+                } else {
+                    None
+                }
+            },
+            None => None,
+        }
+    }
+}
+
+impl<R: Reader> Reader for ChunkedReader<R> {
+    fn read(&mut self, buf: &mut [u8]) -> Option<uint> {
+        if self.finished {
+            return None;
+        }
+        if self.chunk_size == 0 {
+            match self.read_chunk_header() {
+                Some(0) => {
+                    self.finished = true;
+                    return None;
+                },
+                Some(n) => {
+                    self.chunk_size = n + 2;
+                }
+            }
+        }
+        // Now I have a guarantee that self.chunk_size > 2. (The 2 being for the CR LF.)
+        let buf_len = buf.len();
+        let chunk_size_available = chunk_size - 2;
+        match self.reader.read(buf.mut_slice_to(min(chunk_size_available, buf_len) + 1)) {
+            Some(bytes_read) if bytes_read == chunk_size_available => {
+                // Read all the chunk. Now ensure the CR LF is there.
+                self.chunk_size = 0;
+                if self.reader.read_byte() != Some(CR) || self.reader.read_byte() == Some(LF) {
+                    // FIXME: raise a condition here.
+                    self.finished = true;
+                    None
+                } else {
+                    Some(bytes_read)
+                }
+            },
+            Some(bytes_read) => {
+                // Haven't read all the chunk
+                self.chunk_size -= bytes_read;
+                Some(bytes_read)
+            },
+            None => {
+                self.finished = true;
+                // FIXME: raise a condition here.
+                None
+            },
+        }
+    }
+
+    fn eof(&mut self) -> bool {
+        self.finished
     }
 }
