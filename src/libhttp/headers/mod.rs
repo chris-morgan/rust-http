@@ -418,7 +418,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 },
 
                 // TODO: fix up these quoted-string rules, they're probably wrong (CRLF inside it?)
-                Normal if b == DOUBLE_QUOTE => {
+                Normal | CompactingLWS if b == DOUBLE_QUOTE => {
                     self.at_start = false;
                     self.state = InsideQuotedString;
                     return Some(b);
