@@ -108,7 +108,7 @@ impl<S: Reader + Writer> ResponseReader<S> {
             let mut headers = ~headers::response::HeaderCollection::new();
             loop {
                 let xxx = buffer.read_header::<headers::response::Header>();
-                printfln!("xxx = %?", xxx);
+                info!("header = %?", xxx);
                 match xxx {
                 //match buffer.read_header::<headers::response::Header>() {
                     Err(EndOfFile) => {

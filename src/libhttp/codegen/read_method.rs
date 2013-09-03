@@ -1,8 +1,8 @@
 use super::branchify::generate_branchified_method;
 use super::get_writer;
 
-pub fn generate() {
-    let writer = get_writer("read_method.rs");
+pub fn generate(output_dir: &Path) {
+    let writer = get_writer(output_dir, "read_method.rs");
     writer.write(bytes!("\
 // This automatically generated file is included in request.rs.
 {
