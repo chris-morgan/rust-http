@@ -23,7 +23,7 @@ src/libhttp/codegen/codegen: $(wildcard src/libhttp/codegen/*.rs)
 	$(RUSTC) $(RUSTFLAGS) $@.rs
 
 src/libhttp/generated/%.rs: src/libhttp/codegen/codegen
-	src/libhttp/codegen/codegen $(patsubst src/libhttp/generated/%,%,$@)
+	src/libhttp/codegen/codegen $(patsubst src/libhttp/generated/%,%,$@) src/libhttp/generated/
 
 $(libhttp_so): $(libhttp_files)
 	mkdir -p build/

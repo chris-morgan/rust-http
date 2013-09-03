@@ -68,8 +68,8 @@ fn camel_case(msg: &str) -> ~str {
 static mut longest_ident: uint = 0;
 static mut longest_reason: uint = 0;
 
-pub fn generate() {
-    let out = get_writer("status.rs");
+pub fn generate(output_dir: &Path) {
+    let out = get_writer(output_dir, "status.rs");
     let entries = [
         Left("1xx Informational"),
         StatusN(100, "Continue"),
