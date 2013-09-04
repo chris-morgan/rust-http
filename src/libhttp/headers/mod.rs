@@ -849,7 +849,6 @@ macro_rules! headers_mod {
             use extra::treemap::{TreeMap, TreeMapIterator};
             use headers;
             use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
-            use headers::serialization_utils::push_maybe_quoted_string;
 
             pub enum Header {
                 $($caps_ident($htype),)*
