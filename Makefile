@@ -38,7 +38,7 @@ examples: build/examples/apache_fake build/examples/hello_world build/examples/i
 build/tests: $(libhttp_files)
 	$(RUSTC) $(RUSTFLAGS) --test -o build/tests src/libhttp/lib.rs
 
-check: build/tests
+check: all build/tests
 	build/tests --test
 
 clean:
