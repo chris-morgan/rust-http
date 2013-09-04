@@ -109,7 +109,11 @@ impl<'self, S: Reader + Writer> RequestBuffer<'self, S> {
                 self.stream.poke_byte(b);
                 Ok(header)
             }
-            (Ok(_header), None) => unreachable!()
+            (Ok(header), None) => {
+                // This should have read an extra byte, on account of the CR LF SP possibility
+                error!("header with no next byte, did reading go wrong?");
+                Ok(header)
+            }
         }
     }
 }
