@@ -33,7 +33,7 @@ build/%:: src/%.rs $(libhttp_so)
 	mkdir -p '$(dir $@)'
 	$(RUSTC) $(RUSTFLAGS) $< -o $@ -L build/
 
-examples: build/examples/apache_fake build/examples/hello_world build/examples/info build/examples/client/client
+examples: build/examples/apache_fake build/examples/hello_world build/examples/info build/examples/request_uri build/examples/client/client
 
 build/tests: $(libhttp_files)
 	$(RUSTC) $(RUSTFLAGS) --test -o build/tests src/libhttp/lib.rs
