@@ -961,7 +961,7 @@ macro_rules! headers_mod {
                             s.reserve(name.len() + 4 + value.len());
                             s.push_str(*name);
                             s.push_str(": ");
-                            let s = push_maybe_quoted_string(s, *value);
+                            s.push_str(*value);
                             writer.write(s.as_bytes());
                             writer.write(bytes!("\r\n"));
                             return
