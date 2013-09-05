@@ -3,7 +3,7 @@ extern mod extra;
 use std::cell::Cell;
 use std::comm::SharedChan;
 use std::task::{spawn_with, spawn_supervised};
-use std::rt::io::{Listener, Writer};
+use std::rt::io::{Listener, Acceptor, Writer};
 use std::rt::io::net::ip::SocketAddr;
 use std::rt::io::io_error;
 use extra::time::precise_time_ns;
@@ -45,18 +45,16 @@ impl<T: Send + Clone + Server> ServerUtil for T {
     fn serve_forever(self) {
         let config = self.get_config();
         debug!("About to bind to %?", config.bind_address);
-        let mut optlistener = TcpListener::bind(config.bind_address);
-        debug!("Bind attempt completed");
-        let (perf_po, perf_ch) = stream();
-        let perf_ch = SharedChan::new(perf_ch);
-        spawn_with(perf_po, perf_dumper);
-        match optlistener {
+        match TcpListener::bind(config.bind_address).listen() {
             None => {
-                debug!("listen failed :-(");
+                error!("bind or listen failed :-(");
                 return;
-            }
-            Some(ref mut listener) => {
+            },
+            Some(ref mut acceptor) => {
                 debug!("listening");
+                let (perf_po, perf_ch) = stream();
+                let perf_ch = SharedChan::new(perf_ch);
+                spawn_with(perf_po, perf_dumper);
                 loop {
                     // OK, we're sort of shadowing an IoError here. Perhaps this should be done in a
                     // separate task so that it can safely fail...
@@ -64,7 +62,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                     let optstream = io_error::cond.trap(|e| {
                         error = Some(e);
                     }).inside(|| {
-                        listener.accept()
+                        acceptor.accept()
                     });
 
                     let time_start = precise_time_ns();
