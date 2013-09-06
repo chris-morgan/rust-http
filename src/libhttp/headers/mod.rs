@@ -269,17 +269,21 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
         if !already_read_semicolon && self.next() != Some(';' as u8) {
             return None;
         }
+        self.consume_optional_lws();
         let key = match self.read_token() {
             Some(t) => t,
             None => return None,
         };
+        self.consume_optional_lws();
         if self.next() != Some('=' as u8) {
             return None;
         }
+        self.consume_optional_lws();
         let value = match self.read_token_or_quoted_string() {
             Some(t) => t,
             None => return None,
         };
+        self.consume_optional_lws();
         Some((key, value))
     }
 
