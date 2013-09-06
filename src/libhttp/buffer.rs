@@ -32,7 +32,7 @@ struct BufferedStream<T> {
     writing_chunked_body: bool,
 }
 
-impl<T: Reader + Writer /*Stream*/> BufferedStream<T> {
+impl<T: Stream> BufferedStream<T> {
     pub fn new(stream: T, call_wrapped_flush: bool) -> BufferedStream<T> {
         BufferedStream {
             wrapped: stream,
@@ -46,8 +46,6 @@ impl<T: Reader + Writer /*Stream*/> BufferedStream<T> {
         }
     }
 }
-
-impl<T: Stream> Stream for BufferedStream<T>;
 
 impl<T: Reader> BufferedStream<T> {
     /// Poke a single byte back so it will be read next. For this to make sense, you must have just

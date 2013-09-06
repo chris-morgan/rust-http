@@ -1,4 +1,4 @@
-use std::rt::io::{Reader, Writer};
+use std::rt::io::{Reader, Stream};
 use std::rt::io::extensions::ReaderUtil;
 use std::rt::io::{io_error, OtherIoError, IoError};
 use client::request::RequestWriter;
@@ -36,7 +36,7 @@ fn bad_response_err() -> IoError {
     }
 }
 
-impl<S: Reader + Writer> ResponseReader<S> {
+impl<S: Stream> ResponseReader<S> {
     pub fn construct(mut stream: BufferedStream<S>, request: ~RequestWriter<S>)
             -> Result<ResponseReader<S>, ~RequestWriter<S>> {
         // TODO: raise condition at the points where Err is returned
@@ -143,7 +143,7 @@ impl<S: Reader + Writer> ResponseReader<S> {
     }
 }
 
-impl<S: Reader + Writer> Reader for ResponseReader<S> {
+impl<S: Stream> Reader for ResponseReader<S> {
     fn read(&mut self, buf: &mut [u8]) -> Option<uint> {
         self.stream.read(buf)
     }
