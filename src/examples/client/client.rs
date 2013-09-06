@@ -25,7 +25,7 @@ fn main() {
     println("First 1024 bytes of response:");
     let mut buf = [0, ..1024];
     match response.read(buf) {
-        Some(len) => printfln!("%?", str::from_bytes(buf.slice_to(len))),
+        Some(len) => printfln!("%?", str::from_utf8(buf.slice_to(len))),
         None => println("uh oh, got None :-("),
     }
     // TODO: read it *all*, correctly

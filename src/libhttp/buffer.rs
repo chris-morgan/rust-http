@@ -1,6 +1,6 @@
 /// Memory buffers for the benefit of `std::rt::io::net` which has slow read/write.
 
-use std::rt::io::{Reader, Writer, Stream};
+use std::rt::io::{Reader, Writer};
 use std::rt::io::net::tcp::TcpStream;
 use std::cmp::min;
 use std::ptr;
