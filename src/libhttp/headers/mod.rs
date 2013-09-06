@@ -1089,6 +1089,6 @@ headers_mod! {
     24, "Content-MD5",      "Content-Md5",      ContentMd5,      content_md5,      ~str;
     25, "Content-Range",    "Content-Range",    ContentRange,    content_range,    ~str;
     26, "Content-Type",     "Content-Type",     ContentType,     content_type,     headers::content_type::MediaType;
-    27, "Expires",          "Expires",          Expires,         expires,          extra::time::Tm;
+    27, "Expires",          "Expires",          Expires,         expires,          ~str; // TODO: Should be Tm
     28, "Last-Modified",    "Last-Modified",    LastModified,    last_modified,    extra::time::Tm;
 }
