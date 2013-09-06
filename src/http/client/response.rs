@@ -140,6 +140,10 @@ impl<S: Stream> ResponseReader<S> {
             headers: headers,
         })
     }
+
+    pub fn get_content(&mut self) ->  ~[u8] {
+        self.stream.read_to_end()
+    }
 }
 
 impl<S: Stream> Reader for ResponseReader<S> {

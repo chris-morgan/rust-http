@@ -228,13 +228,15 @@ impl RequestWriter<TcpStream> {
         }
     }
 
-    /// Send data to the remote server.
-    /// This method appends Content-Length
-    /// to headers and sends them. If headers
-    /// where already sent, it will send data
-    /// without the Content-Length.
-    // TODO: Implement chunked request, perhaps
-    // in a `send_chunked` method.
+    /**
+     * Send data to the remote server.
+     * This method appends Content-Length
+     * to headers and sends them. If headers
+     * where already sent, it will send data
+     * without the Content-Length.
+     * TODO: Implement chunked request, perhaps
+     * in a `send_chunked` method.
+     */
     pub fn send(&mut self, buf: &[u8]) {
 
         // NOTE: Should we make this fail?
