@@ -1,7 +1,8 @@
 use extra::url::Url;
 use method::Method;
 use std::rt::io::{Reader, Writer};
-use std::rt::io::net::ip::SocketAddr;
+use std::rt::io::net::get_host_addresses;
+use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::rt::io::net::tcp::TcpStream;
 use buffer::BufferedStream;
 use headers::request::HeaderCollection;
@@ -70,10 +71,39 @@ impl<S: Reader + Writer> RequestWriter<S> {
             },
         };
 
+        let remote_addr = url_to_socket_addr(&url);
+        info!("using ip address %s for %s", remote_addr.to_str(), url.host);
+
+        fn url_to_socket_addr(url: &Url) -> SocketAddr {
+            // Just grab the first IPv4 address
+            let addrs = get_host_addresses(url.host);
+            // TODO: Error handling
+            let addrs = addrs.unwrap();
+            let addr = do addrs.move_iter().find |&a| {
+                match a {
+                    Ipv4Addr(*) => true,
+                    _ => false
+                }
+            };
+
+            // TODO: Error handling
+            let addr = addr.unwrap();
+
+            let port = url.port.clone().unwrap_or_default(~"80");
+            let port = FromStr::from_str(port);
+            // TODO: Error handling
+            let port = port.unwrap();
+
+            SocketAddr {
+                ip: addr,
+                port: port
+            }
+        }
+
         let mut request = RequestWriter {
             stream: None,
             headers_written: false,
-            remote_addr: None,
+            remote_addr: Some(remote_addr),
             headers: ~HeaderCollection::new(),
             method: method,
             url: url,
