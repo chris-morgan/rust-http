@@ -86,55 +86,58 @@ pub fn generate_branchified_method(
         valid: &str,
         unknown: &str) {
 
-    // Write Formatted
-    macro_rules! wf(($($x:tt)*) => ({
-        let s = fmt!($($x)*);
-        writer.write(indentstr.as_bytes());
-        writer.write(s.as_bytes());
-        writer.write(bytes!("\n"));
-    }))
-
     fn r(writer: @Writer, branch: &ParseBranch, prefix: &str, indent: uint, read_call: &str,
             end: &str, max_len: &str, valid: &str, unknown: &str) {
         let indentstr = " ".repeat(indent * 4);
+        let w = |s: &str| {
+            writer.write(indentstr.as_bytes());
+            writer.write(s.as_bytes());
+            writer.write(bytes!("\n"));
+        };
         for &c in branch.matches.iter() {
             let next_prefix = fmt!("%s%c", prefix, c as char);
-            wf!("Some(b) if b == '%c' as u8 => match %s {", c as char, read_call);
+            w(fmt!("Some(b) if b == '%c' as u8 => match %s {", c as char, read_call));
             for b in branch.children.iter() {
                 r(writer, b, next_prefix, indent + 1, read_call, end, max_len, valid, unknown);
             }
             match branch.result {
-                Some(ref result) => wf!("    Some(b) if b == SP => return Some(%s),", *result),
-                None => wf!("    Some(b) if b == SP => return Some(%s),",
-                                unknown.replace("%s", fmt!("~\"%s\"", next_prefix))),
+                Some(ref result) => w(fmt!("    Some(b) if b == SP => return Some(%s),", *result)),
+                None => w(fmt!("    Some(b) if b == SP => return Some(%s),",
+                               unknown.replace("%s", fmt!("~\"%s\"", next_prefix)))),
             }
-            wf!("    Some(b) if %s => (\"%s\", b),", valid, next_prefix);
-            wf!("    _ => return None,");
-            wf!("},");
+            w(fmt!("    Some(b) if %s => (\"%s\", b),", valid, next_prefix));
+            w(fmt!("    _ => return None,"));
+            w(fmt!("},"));
         }
     }
     let indentstr = " ".repeat(indent * 4);
-    wf!("let (s, next_byte) = match %s {", read_call);
+    let w = |s: &str| {
+        writer.write(indentstr.as_bytes());
+        writer.write(s.as_bytes());
+        writer.write(bytes!("\n"));
+    };
+
+    w(fmt!("let (s, next_byte) = match %s {", read_call));
     for b in branches.iter() {
         r(writer, b, "", indent + 1, read_call, end, max_len, valid, unknown);
     }
-    wf!("    Some(b) if %s => (\"\", b),", valid);
-    wf!("    _ => return None,");
-    wf!("};");
-    wf!("// OK, that didn't pan out. Let's read the rest and see what we get.");
-    wf!("let mut s = s.to_owned();");
-    wf!("s.push_char(next_byte as char);");
-    wf!("loop {");
-    wf!("    match %s {", read_call);
-    wf!("        Some(b) if b == %s => return Some(%s),", end, unknown.replace("%s", "s"));
-    wf!("        Some(b) if %s => {", valid);
-    wf!("            if s.len() == %s {", max_len);
-    wf!("                // Too long; bad request");
-    wf!("                return None;");
-    wf!("            }");
-    wf!("            s.push_char(b as char);");
-    wf!("        },");
-    wf!("        _ => return None,");
-    wf!("    }");
-    wf!("}");
+    w(fmt!("    Some(b) if %s => (\"\", b),", valid));
+    w(fmt!("    _ => return None,"));
+    w(fmt!("};"));
+    w(fmt!("// OK, that didn't pan out. Let's read the rest and see what we get."));
+    w(fmt!("let mut s = s.to_owned();"));
+    w(fmt!("s.push_char(next_byte as char);"));
+    w(fmt!("loop {"));
+    w(fmt!("    match %s {", read_call));
+    w(fmt!("        Some(b) if b == %s => return Some(%s),", end, unknown.replace("%s", "s")));
+    w(fmt!("        Some(b) if %s => {", valid));
+    w(fmt!("            if s.len() == %s {", max_len));
+    w(fmt!("                // Too long; bad request"));
+    w(fmt!("                return None;"));
+    w(fmt!("            }"));
+    w(fmt!("            s.push_char(b as char);"));
+    w(fmt!("        },"));
+    w(fmt!("        _ => return None,"));
+    w(fmt!("    }"));
+    w(fmt!("}"));
 }
