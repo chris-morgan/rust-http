@@ -50,7 +50,7 @@ pub fn comma_split(value: &str) -> ~[~str] {
 }
 
 pub fn comma_split_iter<'a>(value: &'a str)
-        -> ::std::iterator::Map<'a, &'a str, &'a str, ::std::str::CharSplitIterator<'a, char>> {
+        -> ::std::iter::Map<'a, &'a str, &'a str, ::std::str::CharSplitIterator<'a, char>> {
     value.split_iter(',').map(|w| w.trim_left())
 }
 
