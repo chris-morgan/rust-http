@@ -1,6 +1,5 @@
 //! The Host request header, defined in RFC 2616, Section 14.23.
 
-use std::u16;
 use std::rt::io::Reader;
 
 /// A simple little thing for the host of a request
