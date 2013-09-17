@@ -33,7 +33,7 @@ impl super::HeaderConvertible for Host {
         Some(Host {
             name: hi.next().unwrap().to_owned(),
             port: match hi.next() {
-                Some(name) => u16::from_str(name),
+                Some(name) => from_str::<u16>(name),
                 None => None,
             },
         })
