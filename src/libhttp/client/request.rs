@@ -89,7 +89,7 @@ impl<S: Reader + Writer> RequestWriter<S> {
             // TODO: Error handling
             let addr = addr.unwrap();
 
-            let port = url.port.clone().unwrap_or_default(~"80");
+            let port = url.port.clone().unwrap_or(~"80");
             let port = FromStr::from_str(port);
             // TODO: Error handling
             let port = port.unwrap();
