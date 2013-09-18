@@ -1,6 +1,5 @@
 //! The Host request header, defined in RFC 2616, Section 14.23.
 
-use std::u16;
 use std::rt::io::Reader;
 
 /// A simple little thing for the host of a request
@@ -33,7 +32,7 @@ impl super::HeaderConvertible for Host {
         Some(Host {
             name: hi.next().unwrap().to_owned(),
             port: match hi.next() {
-                Some(name) => u16::from_str(name),
+                Some(name) => from_str::<u16>(name),
                 None => None,
             },
         })
