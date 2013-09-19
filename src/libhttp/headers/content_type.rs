@@ -40,15 +40,11 @@ impl super::HeaderConvertible for MediaType {
             // At the time of writing, ``Some(parameters) if reader.verify_consumed()`` was not
             // permitted: "cannot bind by-move into a pattern guard"
             Some(parameters) => {
-                if !reader.verify_consumed() {
-                    None
-                } else {
-                    Some(MediaType {
-                        type_: type_,
-                        subtype: subtype,
-                        parameters: parameters,
-                    })
-                }
+                reader.some_if_consumed(MediaType {
+                    type_: type_,
+                    subtype: subtype,
+                    parameters: parameters,
+                })
             },
             None => None,
         }

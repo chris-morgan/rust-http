@@ -196,6 +196,18 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
         self.next() == None
     }
 
+    /// Turn a constructed header value into an Option: Some(value) if the header value is consumed
+    /// or None if it is not, thus indicating: "I'm finished and expect nothing more. Anything more
+    /// is an error."
+    #[inline]
+    pub fn some_if_consumed<T>(&mut self, t: T) -> Option<T> {
+        if self.verify_consumed() {
+            Some(t)
+        } else {
+            None
+        }
+    }
+
     // TODO: can we have collect() implemented for ~str? That would negate the need for this.
     fn collect_to_str(&mut self) -> ~str {
         // TODO: be more efficient (char cast is a little unnecessary)
