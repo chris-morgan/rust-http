@@ -161,7 +161,7 @@ pub struct HeaderValueByteIterator<'self, R> {
 
 impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
 
-    fn new(reader: &'self mut R) -> HeaderValueByteIterator<'self, R> {
+    pub fn new(reader: &'self mut R) -> HeaderValueByteIterator<'self, R> {
         HeaderValueByteIterator {
             reader: reader,
             next_byte: None,
@@ -214,7 +214,7 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
         out
     }
 
-    fn consume_optional_lws(&mut self) {
+    pub fn consume_optional_lws(&mut self) {
         match self.next() {
             Some(b) if b != ' ' as u8 => {
                 // TODO: manually verify this holds
@@ -229,7 +229,7 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
     /// - CommaConsumed if there was a comma and it was consumed;
     /// - EndOfValue if the header value has been completely consumed;
     /// - ErrCommaNotFound if the next thing wasn't a comma (this is an error state)
-    fn consume_comma_lws(&mut self) -> ConsumeCommaLWSResult {
+    pub fn consume_comma_lws(&mut self) -> ConsumeCommaLWSResult {
         self.consume_optional_lws();
         match self.next() {
             Some(b) if b == ',' as u8 => {
