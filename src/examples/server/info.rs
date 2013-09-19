@@ -37,7 +37,7 @@ impl Server for InfoServer {
             <dt>Request URI</dt><dd>{:?}</dd>
             <dt>HTTP version</dt><dd>{:?}</dd>
             <dt>Close connection</dt><dd>{}</dd></dl>",
-            r.method.to_str(),
+            r.method,
             r.headers.host,
             r.request_uri,
             r.version,

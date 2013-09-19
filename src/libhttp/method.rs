@@ -1,3 +1,5 @@
+use std::fmt;
+
 /// HTTP methods, as defined in RFC 2616, §5.1.1.
 ///
 /// Method names are case-sensitive.
@@ -57,6 +59,23 @@ impl FromStr for Method {
             "PATCH"   => Some(Patch),
             _         => None
         }
+    }
+}
+
+impl fmt::Default for Method {
+    fn fmt(s: &Method, f: &mut fmt::Formatter) {
+        f.buf.write(match *s {
+            Options                => bytes!("OPTIONS"),
+            Get                    => bytes!("GET"),
+            Head                   => bytes!("HEAD"),
+            Post                   => bytes!("POST"),
+            Put                    => bytes!("PUT"),
+            Delete                 => bytes!("DELETE"),
+            Trace                  => bytes!("TRACE"),
+            Connect                => bytes!("CONNECT"),
+            Patch                  => bytes!("PATCH"),
+            ExtensionMethod(ref s) => s.as_bytes(),
+        })
     }
 }
 
