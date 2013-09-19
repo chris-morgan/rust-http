@@ -30,6 +30,6 @@ pub fn generate(output_dir: &Path) {
         "SP",
         "MAX_METHOD_LEN",
         "is_token_item(b)",
-        "ExtensionMethod(%s)");
+        "ExtensionMethod({})");
     writer.write(bytes!("}\n"));
 }

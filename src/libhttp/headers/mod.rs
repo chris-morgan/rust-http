@@ -350,8 +350,8 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
                     output.push_char(b as char);
                 },
                 Some(b) => {
-                    printfln!("TODO: what should be done with a token ended with a non-separator? \
-(With token %?, %? was read.)", output, b as char);
+                    println!("TODO: what should be done with a token ended with a non-separator? \
+(With token {}, {} was read.)", output, b as char);
                 }
             }
         }

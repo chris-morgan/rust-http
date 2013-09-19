@@ -215,12 +215,21 @@ fn perf_dumper(perf_po: Port<(u64, u64, u64, u64, u64)>) {
         i += 1;
         if i % PERF_DUMP_FREQUENCY == 0 {
             println("");
-            println(fmt!("%? requests made thus far. Current means:", i));
-            println(fmt!("- Total:               100%%, %12?", td_total / i));
-            println(fmt!("- Spawn:               %3?%%, %12?", 100 * td_spawn / td_total, td_spawn / i));
-            println(fmt!("- Load request:        %3?%%, %12?", 100 * td_request / td_total, td_request / i));
-            println(fmt!("- Initialise response: %3?%%, %12?", 100 * td_response / td_total, td_response / i));
-            println(fmt!("- Handle:              %3?%%, %12?", 100 * td_handle / td_total, td_handle / i));
+            println!("{} requests made thus far. Current means:", i);
+            println!("- Total:               100%, {:12f}",
+                     td_total as float / i as float);
+            println!("- Spawn:               {:3f}%, {:12f}",
+                     100f * td_spawn as float / td_total as float,
+                     td_spawn as float / i as float);
+            println!("- Load request:        {:3f}%, {:12f}",
+                     100f * td_request as float / td_total as float,
+                     td_request as float / i as float);
+            println!("- Initialise response: {:3f}%, {:12f}",
+                     100f * td_response as float / td_total as float,
+                     td_response as float / i as float);
+            println!("- Handle:              {:3f}%, {:12f}",
+                     100f * td_handle as float / td_total as float,
+                     td_handle as float / i as float);
         }
     }
 }

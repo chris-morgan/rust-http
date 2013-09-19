@@ -31,12 +31,12 @@ impl Server for InfoServer {
         w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>"));
 
         w.write(bytes!("<h1>Request</h1>"));
-        let s = fmt!("<dl>
-            <dt>Method</dt><dd>%s</dd>
-            <dt>Host</dt><dd>%?</dd>
-            <dt>Request URI</dt><dd>%?</dd>
-            <dt>HTTP version</dt><dd>%?</dd>
-            <dt>Close connection</dt><dd>%?</dd></dl>",
+        let s = format!("<dl>
+            <dt>Method</dt><dd>{}</dd>
+            <dt>Host</dt><dd>{:?}</dd>
+            <dt>Request URI</dt><dd>{:?}</dd>
+            <dt>HTTP version</dt><dd>{:?}</dd>
+            <dt>Close connection</dt><dd>{}</dd></dl>",
             r.method.to_str(),
             r.headers.host,
             r.request_uri,
@@ -46,9 +46,9 @@ impl Server for InfoServer {
         w.write(bytes!("<h2>Extension headers</h2>"));
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
         for header in r.headers.iter() {
-            let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>",
-                            header.header_name(),
-                            header.header_value());
+            let line = format!("<tr><td><code>{}</code></td><td><code>{}</code></td></tr>",
+                               header.header_name(),
+                               header.header_value());
             w.write(line.as_bytes());
         }
         w.write(bytes!("</tbody></table>"));
@@ -57,14 +57,14 @@ impl Server for InfoServer {
         w.write(bytes!("</pre>"));
 
         w.write(bytes!("<h1>Response</h1>"));
-        let s = fmt!("<dl><dt>Status</dt><dd>%s</dd></dl>", w.status.to_str());
+        let s = format!("<dl><dt>Status</dt><dd>{}</dd></dl>", w.status.to_str());
         w.write(s.as_bytes());
         w.write(bytes!("<h2>Headers</h2>"));
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
         {
             let h = w.headers.clone();
             for header in h.iter() {
-                let line = fmt!("<tr><td><code>%s</code></td><td><code>%s</code></td></tr>",
+                let line = format!("<tr><td><code>{}</code></td><td><code>{}</code></td></tr>",
                                 header.header_name(),
                                 header.header_value());
                 w.write(line.as_bytes());

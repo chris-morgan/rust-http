@@ -17,7 +17,7 @@ pub struct Host {
 impl ToStr for Host {
     fn to_str(&self) -> ~str {
         match self.port {
-            Some(port) => fmt!("%s:%s", self.name, port.to_str()),
+            Some(port) => format!("{}:{}", self.name, port.to_str()),
             None => self.name.clone(),
         }
     }

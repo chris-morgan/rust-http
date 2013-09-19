@@ -103,8 +103,8 @@ impl<W: Writer> WriterUtil for W {
         match quality {
             Some(qvalue) => {
                 self.write(bytes!(";q="));
-                // TODO: don't use fmt! for this!
-                let s = fmt!("%0.3f", qvalue);
+                // TODO: don't use format! for this!
+                let s = format!("{:0.3f}", qvalue);
                 self.write(s.as_bytes());
             },
             None => (),
@@ -134,7 +134,7 @@ pub fn push_quality(mut s: ~str, quality: Option<float>) -> ~str {
     // TODO: remove second and third decimal places if zero, and use a better quality type anyway
     match quality {
         Some(qvalue) => {
-            s.push_str(fmt!(";q=%0.3f", qvalue))
+            s.push_str(format!(";q={:0.3f}", qvalue))
         },
         None => (),
     }

@@ -73,9 +73,9 @@ macro_rules! branchify(
 /// :param end: the byte which marks the end of the sequence
 /// :param max_len: the maximum length a value may be before giving up and returning ``None``
 /// :param valid: the function call to if a byte ``b`` is valid
-/// :param unknown: the expression to call for an unknown value; in this string, ``%s`` will be
+/// :param unknown: the expression to call for an unknown value; in this string, ``{}`` will be
 ///         replaced with an expression (literal or non-literal) evaluating to a ``~str`` (it is
-///         ``%s`` only, not arbitrary format strings)
+///         ``{}`` only, not arbitrary format strings)
 pub fn generate_branchified_method(
         writer: @Writer,
         branches: &[ParseBranch],
@@ -95,19 +95,19 @@ pub fn generate_branchified_method(
             writer.write(bytes!("\n"));
         };
         for &c in branch.matches.iter() {
-            let next_prefix = fmt!("%s%c", prefix, c as char);
-            w(fmt!("Some(b) if b == '%c' as u8 => match %s {", c as char, read_call));
+            let next_prefix = format!("{}{}", prefix, c as char);
+            w(format!("Some(b) if b == '{}' as u8 => match {} \\{", c as char, read_call));
             for b in branch.children.iter() {
                 r(writer, b, next_prefix, indent + 1, read_call, end, max_len, valid, unknown);
             }
             match branch.result {
-                Some(ref result) => w(fmt!("    Some(b) if b == SP => return Some(%s),", *result)),
-                None => w(fmt!("    Some(b) if b == SP => return Some(%s),",
-                               unknown.replace("%s", fmt!("~\"%s\"", next_prefix)))),
+                Some(ref result) => w(format!("    Some(b) if b == SP => return Some({}),", *result)),
+                None => w(format!("    Some(b) if b == SP => return Some({}),",
+                                  unknown.replace("{}", format!("~\"{}\"", next_prefix)))),
             }
-            w(fmt!("    Some(b) if %s => (\"%s\", b),", valid, next_prefix));
-            w(fmt!("    _ => return None,"));
-            w(fmt!("},"));
+            w(format!("    Some(b) if {} => (\"{}\", b),", valid, next_prefix));
+            w("    _ => return None,");
+            w("},");
         }
     }
     let indentstr = " ".repeat(indent * 4);
@@ -117,27 +117,27 @@ pub fn generate_branchified_method(
         writer.write(bytes!("\n"));
     };
 
-    w(fmt!("let (s, next_byte) = match %s {", read_call));
+    w(format!("let (s, next_byte) = match {} \\{", read_call));
     for b in branches.iter() {
         r(writer, b, "", indent + 1, read_call, end, max_len, valid, unknown);
     }
-    w(fmt!("    Some(b) if %s => (\"\", b),", valid));
-    w(fmt!("    _ => return None,"));
-    w(fmt!("};"));
-    w(fmt!("// OK, that didn't pan out. Let's read the rest and see what we get."));
-    w(fmt!("let mut s = s.to_owned();"));
-    w(fmt!("s.push_char(next_byte as char);"));
-    w(fmt!("loop {"));
-    w(fmt!("    match %s {", read_call));
-    w(fmt!("        Some(b) if b == %s => return Some(%s),", end, unknown.replace("%s", "s")));
-    w(fmt!("        Some(b) if %s => {", valid));
-    w(fmt!("            if s.len() == %s {", max_len));
-    w(fmt!("                // Too long; bad request"));
-    w(fmt!("                return None;"));
-    w(fmt!("            }"));
-    w(fmt!("            s.push_char(b as char);"));
-    w(fmt!("        },"));
-    w(fmt!("        _ => return None,"));
-    w(fmt!("    }"));
-    w(fmt!("}"));
+    w(format!("    Some(b) if {} => (\"\", b),", valid));
+    w(       ("    _ => return None,"));
+    w(       ("};"));
+    w(       ("// OK, that didn't pan out. Let's read the rest and see what we get."));
+    w(       ("let mut s = s.to_owned();"));
+    w(       ("s.push_char(next_byte as char);"));
+    w(       ("loop {"));
+    w(format!("    match {} \\{", read_call));
+    w(format!("        Some(b) if b == {} => return Some({}),", end, unknown.replace("{}", "s")));
+    w(format!("        Some(b) if {} => \\{", valid));
+    w(format!("            if s.len() == {} \\{", max_len));
+    w(       ("                // Too long; bad request"));
+    w(       ("                return None;"));
+    w(       ("            }"));
+    w(       ("            s.push_char(b as char);"));
+    w(       ("        },"));
+    w(       ("        _ => return None,"));
+    w(       ("    }"));
+    w(       ("}"));
 }

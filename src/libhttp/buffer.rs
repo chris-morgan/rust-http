@@ -140,7 +140,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
             // This is the lazy approach which may involve multiple writes where it's really not
             // warranted. Maybe deal with that later.
             if self.writing_chunked_body {
-                let s = fmt!("%s\r\n", (self.write_len + buf.len()).to_str_radix(16));
+                let s = format!("{}\r\n", (self.write_len + buf.len()).to_str_radix(16));
                 self.wrapped.write(s.as_bytes());
             }
             if self.write_len > 0 {
@@ -166,7 +166,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
             self.write_len += buf.len();
             if self.write_len == self.write_buffer.len() {
                 if self.writing_chunked_body {
-                    let s = fmt!("%s\r\n", self.write_len.to_str_radix(16));
+                    let s = format!("{}\r\n", self.write_len.to_str_radix(16));
                     self.wrapped.write(s.as_bytes());
                     self.wrapped.write(self.write_buffer);
                     self.wrapped.write(bytes!("\r\n"));
@@ -181,7 +181,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
     fn flush(&mut self) {
         if self.write_len > 0 {
             if self.writing_chunked_body {
-                let s = fmt!("%s\r\n", self.write_len.to_str_radix(16));
+                let s = format!("{}\r\n", self.write_len.to_str_radix(16));
                 self.wrapped.write(s.as_bytes());
             }
             self.wrapped.write(self.write_buffer.slice_to(self.write_len));

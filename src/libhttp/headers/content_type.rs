@@ -18,7 +18,7 @@ impl ToStr for MediaType {
         //s.push_token(self.subtype);
         //s.push_parameters(self.parameters);
         //s
-        let s = fmt!("%s/%s", self.type_, self.subtype);
+        let s = format!("{}/{}", self.type_, self.subtype);
         push_parameters(s, self.parameters)
     }
 }

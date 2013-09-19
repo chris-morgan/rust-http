@@ -42,7 +42,7 @@ impl<S: Stream> ResponseReader<S> {
         // TODO: raise condition at the points where Err is returned
         //let mut b = [0u8, ..4096];
         //let len = stream.read(b);
-        //printfln!("%?", ::std::str::from_bytes(b.slice_to(len.unwrap())));
+        //println!("{}", ::std::str::from_bytes(b.slice_to(len.unwrap())));
         let http_version = match read_http_version(&mut stream, SP) {
             Some(nums) => nums,
             None => {

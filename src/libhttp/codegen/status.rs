@@ -165,10 +165,10 @@ pub enum Status {
 ");
     for &entry in entries.iter() {
         match entry {
-            Left(heading) => out.write_str(fmt!("\n    // %s\n", heading)),
+            Left(heading) => out.write_str(format!("\n    // {}\n", heading)),
             Right(status) => match status.comment {
-                None => out.write_str(fmt!("    %s,\n", status.ident())),
-                Some(comment) => out.write_str(fmt!("    %s,  // %s\n", status.ident(), comment)),
+                None => out.write_str(format!("    {},\n", status.ident())),
+                Some(comment) => out.write_str(format!("    {},  // {}\n", status.ident(), comment)),
             },
         }
     }
@@ -185,8 +185,8 @@ impl Status {
 ");
     for &entry in entries.iter() {
         match entry {
-            Left(heading) => out.write_str(fmt!("\n            // %s\n", heading)),
-            Right(status) => out.write_str(fmt!("            %s => %u,\n",
+            Left(heading) => out.write_str(format!("\n            // {}\n", heading)),
+            Right(status) => out.write_str(format!("            {} => {},\n",
                                                 status.padded_ident(), status.code)),
         }
     }
@@ -201,8 +201,8 @@ impl Status {
 ");
     for &entry in entries.iter() {
         match entry {
-            Left(heading) => out.write_str(fmt!("\n            // %s\n", heading)),
-            Right(status) => out.write_str(fmt!("            %s => ~\"%s\",\n",
+            Left(heading) => out.write_str(format!("\n            // {}\n", heading)),
+            Right(status) => out.write_str(format!("            {} => ~\"{}\",\n",
                                                 status.padded_ident(), status.reason))
         }
     }
@@ -218,8 +218,8 @@ impl Status {
 ");
     for &entry in entries.iter() {
         match entry {
-            Left(heading) => out.write_str(fmt!("\n            // %s\n", heading)),
-            Right(status) => out.write_str(fmt!("            (%u, \"%s\")%s => %s,\n",
+            Left(heading) => out.write_str(format!("\n            // {}\n", heading)),
+            Right(status) => out.write_str(format!("            ({}, \"{}\"){} => {},\n",
                                                 status.code,
                                                 status.reason.to_ascii_lower(),
                                                 status.reason_padding_spaces(),
@@ -236,7 +236,7 @@ impl ToStr for Status {
     /// Produce the HTTP status message incorporating both code and message,
     /// e.g. `ImATeapot.to_str() == \"418 I'm a teapot\"`
 	fn to_str(&self) -> ~str {
-		fmt!(\"%s %s\", self.code().to_str(), self.reason())
+		format!(\"{} {}\", self.code().to_str(), self.reason())
 	}
 }
 
@@ -258,19 +258,19 @@ impl IntConvertible for Status {
     let mut matched_numbers = HashSet::new();
     for &entry in entries.iter() {
         match entry {
-            Left(heading) => out.write_str(fmt!("\n            // %s\n", heading)),
+            Left(heading) => out.write_str(format!("\n            // {}\n", heading)),
             Right(status) => {
                 if !matched_numbers.contains(&status.code) {
                     // Purpose: FailedDependency and MethodFailure both use 424,
                     // but clearly they mustn't both go in here
-                    out.write_str(fmt!("            %u => %s,\n", status.code, status.ident()));
+                    out.write_str(format!("            {:u} => {},\n", status.code, status.ident()));
                     matched_numbers.insert(status.code);
                 }
             },
         }
     }
     out.write_str("
-            _   => { fail!(fmt!(\"No registered HTTP status code %d\", n)); }
+            _   => { fail!(format!(\"No registered HTTP status code {}\", n)); }
         }
     }
 }");

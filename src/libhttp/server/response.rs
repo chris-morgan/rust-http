@@ -73,7 +73,7 @@ impl<'self> ResponseWriter<'self> {
         // XXX: might be better not to hardcode HTTP/1.1.
         // XXX: Rust's current lack of statement-duration lifetime handling prevents this from being
         // one statement ("error: borrowed value does not live long enough")
-        let s = fmt!("HTTP/1.1 %s\r\n", self.status.to_str());
+        let s = format!("HTTP/1.1 {}\r\n", self.status.to_str());
         self.writer.write(s.as_bytes());
 
         // FIXME: this is not an impressive way of handling it, but so long as chunked is the only

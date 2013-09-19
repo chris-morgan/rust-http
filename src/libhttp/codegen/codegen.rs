@@ -21,13 +21,13 @@ fn main() {
                 ~"read_method.rs" => read_method::generate(&output_dir),
                 ~"status.rs" => status::generate(&output_dir),
                 s => {
-                    printfln!("unknown thing-to-generate '%s'", s);
+                    println!("unknown thing-to-generate '{}'", s);
                     os::set_exit_status(1);
                 }
             }
         },
         _ => {
-            printfln!("usage: %s [read_method|status].rs", args[0]);
+            println!("usage: {} [read_method|status].rs", args[0]);
             os::set_exit_status(1);
         }
     }
