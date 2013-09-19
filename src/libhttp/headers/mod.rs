@@ -172,6 +172,8 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
 
     /// Check that the entire header value has been consumed.
     ///
+    /// Should there be any trailing linear white space, it is dropped.
+    ///
     /// Be cautious using this function as it is destructive, losing a character in the case where
     /// the value has not been entirely consumed.
     ///
@@ -185,8 +187,12 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
     ///     } else {
     ///         None
     ///     }
+    ///
+    /// ... however, this common case is handled with the ``some_if_consumed`` method, so you may
+    /// very well not need to call this function directly.
     #[inline]
-    fn verify_consumed(&mut self) -> bool {
+    pub fn verify_consumed(&mut self) -> bool {
+        self.consume_optional_lws();
         self.next() == None
     }
 
