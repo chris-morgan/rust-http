@@ -9,6 +9,14 @@ pub struct MediaType {
     parameters: ~[(~str, ~str)],
 }
 
+pub fn MediaType(type_: ~str, subtype: ~str, parameters: ~[(~str, ~str)]) -> MediaType {
+    MediaType {
+        type_: type_,
+        subtype: subtype,
+        parameters: parameters,
+    }
+}
+
 impl ToStr for MediaType {
     fn to_str(&self) -> ~str {
         // Idea:
@@ -60,4 +68,23 @@ impl super::HeaderConvertible for MediaType {
     fn http_value(&self) -> ~str {
         self.to_str()
     }
+}
+
+#[test]
+fn test_content_type() {
+    use headers::test_utils::*;
+    assert_conversion_correct("type/subtype", MediaType("type", "subtype", ~[]));
+    assert_conversion_correct("type/subtype;key=value",
+            MediaType("type", "subtype", ~[(~"key", ~"value")]));
+    assert_conversion_correct("type/subtype;key=value;q=0.1",
+            MediaType("type", "subtype", ~[(~"key", ~"value"), (~"q", ~"0.1")]));
+    assert_interpretation_correct("type/subtype ; key = value ; q = 0.1",
+            MediaType("type", "subtype", ~[(~"key", ~"value"), (~"q", ~"0.1")]));
+
+    assert_invalid::<MediaType>("");
+    assert_invalid::<MediaType>("/");
+    assert_invalid::<MediaType>("type /subtype");
+    assert_invalid::<MediaType>("type/ subtype");
+    assert_invalid::<MediaType>("type/subtype,foo=bar");
+    assert_invalid::<MediaType>("type/subtype;foo=bar,foo=bar");
 }
