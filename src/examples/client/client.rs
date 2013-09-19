@@ -16,7 +16,7 @@ fn main() {
         Err(_request) => fail!("This example can progress no further with no response :-("),
     };
     println("Yay! Started to get the response.");
-    println!("Status: {}", response.status.to_str());
+    println!("Status: {}", response.status);
     println("Headers:");
     for header in response.headers.iter() {
         println!(" - {}: {}", header.header_name(), header.header_value());

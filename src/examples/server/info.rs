@@ -57,7 +57,7 @@ impl Server for InfoServer {
         w.write(bytes!("</pre>"));
 
         w.write(bytes!("<h1>Response</h1>"));
-        let s = format!("<dl><dt>Status</dt><dd>{}</dd></dl>", w.status.to_str());
+        let s = format!("<dl><dt>Status</dt><dd>{}</dd></dl>", w.status);
         w.write(s.as_bytes());
         w.write(bytes!("<h2>Headers</h2>"));
         w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
