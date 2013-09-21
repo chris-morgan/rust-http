@@ -3,7 +3,7 @@ use http::client::RequestWriter;
 use http::method::Get;
 use http::headers::HeaderEnum;
 use std::str;
-use std::rt::io::Reader;
+use std::rt::io::extensions::ReaderUtil;
 use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
 
 fn main() {
@@ -22,11 +22,6 @@ fn main() {
         println!(" - {}: {}", header.header_name(), header.header_value());
     }
     print("\n");
-    println("First 1024 bytes of response:");
-    let mut buf = [0, ..1024];
-    match response.read(buf) {
-        Some(len) => println!("{}", str::from_utf8(buf.slice_to(len))),
-        None => println("uh oh, got None :-("),
-    }
-    // TODO: read it *all*, correctly
+    println("Response:");
+    println(str::from_utf8(response.read_to_end()));
 }
