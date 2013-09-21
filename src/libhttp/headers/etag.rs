@@ -33,25 +33,27 @@ impl ToStr for EntityTag {
 
 impl super::HeaderConvertible for EntityTag {
     fn from_stream<R: Reader>(reader: &mut super::HeaderValueByteIterator<R>) -> Option<EntityTag> {
-        reader.some_if_consumed(EntityTag {
-            weak: match reader.next() {
-                Some(b) if b == 'W' as u8 => {
-                    if reader.next() != '/' as u8 || reader.next() != '"' {
-                        return None;
-                    }
-                    true
-                },
-                Some(b) if b == '"' as u8 => {
-                    false
-                },
-                _ => {
+        let weak = match reader.next() {
+            Some(b) if b == 'W' as u8 => {
+                if reader.next() != Some('/' as u8) || reader.next() != Some('"' as u8) {
                     return None;
                 }
+                true
             },
-            opaque_tag: match reader.read_quoted_string(true) {
-                Some(tag) => tag,
-                None => return None,
+            Some(b) if b == '"' as u8 => {
+                false
+            },
+            _ => {
+                return None;
             }
+        };
+        let opaque_tag = match reader.read_quoted_string(true) {
+            Some(tag) => tag,
+            None => return None,
+        };
+        reader.some_if_consumed(EntityTag {
+            weak: weak,
+            opaque_tag: opaque_tag,
         })
     }
 
