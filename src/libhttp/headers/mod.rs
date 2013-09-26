@@ -612,7 +612,7 @@ impl HeaderConvertible for Url {
     }
 }
 
-impl CommaListHeaderConvertible for Method;
+impl CommaListHeaderConvertible for Method {}
 
 impl HeaderConvertible for Method {
     fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<Method> {

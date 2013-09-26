@@ -23,7 +23,7 @@ impl ToStr for Connection {
     }
 }
 
-impl super::CommaListHeaderConvertible for Connection;
+impl super::CommaListHeaderConvertible for Connection {}
 
 impl super::HeaderConvertible for Connection {
     fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
