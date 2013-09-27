@@ -34,7 +34,7 @@ impl ToStr for EntityTag {
 impl super::HeaderConvertible for EntityTag {
     fn from_stream<R: Reader>(reader: &mut super::HeaderValueByteIterator<R>) -> Option<EntityTag> {
         let weak = match reader.next() {
-            Some(b) if b == 'W' as u8 => {
+            Some(b) if b == 'W' as u8 || b == 'w' as u8 => {
                 if reader.next() != Some('/' as u8) || reader.next() != Some('"' as u8) {
                     return None;
                 }
