@@ -16,7 +16,7 @@ pub enum TransferCoding {
     TransferExtension(~str, ~[(~str, ~str)]),
 }
 
-impl super::CommaListHeaderConvertible for TransferCoding;
+impl super::CommaListHeaderConvertible for TransferCoding {}
 
 impl super::HeaderConvertible for TransferCoding {
     fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
