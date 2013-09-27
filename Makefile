@@ -38,6 +38,13 @@ examples: $(patsubst src/examples/%.rs,build/examples/%,$(wildcard src/examples/
 build/tests: $(libhttp_files)
 	$(RUSTC) $(RUSTFLAGS) --test -o build/tests src/libhttp/lib.rs
 
+build/quicktests: $(libhttp_files)
+	$(RUSTC) --test -o build/quicktests src/libhttp/lib.rs
+
+# Can't wait for everything to build, optimised too? OK, you can save some time here.
+quickcheck: build/quicktests
+	build/quicktests --test
+
 check: all build/tests
 	build/tests --test
 
