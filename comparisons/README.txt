@@ -35,12 +35,9 @@ and Apache config got broken.)
 
 :Hardware: Over-six-year-old Core 2 Duo laptop with 4GB ("plenty") of RAM
 :OS: Ubuntu 13.10 (alpha) 64-bit
-:Rust version: 0.8-pre (d34016d 2013-07-29 14:01:24 -0700)
-:Node version: 0.10.15
-:Go version: 1.1.1
-
-Note that concurrency levels greater than one will at present cause the server
-to occasionally segfault. Just keep trying.
+:Rust version: 0.8 (a94158c 2013-09-26 18:46:10 -0700)
+:Node version: 0.10.19
+:Go version: 1.1.2
 
 ``ab`` (new connections)
 ````````````````````````
@@ -54,9 +51,11 @@ to occasionally segfault. Just keep trying.
 =========== ==== ==== ====
 Concurrency Node Go   Rust
 =========== ==== ==== ====
-1           3200 3000 3200
-2           4400 6500 3600
-3           4700 7400 3900
+1           3550 3800 2600
+2           4750 7000 2750
+3           4850 8000 2850
+4           4800 8450 3000
+8           4775 9150 2950
 =========== ==== ==== ====
 
 I have not attempted ``ab`` with ``-k`` (keep-alive) as it doesn’t seem to
@@ -64,6 +63,9 @@ work. (Haven’t had time to assess why, yet.)
 
 ``wrk`` (same connection)
 `````````````````````````
+
+**THIS BENCHMARK IS CURRENTLY OUT OF DATE.** I haven't automated it yet and had
+no time to run it when I updated the above figures.
 
 Ten seconds of benchmarking, with one connection kept per thread.
 
