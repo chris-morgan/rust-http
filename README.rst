@@ -1,7 +1,8 @@
 Rust HTTP library
 =================
 
-.. image:: https://travis-ci.org/chris-morgan/rust-http.png?branch=master   :target: https://travis-ci.org/chris-morgan/rust-http
+.. image:: https://travis-ci.org/chris-morgan/rust-http.png?branch=master
+   :target: https://travis-ci.org/chris-morgan/rust-http
 
 This project has two parts:
 
