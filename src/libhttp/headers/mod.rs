@@ -436,7 +436,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     // back to CompactingLWS, and if it ends up ``CR LF`` we didn't need the
                     // trailing whitespace anyway.
                     self.state = GotCR;
-                    loop;
+                    continue;
                 },
 
                 // TODO: fix up these quoted-string rules, they're probably wrong (CRLF inside it?)
@@ -465,7 +465,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     // TODO: check RFC 2616's precise rules, I think it does say that a server
                     // should also accept missing CR
                     self.state = GotCRLF;
-                    loop;
+                    continue;
                 },
                 GotCR => {
                     // False alarm, CR without LF. Hmm... was it LWS then? TODO.
@@ -478,7 +478,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 GotCRLF if b == SP || b == HT => {
                     // CR LF SP is a suitable linear whitespace, so don't stop yet
                     self.state = CompactingLWS;
-                    loop;
+                    continue;
                 },
                 GotCRLF => {
                     // Ooh! We got to a genuine end of line, so we're done.
@@ -490,7 +490,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 Normal | CompactingLWS if b == SP || b == HT => {
                     // Start or continue to compact linear whitespace
                     self.state = CompactingLWS;
-                    loop;
+                    continue;
                 },
                 CompactingLWS => {
                     // End of LWS, compact it down to a single space, unless it's at the start.
@@ -565,7 +565,7 @@ impl<T: CommaListHeaderConvertible> HeaderConvertible for ~[T] {
                 None => return None,
             };
             match reader.consume_comma_lws() {
-                CommaConsumed => loop,
+                CommaConsumed => continue,
                 EndOfValue => break,
                 ErrCommaNotFound => return None,
             }
@@ -939,11 +939,11 @@ macro_rules! headers_mod {
                         match self.pos - 1 {
                             $($num_id => match self.coll.$lower_ident {
                                 Some(ref v) => return Some($caps_ident(v.clone())),
-                                None => loop,
+                                None => continue,
                             },)*
                             $num_headers => {
                                 self.ext_iter = Some(self.coll.extensions.iter());
-                                loop
+                                continue
                             },
                             _ => match self.ext_iter.get_mut_ref().next() {
                                 Some((k, v)) =>
