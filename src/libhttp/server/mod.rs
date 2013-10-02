@@ -73,7 +73,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                         // permanent, such that continuing would be a very bad idea, such as
                         // ENOBUFS/ENOMEM; and some where it should just be ignored, e.g.
                         // ECONNABORTED. TODO.
-                        loop;
+                        continue;
                     }
                     let stream = Cell::new(optstream.unwrap());
                     let child_perf_ch = perf_ch.clone();
