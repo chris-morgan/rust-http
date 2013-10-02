@@ -14,8 +14,6 @@
 
 extern mod extra;
 
-macro_rules! unreachable(() => (fail!("internal error: entered unreachable code")))
-
 pub mod buffer;
 pub mod client;
 pub mod common;
