@@ -73,7 +73,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                         // permanent, such that continuing would be a very bad idea, such as
                         // ENOBUFS/ENOMEM; and some where it should just be ignored, e.g.
                         // ECONNABORTED. TODO.
-                        loop;
+                        continue;
                     }
                     let stream = Cell::new(optstream.unwrap());
                     let child_perf_ch = perf_ch.clone();
@@ -217,19 +217,19 @@ fn perf_dumper(perf_po: Port<(u64, u64, u64, u64, u64)>) {
             println("");
             println!("{} requests made thus far. Current means:", i);
             println!("- Total:               100%, {:12f}",
-                     td_total as float / i as float);
+                     td_total as f64 / i as f64);
             println!("- Spawn:               {:3f}%, {:12f}",
-                     100f * td_spawn as float / td_total as float,
-                     td_spawn as float / i as float);
+                     100f64 * td_spawn as f64 / td_total as f64,
+                     td_spawn as f64 / i as f64);
             println!("- Load request:        {:3f}%, {:12f}",
-                     100f * td_request as float / td_total as float,
-                     td_request as float / i as float);
+                     100f64 * td_request as f64 / td_total as f64,
+                     td_request as f64 / i as f64);
             println!("- Initialise response: {:3f}%, {:12f}",
-                     100f * td_response as float / td_total as float,
-                     td_response as float / i as float);
+                     100f64 * td_response as f64 / td_total as f64,
+                     td_response as f64 / i as f64);
             println!("- Handle:              {:3f}%, {:12f}",
-                     100f * td_handle as float / td_total as float,
-                     td_handle as float / i as float);
+                     100f64 * td_handle as f64 / td_total as f64,
+                     td_handle as f64 / i as f64);
         }
     }
 }
