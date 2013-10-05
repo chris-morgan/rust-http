@@ -206,6 +206,9 @@ impl RequestWriter<TcpStream> {
                if self.url.query.len() > 0 { "?" } else { "" },
                url::query_to_str(&self.url.query));
 
+        // `write_all` adds '\r\n' at the end, no
+        // need to terminate the headers section
+        // here.
         self.headers.write_all(&mut self.stream);
         self.headers_written = true;
     }
@@ -224,14 +227,38 @@ impl RequestWriter<TcpStream> {
             None => Err(self), // TODO: raise condition
         }
     }
+
+    /// Send data to the remote server.
+    /// This method appends Content-Length
+    /// to headers and sends them. If headers
+    /// where already sent, it will send data
+    /// without the Content-Length.
+    // TODO: Implement chunked request, perhaps
+    // in a `send_chunked` method.
+    pub fn send(&mut self, buf: &[u8]) {
+
+        // NOTE: Should we make this fail?
+        // If 'Content-Length' is not sent
+        // some servers won't read the request
+        // body.
+        if !self.headers_written {
+            self.headers.content_length = Some(buf.len());
+            self.write_headers();
+        }
+        self.write(buf);
+    }
 }
 
 /// Write the request body. Note that any calls to `write()` will cause the headers to be sent.
 impl Writer for RequestWriter<TcpStream> {
     fn write(&mut self, buf: &[u8]) {
-        if (!self.headers_written) {
-            self.write_headers();
-        }
+        // No data must be sent before
+        // sending headers. Let's make
+        // sure that's the case.
+        self.try_write_headers();
+
+        // Now we're good to send
+        // some data.
         self.stream.write(buf);
     }
 
