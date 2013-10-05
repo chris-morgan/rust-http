@@ -166,8 +166,31 @@ impl RequestWriter<TcpStream> {
         let s = format!("{} {} HTTP/1.0\r\n", self.method.to_str(), self.url.to_str());
         self.stream.write(s.as_bytes());
 
+        // `write_all` adds '\r\n' at the end, no
+        // need to terminate the headers section
+        // here.
         self.headers.write_all(&mut self.stream);
         self.headers_written = true;
+    }
+
+    /// Send data to the remote server.
+    /// This method appends Content-Length
+    /// to headers and sends them. If headers
+    /// where already sent, it will send data
+    /// without the Content-Length.
+    // TODO: Implement chunked request, perhaps
+    // in a `send_chunked` method.
+    pub fn send(&mut self, buf: &[u8]) {
+
+        // NOTE: Should we make this fail?
+        // If 'Content-Length' is not sent
+        // some servers won't read the request
+        // body.
+        if !self.headers_written {
+            self.headers.content_length = Some(buf.len());
+            self.write_headers();
+        }
+        self.write(buf);
     }
 
     // FIXME: ~self rather than self to work around a Rust bug in by-val self at present leading to
@@ -185,9 +208,13 @@ impl RequestWriter<TcpStream> {
 
 impl Writer for RequestWriter<TcpStream> {
     fn write(&mut self, buf: &[u8]) {
-        if (!self.headers_written) {
-            self.write_headers();
-        }
+        // No data must be sent before
+        // sending headers. Let's make
+        // sure that's the case.
+        self.try_write_headers();
+
+        // Now we're good to send
+        // some data.
         self.stream.write(buf);
     }
 
