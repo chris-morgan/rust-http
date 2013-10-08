@@ -12,6 +12,7 @@
 //#[deny(missing_doc)];
 
 #[macro_escape];
+#[feature(globs)];
 
 extern mod extra;
 
