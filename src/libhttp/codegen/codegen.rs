@@ -1,3 +1,4 @@
+#[feature(macro_rules)];
 use std::io::{file_writer, Create, Truncate};
 use std::os;
 
