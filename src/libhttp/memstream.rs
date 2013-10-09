@@ -57,7 +57,7 @@ impl Writer for MemReaderFakeStream {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use super::{MemReaderFakeStream, MemWriterFakeStream};
 
     #[test]
     fn test_mem_writer_fake_stream() {

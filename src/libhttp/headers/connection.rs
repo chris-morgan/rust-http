@@ -56,80 +56,65 @@ impl super::HeaderConvertible for Connection {
 
 #[test]
 fn test_connection() {
-    use headers::test_utils::*;
-    assert_conversion_correct("close", ~[Close]);
+    ::headers::test_utils::assert_conversion_correct("close", ~[Close]);
 }
 #[test]
 fn test_connection_2() {
-    use headers::test_utils::*;
-    assert_conversion_correct("Foo", ~[Token(~"Foo")]);
+    ::headers::test_utils::assert_conversion_correct("Foo", ~[Token(~"Foo")]);
 }
 #[test]
 fn test_connection_3() {
-    use headers::test_utils::*;
-    assert_conversion_correct("Foo, Keep-Alive", ~[Token(~"Foo"), Token(~"Keep-Alive")]);
+    ::headers::test_utils::assert_conversion_correct("Foo, Keep-Alive", ~[Token(~"Foo"), Token(~"Keep-Alive")]);
 }
 #[test]
 fn test_connection_4() {
-    use headers::test_utils::*;
-    assert_conversion_correct("Foo, close", ~[Token(~"Foo"), Close]);
+    ::headers::test_utils::assert_conversion_correct("Foo, close", ~[Token(~"Foo"), Close]);
 }
 #[test]
 fn test_connection_5() {
-    use headers::test_utils::*;
-    assert_conversion_correct("close, Bar", ~[Close, Token(~"Bar")]);
+    ::headers::test_utils::assert_conversion_correct("close, Bar", ~[Close, Token(~"Bar")]);
 }
 #[test]
 fn test_connection_6() {
-    use headers::test_utils::*;
-    assert_interpretation_correct("close", ~[Close]);
+    ::headers::test_utils::assert_interpretation_correct("close", ~[Close]);
 }
 #[test]
 fn test_connection_7() {
-    use headers::test_utils::*;
-    assert_interpretation_correct("foo", ~[Token(~"Foo")]);
+    ::headers::test_utils::assert_interpretation_correct("foo", ~[Token(~"Foo")]);
 }
 #[test]
 #[ignore(reason="lws collapse bug")]
 fn test_connection_8() {
-    use headers::test_utils::*;
-    assert_interpretation_correct("close \r\n , keep-ALIVE", ~[Close, Token(~"Keep-Alive")]);
+    ::headers::test_utils::assert_interpretation_correct("close \r\n , keep-ALIVE", ~[Close, Token(~"Keep-Alive")]);
 }
 #[test]
 fn test_connection_9() {
-    use headers::test_utils::*;
-    assert_interpretation_correct("foo,close", ~[Token(~"Foo"), Close]);
+    ::headers::test_utils::assert_interpretation_correct("foo,close", ~[Token(~"Foo"), Close]);
 }
 #[test]
 fn test_connection_10() {
-    use headers::test_utils::*;
-    assert_interpretation_correct("close, bar", ~[Close, Token(~"Bar")]);
+    ::headers::test_utils::assert_interpretation_correct("close, bar", ~[Close, Token(~"Bar")]);
 }
 #[test]
 fn test_connection_11() {
-    use headers::test_utils::*;
-    assert_interpretation_correct("CLOSE", Close);
+    ::headers::test_utils::assert_interpretation_correct("CLOSE", Close);
 }
 #[test]
 #[ignore(reason="lws collapse bug")]
 fn test_connection_12() {
-    use headers::test_utils::*;
-    assert_invalid::<~[Connection]>("foo bar");
+    ::headers::test_utils::assert_invalid::<~[Connection]>("foo bar");
 }
 #[test]
 #[ignore(reason="lws collapse bug")]
 fn test_connection_13() {
-    use headers::test_utils::*;
-    assert_invalid::<~[Connection]>("foo bar");
+    ::headers::test_utils::assert_invalid::<~[Connection]>("foo bar");
 }
 #[test]
 #[ignore(reason="lws collapse bug")]
 fn test_connection_14() {
-    use headers::test_utils::*;
-    assert_invalid::<~[Connection]>("foo, bar baz");
+    ::headers::test_utils::assert_invalid::<~[Connection]>("foo, bar baz");
 }
 #[test]
 fn test_connection_15() {
-    use headers::test_utils::*;
-    assert_invalid::<~[Connection]>("foo, , baz");
+    ::headers::test_utils::assert_invalid::<~[Connection]>("foo, , baz");
 }

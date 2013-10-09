@@ -71,7 +71,8 @@ impl super::HeaderConvertible for EntityTag {
 
 #[test]
 fn test_etag() {
-    use headers::test_utils::*;
+    use headers::test_utils::{assert_conversion_correct, assert_interpretation_correct,
+                              assert_invalid};
     assert_conversion_correct("\"\"", strong_etag(""));
     assert_conversion_correct("\"fO0\"", strong_etag("fO0"));
     assert_conversion_correct("\"fO0 bar\"", strong_etag("fO0 bar"));

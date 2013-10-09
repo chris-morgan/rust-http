@@ -755,7 +755,6 @@ impl HeaderConvertible for Tm {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use extra::time::Tm;
     use headers::test_utils::{from_stream_with_str, to_stream_into_str};
 
