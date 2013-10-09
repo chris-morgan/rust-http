@@ -1,3 +1,44 @@
+/*!
+
+Things for the construction and sending of HTTP requests.
+
+If you want to make a request, `RequestWriter::new` is where you start, and
+`RequestWriter.read_response` is where you will send the request and read the response.
+
+```rust
+use http::client::RequestWriter;
+use http::method::Get;
+
+fn main() {
+    let request = ~RequestWriter::new(Get, FromStr::from_str("http://example.com/").unwrap());
+    let mut response = match request.read_response() {
+        Ok(response) => response,
+        Err(_request) => unreachable!(), // Uncaught condition will have failed first
+    };
+    // Now you have a `ResponseReader`; see http::client::response for docs on that.
+}
+```
+
+If you wish to send a request body (e.g. POST requests), I'm sorry to have to tell you that there is
+not *good* support for this yet. However, it can be done; here is an example:
+
+```rust
+let data: ~[u8];
+let mut request: ~RequestWriter;
+
+request.headers.content_length = Some(data.len());
+request.write(data);
+let response = match request.read_response() {
+    Ok(response) => response,
+    Err(_request) => unreachable!(), // Uncaught condition will have failed first
+};
+```
+
+Finally, if you're wondering why you need to work with `~RequestWriter` rather than `RequestWriter`:
+that's due to a Rust bug; when that's resolved, we'll go back to using just `RequestWriter`.
+
+*/
+
 use extra::url::Url;
 use method::Method;
 use std::rt::io::{Reader, Writer};
@@ -170,8 +211,15 @@ impl RequestWriter<TcpStream> {
         self.headers_written = true;
     }
 
-    // FIXME: ~self rather than self to work around a Rust bug in by-val self at present leading to
-    // a segfault on calling construct().
+    /**
+     * Send the request and construct a `ResponseReader` out of it.
+     *
+     * If the request sending fails in any way, a condition will be raised; if handled, the original
+     * request will be returned as an `Err`.
+     *
+     * FIXME: ~self is currently used rather than self to work around a Rust bug in by-val self at
+     * present which led to a segfault on calling `ResponseReader::construct()`.
+     */
     pub fn read_response(~self) -> Result<ResponseReader<TcpStream>, ~RequestWriter<TcpStream>> {
         let mut mut_self = self;
         mut_self.try_write_headers();
@@ -183,6 +231,7 @@ impl RequestWriter<TcpStream> {
     }
 }
 
+/// Write the request body. Note that any calls to `write()` will cause the headers to be sent.
 impl Writer for RequestWriter<TcpStream> {
     fn write(&mut self, buf: &[u8]) {
         if (!self.headers_written) {
