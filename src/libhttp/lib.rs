@@ -10,6 +10,7 @@
 #[deny(non_camel_case_types)];
 //#[deny(missing_doc)];
 
+#[feature(macro_rules)];
 #[macro_escape];
 
 extern mod extra;
