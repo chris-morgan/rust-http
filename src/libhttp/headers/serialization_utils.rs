@@ -230,9 +230,9 @@ pub fn push_parameters(mut s: ~str, parameters: &[(~str, ~str)]) -> ~str {
 
 #[cfg(test)]
 mod test {
-    use super::{normalise_header_name, comma_split, comma_split_iter,
+    use super::{normalise_header_name, comma_split, comma_split_iter, comma_join,
                 push_quality, push_parameter, push_parameters,
-                push_maybe_quoted_string, maybe_quoted_string, quoted_string,
+                push_maybe_quoted_string, push_quoted_string, maybe_quoted_string, quoted_string,
                 unquote_string, maybe_unquote_string};
 
     #[test]
