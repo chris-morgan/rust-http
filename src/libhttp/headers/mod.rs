@@ -431,7 +431,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 }
             };
             match self.state {
-                Normal | CompactingLWS if b == CR => {
+                Normal if b == CR => {
                     // It's OK to go to GotCR on CompactingLWS: if it ends up ``CR LF SP`` it'll get
                     // back to CompactingLWS, and if it ends up ``CR LF`` we didn't need the
                     // trailing whitespace anyway.
@@ -440,7 +440,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 },
 
                 // TODO: fix up these quoted-string rules, they're probably wrong (CRLF inside it?)
-                Normal | CompactingLWS if b == DOUBLE_QUOTE => {
+                Normal if b == DOUBLE_QUOTE => {
                     self.at_start = false;
                     self.state = InsideQuotedString;
                     return Some(b);
@@ -487,7 +487,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.state = Finished;
                     return None;
                 },
-                Normal | CompactingLWS if b == SP || b == HT => {
+                Normal if b == SP || b == HT => {
                     // Start or continue to compact linear whitespace
                     self.state = CompactingLWS;
                     continue;
@@ -495,12 +495,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 CompactingLWS => {
                     // End of LWS, compact it down to a single space, unless it's at the start.
                     self.state = Normal;
-                    if self.at_start {
-                        return Some(b);
-                    } else {
-                        self.next_byte = Some(b);
-                        return Some(SP);
-                    }
+                    return Some(b);
                 },
                 Normal => {
                     self.at_start = false;

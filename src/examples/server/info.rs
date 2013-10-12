@@ -48,7 +48,7 @@ impl Server for InfoServer {
         for header in r.headers.iter() {
             let line = format!("<tr><td><code>{}</code></td><td><code>{}</code></td></tr>",
                                header.header_name(),
-                               header.header_value());
+                               ::std::str::replace(header.header_value(), " ", "&nbsp"));
             w.write(line.as_bytes());
         }
         w.write(bytes!("</tbody></table>"));
@@ -66,7 +66,7 @@ impl Server for InfoServer {
             for header in h.iter() {
                 let line = format!("<tr><td><code>{}</code></td><td><code>{}</code></td></tr>",
                                 header.header_name(),
-                                header.header_value());
+                               ::std::str::replace(header.header_value(), " ", "&nbsp"));
                 w.write(line.as_bytes());
             }
         }
