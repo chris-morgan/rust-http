@@ -110,7 +110,7 @@ fn test_connection_13() {
     ::headers::test_utils::assert_invalid::<~[Connection]>("foo bar");
 }
 #[test]
-#[ignore(reason="lws collapse bug")]
+//#[ignore(reason="lws collapse bug")]
 fn test_connection_14() {
     ::headers::test_utils::assert_invalid::<~[Connection]>("foo, bar baz");
 }
