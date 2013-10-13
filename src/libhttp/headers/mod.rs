@@ -134,7 +134,6 @@ enum HeaderValueByteIteratorState {
     Normal,  // Anything other than the rest.
     InsideQuotedString,  // no LWS compacting here. TODO: check spec on CR LF SP in quoted-string.
     InsideQuotedStringEscape,  // don't let a " close quoted-string if it comes next
-    //CRorLFInsideQuotedString,  // no LWS compacting here. TODO: check spec on CR LF SP in quoted-string.
     GotCR,  // Last character was CR
     GotCRLF,  // Last two characters were CR LF
     Finished,  // Finished, so next() should always return ``None`` immediately (no side effects)
@@ -430,15 +429,17 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     Some(b) => b,
                 }
             };
+            println!("-----------> Loop");
             match self.state {
                 Normal if b == SP || b == HT  =>{
                     if self.at_start {
+                    println!("0: '{0}'","Continue");
                         continue;
                     } else {
+                    println!("0: '{0}'","SP");
                         return Some(SP);
                     }
                 }
-
                 Normal if b == CR => {
                     // It's OK to go to GotCR on CompactingLWS: if it ends up ``CR LF SP`` it'll get
                     // back to CompactingLWS, and if it ends up ``CR LF`` we didn't need the
@@ -446,7 +447,6 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.state = GotCR;
                     continue;
                 },
-
                 // TODO: fix up these quoted-string rules, they're probably wrong (CRLF inside it?)
                 Normal if b == DOUBLE_QUOTE => {
                     self.at_start = false;
@@ -465,33 +465,28 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.state = Normal;
                     return Some(b);
                 }
-
-                //InsideQuotedString if b == CR => {
-                    //self.state = CRorLFInsideQuotedString;
-                    //continue;
-                //}
                 
-                //CRorLFInsideQuotedString if b == CR=> {
-                    //self.state = InsideQuotedString;
-                    //continue;
-                //}
-
-                //CRorLFInsideQuotedString => {
-                    //self.state = InsideQuotedString;
-                    //return None;
-                //}
+                InsideQuotedString if b == CR => {
+                    println!("6: '{0}'", "CR - Continue");
+                    self.next_byte = Some(LF);
+                    self.state = Normal;
+                    return Some(DOUBLE_QUOTE);
+                }
 
                 InsideQuotedString => {
+                    println!("8: '{0}'", ::std::str::from_utf8([b]));
                     return Some(b);
                 }
 
                 GotCR | Normal if b == LF => {
+                    println!("9: '{0}'", "LF - Continue");
                     // TODO: check RFC 2616's precise rules, I think it does say that a server
                     // should also accept missing CR
                     self.state = GotCRLF;
                     continue;
                 },
                 GotCR => {
+                    println!("10: '{0}'", "Returning CR");
                     // False alarm, CR without LF. Hmm... was it LWS then? TODO.
                     // FIXME: this is BAD, but I'm dropping the CR for now;
                     // when we can have yield it'd be better. Also again, check speck.
@@ -500,6 +495,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     return Some(CR);
                 },
                 GotCRLF => {
+                    println!("11: '{0}'", "None");
                     // Ooh! We got to a genuine end of line, so we're done.
                     // But first, we must makes sure not to lose that byte.
                     self.next_byte = Some(b);
@@ -507,10 +503,12 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     return None;
                 },
                 Normal => {
+                    println!("12: '{0}'",::std::str::from_utf8([b]));
                     self.at_start = false;
                     return Some(b);
                 },
                 Finished => {
+                    println!("12: 'Finished'");
                     unreachable!();
                 },
             };
