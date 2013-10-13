@@ -134,7 +134,7 @@ enum HeaderValueByteIteratorState {
     Normal,  // Anything other than the rest.
     InsideQuotedString,  // no LWS compacting here. TODO: check spec on CR LF SP in quoted-string.
     InsideQuotedStringEscape,  // don't let a " close quoted-string if it comes next
-    CompactingLWS,  // Got at least one linear white space character; turning it into just one SP
+    //CRorLFInsideQuotedString,  // no LWS compacting here. TODO: check spec on CR LF SP in quoted-string.
     GotCR,  // Last character was CR
     GotCRLF,  // Last two characters were CR LF
     Finished,  // Finished, so next() should always return ``None`` immediately (no side effects)
@@ -431,6 +431,14 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 }
             };
             match self.state {
+                Normal if b == SP || b == HT  =>{
+                    if self.at_start {
+                        continue;
+                    } else {
+                        return Some(SP);
+                    }
+                }
+
                 Normal if b == CR => {
                     // It's OK to go to GotCR on CompactingLWS: if it ends up ``CR LF SP`` it'll get
                     // back to CompactingLWS, and if it ends up ``CR LF`` we didn't need the
@@ -457,6 +465,22 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.state = Normal;
                     return Some(b);
                 }
+
+                //InsideQuotedString if b == CR => {
+                    //self.state = CRorLFInsideQuotedString;
+                    //continue;
+                //}
+                
+                //CRorLFInsideQuotedString if b == CR=> {
+                    //self.state = InsideQuotedString;
+                    //continue;
+                //}
+
+                //CRorLFInsideQuotedString => {
+                    //self.state = InsideQuotedString;
+                    //return None;
+                //}
+
                 InsideQuotedString => {
                     return Some(b);
                 }
@@ -475,11 +499,6 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.state = Normal;
                     return Some(CR);
                 },
-                GotCRLF if b == SP || b == HT => {
-                    // CR LF SP is a suitable linear whitespace, so don't stop yet
-                    self.state = CompactingLWS;
-                    continue;
-                },
                 GotCRLF => {
                     // Ooh! We got to a genuine end of line, so we're done.
                     // But first, we must makes sure not to lose that byte.
@@ -487,21 +506,13 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.state = Finished;
                     return None;
                 },
-                Normal if b == SP || b == HT => {
-                    // Start or continue to compact linear whitespace
-                    self.state = CompactingLWS;
-                    continue;
-                },
-                CompactingLWS => {
-                    // End of LWS, compact it down to a single space, unless it's at the start.
-                    self.state = Normal;
-                    return Some(b);
-                },
                 Normal => {
                     self.at_start = false;
                     return Some(b);
                 },
-                Finished => unreachable!(),
+                Finished => {
+                    unreachable!();
+                },
             };
         }
     }
