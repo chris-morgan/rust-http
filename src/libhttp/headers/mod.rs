@@ -429,14 +429,11 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     Some(b) => b,
                 }
             };
-            println!("-----------> Loop");
             match self.state {
                 Normal if b == SP || b == HT  =>{
                     if self.at_start {
-                    println!("0: '{0}'","Continue");
                         continue;
                     } else {
-                    println!("0: '{0}'","SP");
                         return Some(SP);
                     }
                 }
@@ -465,28 +462,21 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.state = Normal;
                     return Some(b);
                 }
-                
                 InsideQuotedString if b == CR => {
-                    println!("6: '{0}'", "CR - Continue");
                     self.next_byte = Some(LF);
                     self.state = Normal;
                     return Some(DOUBLE_QUOTE);
                 }
-
                 InsideQuotedString => {
-                    println!("8: '{0}'", ::std::str::from_utf8([b]));
                     return Some(b);
                 }
-
                 GotCR | Normal if b == LF => {
-                    println!("9: '{0}'", "LF - Continue");
                     // TODO: check RFC 2616's precise rules, I think it does say that a server
                     // should also accept missing CR
                     self.state = GotCRLF;
                     continue;
                 },
                 GotCR => {
-                    println!("10: '{0}'", "Returning CR");
                     // False alarm, CR without LF. Hmm... was it LWS then? TODO.
                     // FIXME: this is BAD, but I'm dropping the CR for now;
                     // when we can have yield it'd be better. Also again, check speck.
@@ -495,7 +485,6 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     return Some(CR);
                 },
                 GotCRLF => {
-                    println!("11: '{0}'", "None");
                     // Ooh! We got to a genuine end of line, so we're done.
                     // But first, we must makes sure not to lose that byte.
                     self.next_byte = Some(b);
@@ -503,14 +492,10 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     return None;
                 },
                 Normal => {
-                    println!("12: '{0}'",::std::str::from_utf8([b]));
                     self.at_start = false;
                     return Some(b);
                 },
-                Finished => {
-                    println!("12: 'Finished'");
-                    unreachable!();
-                },
+                Finished => unreachable!(),
             };
         }
     }
