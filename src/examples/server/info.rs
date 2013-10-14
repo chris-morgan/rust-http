@@ -29,6 +29,8 @@ impl Server for InfoServer {
         });
         w.headers.server = Some(~"Rust Thingummy/0.0-pre");
         w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>"));
+        w.write(bytes!("<h1>Request</h1>"));
+        w.write(bytes!("<style> code{white-space: pre;} </style>"));
 
         w.write(bytes!("<h1>Request</h1>"));
         let s = format!("<dl>
@@ -48,7 +50,7 @@ impl Server for InfoServer {
         for header in r.headers.iter() {
             let line = format!("<tr><td><code>{}</code></td><td><code>{}</code></td></tr>",
                                header.header_name(),
-                               ::std::str::replace(header.header_value(), " ", "&nbsp"));
+                               header.header_value());
             w.write(line.as_bytes());
         }
         w.write(bytes!("</tbody></table>"));
@@ -65,8 +67,8 @@ impl Server for InfoServer {
             let h = w.headers.clone();
             for header in h.iter() {
                 let line = format!("<tr><td><code>{}</code></td><td><code>{}</code></td></tr>",
-                                header.header_name(),
-                               ::std::str::replace(header.header_value(), " ", "&nbsp"));
+                               header.header_name(),
+                               header.header_value());
                 w.write(line.as_bytes());
             }
         }
