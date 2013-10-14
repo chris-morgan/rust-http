@@ -134,7 +134,6 @@ enum HeaderValueByteIteratorState {
     Normal,  // Anything other than the rest.
     InsideQuotedString,  // no LWS compacting here. TODO: check spec on CR LF SP in quoted-string.
     InsideQuotedStringEscape,  // don't let a " close quoted-string if it comes next
-    GotCR,  // Last character was CR
     GotCRLF,  // Last two characters were CR LF
     Finished,  // Finished, so next() should always return ``None`` immediately (no side effects)
 }
@@ -437,13 +436,11 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                         return Some(SP);
                     }
                 }
+                //Seems like we don't want to do anything with this.
                 Normal if b == CR => {
-                    // It's OK to go to GotCR on CompactingLWS: if it ends up ``CR LF SP`` it'll get
-                    // back to CompactingLWS, and if it ends up ``CR LF`` we didn't need the
-                    // trailing whitespace anyway.
-                    self.state = GotCR;
                     continue;
                 },
+
                 // TODO: fix up these quoted-string rules, they're probably wrong (CRLF inside it?)
                 Normal if b == DOUBLE_QUOTE => {
                     self.at_start = false;
@@ -462,7 +459,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.state = Normal;
                     return Some(b);
                 }
-                InsideQuotedString if b == CR => {
+                InsideQuotedString if b == LF => {
                     self.next_byte = Some(LF);
                     self.state = Normal;
                     return Some(DOUBLE_QUOTE);
@@ -470,20 +467,16 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 InsideQuotedString => {
                     return Some(b);
                 }
-                GotCR | Normal if b == LF => {
-                    // TODO: check RFC 2616's precise rules, I think it does say that a server
-                    // should also accept missing CR
+                Normal if b == LF => {
                     self.state = GotCRLF;
                     continue;
                 },
-                GotCR => {
-                    // False alarm, CR without LF. Hmm... was it LWS then? TODO.
-                    // FIXME: this is BAD, but I'm dropping the CR for now;
-                    // when we can have yield it'd be better. Also again, check speck.
-                    self.next_byte = Some(b);
+                //Header value can be split into multpiple lines.
+                //New line is a candidate if it starts with SP or HT.
+                GotCRLF if b == SP || b == HT=> {
                     self.state = Normal;
-                    return Some(CR);
-                },
+                    return Some(SP);
+                }
                 GotCRLF => {
                     // Ooh! We got to a genuine end of line, so we're done.
                     // But first, we must makes sure not to lose that byte.
