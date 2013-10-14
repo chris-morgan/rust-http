@@ -54,4 +54,4 @@ clean:
 	rm -rf src/libhttp/generated/ src/libhttp/codegen/codegen
 	rm -rf build/
 
-.PHONY: libhttp examples clean check
+.PHONY: all libhttp examples clean check
