@@ -17,7 +17,7 @@ libhttp_files=\
 		      src/libhttp/method.rs \
 		      src/libhttp/rfc2616.rs
 
-libhttp: $(libhttp_so)
+$(libhttp_so):
 
 all: $(libhttp_so) examples
 
@@ -54,4 +54,4 @@ clean:
 	rm -rf src/libhttp/generated/ src/libhttp/codegen/codegen
 	rm -rf build/
 
-.PHONY: all examples clean check
+.PHONY: libhttp examples clean check
