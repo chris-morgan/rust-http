@@ -17,6 +17,10 @@ libhttp_files=\
 		      src/libhttp/method.rs \
 		      src/libhttp/rfc2616.rs
 
+$(libhttp_so): $(libhttp_files)
+	mkdir -p build/
+	$(RUSTC) $(RUSTFLAGS) src/libhttp/lib.rs --out-dir=build
+
 all: $(libhttp_so) examples
 
 src/libhttp/codegen/codegen: $(wildcard src/libhttp/codegen/*.rs)
@@ -24,10 +28,6 @@ src/libhttp/codegen/codegen: $(wildcard src/libhttp/codegen/*.rs)
 
 src/libhttp/generated/%.rs: src/libhttp/codegen/codegen
 	src/libhttp/codegen/codegen $(patsubst src/libhttp/generated/%,%,$@) src/libhttp/generated/
-
-$(libhttp_so): $(libhttp_files)
-	mkdir -p build/
-	$(RUSTC) $(RUSTFLAGS) src/libhttp/lib.rs --out-dir=build
 
 build/%:: src/%.rs $(libhttp_so)
 	mkdir -p '$(dir $@)'
