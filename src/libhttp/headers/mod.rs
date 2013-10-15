@@ -222,14 +222,21 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
         out
     }
 
+    // It doesn't handle CR or LF  at the moment since next() only returns SP or HT when it finds any LWS.
     pub fn consume_optional_lws(&mut self) {
-        match self.next() {
-            Some(b) if b != ' ' as u8 => {
-                // TODO: manually verify this holds
-                assert_eq!(self.next_byte, None);
-                self.next_byte = Some(b);
-            },
-            _ => (),
+        loop {
+            match self.next() {
+                Some(b) if b == SP || b == HT => {
+                    continue;
+                },
+                Some(b) => {
+                    // TODO: manually verify this holds
+                    assert_eq!(self.next_byte, None);
+                    self.next_byte = Some(b);
+                    break;
+                },
+                None => { break; },
+            }
         }
     }
 
