@@ -389,6 +389,7 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
                 Some(b) if is_separator(b) => {
                     assert_eq!(self.next_byte, None);
                     self.next_byte = Some(b);
+                    self.consume_optional_lws();
                     break;
                 },
                 Some(b) if is_token_item(b) => {
