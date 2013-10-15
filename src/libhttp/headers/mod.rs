@@ -132,8 +132,6 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
 #[deriving(Eq)]
 enum HeaderValueByteIteratorState {
     Normal,  // Anything other than the rest.
-    InsideQuotedString,  // no LWS compacting here. TODO: check spec on CR LF SP in quoted-string.
-    InsideQuotedStringEscape,  // don't let a " close quoted-string if it comes next
     GotCRLF,  // Last two characters were CR LF
     Finished,  // Finished, so next() should always return ``None`` immediately (no side effects)
 }
@@ -441,33 +439,6 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 Normal if b == CR => {
                     continue;
                 },
-
-                // TODO: fix up these quoted-string rules, they're probably wrong (CRLF inside it?)
-                Normal if b == DOUBLE_QUOTE => {
-                    self.at_start = false;
-                    self.state = InsideQuotedString;
-                    return Some(b);
-                },
-                InsideQuotedString if b == BACKSLASH => {
-                    self.state = InsideQuotedStringEscape;
-                    return Some(b);
-                }
-                InsideQuotedStringEscape => {
-                    self.state = InsideQuotedString;
-                    return Some(b);
-                }
-                InsideQuotedString if b == DOUBLE_QUOTE => {
-                    self.state = Normal;
-                    return Some(b);
-                }
-                InsideQuotedString if b == LF => {
-                    self.next_byte = Some(LF);
-                    self.state = Normal;
-                    return Some(DOUBLE_QUOTE);
-                }
-                InsideQuotedString => {
-                    return Some(b);
-                }
                 Normal if b == LF => {
                     self.state = GotCRLF;
                     continue;
