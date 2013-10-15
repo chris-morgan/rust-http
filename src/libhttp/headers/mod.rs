@@ -432,7 +432,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     if self.at_start {
                         continue;
                     } else {
-                        return Some(SP);
+                        return Some(b);
                     }
                 }
                 //Seems like we don't want to do anything with this.
