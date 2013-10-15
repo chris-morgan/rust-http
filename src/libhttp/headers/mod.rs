@@ -132,7 +132,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
 #[deriving(Eq)]
 enum HeaderValueByteIteratorState {
     Normal,  // Anything other than the rest.
-    GotCRLF,  // Last two characters were CR LF
+    GotLF,  // Last two characters were CR LF
     Finished,  // Finished, so next() should always return ``None`` immediately (no side effects)
 }
 
@@ -387,7 +387,7 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
                 Some(b) if is_separator(b) => {
                     assert_eq!(self.next_byte, None);
                     self.next_byte = Some(b);
-                    self.consume_optional_lws();
+                    //self.consume_optional_lws();
                     break;
                 },
                 Some(b) if is_token_item(b) => {
@@ -428,7 +428,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 }
             };
             match self.state {
-                Normal if b == SP || b == HT  =>{
+                Normal if b == SP || b == HT => {
                     if self.at_start {
                         continue;
                     } else {
@@ -440,16 +440,16 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     continue;
                 },
                 Normal if b == LF => {
-                    self.state = GotCRLF;
+                    self.state = GotLF;
                     continue;
                 },
                 //Header value can be split into multpiple lines.
                 //New line is a candidate if it starts with SP or HT.
-                GotCRLF if b == SP || b == HT=> {
+                GotLF if b == SP || b == HT => {
                     self.state = Normal;
                     return Some(SP);
                 }
-                GotCRLF => {
+                GotLF => {
                     // Ooh! We got to a genuine end of line, so we're done.
                     // But first, we must makes sure not to lose that byte.
                     self.next_byte = Some(b);
