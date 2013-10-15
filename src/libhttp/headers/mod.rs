@@ -434,8 +434,8 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     } else {
                         return Some(b);
                     }
-                }
-                //Seems like we don't want to do anything with this.
+                },
+                // Seems like we don't want to do anything with this.
                 Normal if b == CR => {
                     continue;
                 },
@@ -443,12 +443,12 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.state = GotLF;
                     continue;
                 },
-                //Header value can be split into multpiple lines.
-                //New line is a candidate if it starts with SP or HT.
+                // Header value can be split into multiple lines.
+                // New line is a candidate if it starts with LWS (SP or HT).
                 GotLF if b == SP || b == HT => {
                     self.state = Normal;
-                    return Some(SP);
-                }
+                    return Some(b);
+                },
                 GotLF => {
                     // Ooh! We got to a genuine end of line, so we're done.
                     // But first, we must makes sure not to lose that byte.
@@ -461,7 +461,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     return Some(b);
                 },
                 Finished => unreachable!(),
-            };
+            }
         }
     }
 }
