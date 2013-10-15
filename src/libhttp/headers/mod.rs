@@ -435,8 +435,11 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                         return Some(b);
                     }
                 },
-                // Seems like we don't want to do anything with this.
                 Normal if b == CR => {
+                    // RFC 2616 section 19.3, paragraph 3: "The line terminator for message-header
+                    // fields is the sequence CRLF. However, we recommend that applications, when
+                    // parsing such headers, recognize a single LF as a line terminator and ignore
+                    // the leading CR."
                     continue;
                 },
                 Normal if b == LF => {
