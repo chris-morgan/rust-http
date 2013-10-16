@@ -453,9 +453,13 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.state = GotLF;
                     continue;
                 },
-                // Header value can be split into multiple lines.
-                // New line is a candidate if it starts with LWS (SP or HT).
                 GotLF if b == SP || b == HT => {
+                    // Header value can be split into multiple lines.
+                    // New line is a candidate if it starts with LWS (SP or HT).
+                    // RFC2616 Section 4.2 paragraph 1:
+                    // "... Header fields can be extended over multiple lines by preceding each extra line
+                    // with at least one SP or HT."
+
                     self.state = Normal;
                     return Some(b);
                 },
@@ -481,8 +485,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
  */
 pub trait HeaderConvertible: Eq + Clone {
     /**
-     * Read a header value from an iterator over the raw value. That iterator compacts linear white
-     * space to a single SP, so this static method should just expect a single SP. There will be no
+     * Read a header value from an iterator over the raw value. There will be no
      * leading or trailing space, either; also the ``CR LF`` which would indicate the end of the
      * header line in the stream is removed.
      *
