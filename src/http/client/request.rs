@@ -128,10 +128,14 @@ impl<S: Reader + Writer> RequestWriter<S> {
             // TODO: Error handling
             let addr = addr.unwrap();
 
-            let port = url.port.clone().unwrap_or(~"80");
-            let port = from_str(port);
-            // TODO: Error handling
-            let port = port.unwrap();
+            let port = match url.port {
+                None =>  match url.scheme {
+                    ~"http" => Some(80),
+                    ~"https" => Some(443),
+                    _  => None,
+                    },
+                Some(ref p) => Some(from_str(*p).expect("You didn’t aught to give a bad port!")) };
+            let port = port.unwrap_or(80);
 
             SocketAddr {
                 ip: addr,
