@@ -8,7 +8,7 @@ use std::rt::io::{Reader, Writer};
 use std::rt::io::extensions::ReaderUtil;
 use extra::time::{Tm, strptime};
 use extra::url::Url;
-use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON, DOUBLE_QUOTE, BACKSLASH};
+use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON};
 use method::Method;
 
 use self::serialization_utils::{normalise_header_name};
