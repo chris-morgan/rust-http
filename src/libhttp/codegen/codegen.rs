@@ -15,7 +15,7 @@ fn main() {
             os::set_exit_status(1); 
         },
         3 => {
-            let output_dir = GenericPath::from_str(args[2]);
+            let output_dir = from_str(args[2]).unwrap();
             // TODO: maybe not 0777?
             os::make_dir(&output_dir, 0b111_111_111);
 
@@ -36,7 +36,9 @@ fn main() {
 }
 
 pub fn get_writer(output_dir: &Path, filename: &str) -> @Writer {
-    match file_writer(&output_dir.push(filename), [Create, Truncate]) {
+    let mut output_dir = output_dir.clone();
+    output_dir.push(filename);
+    match file_writer(&output_dir, [Create, Truncate]) {
         Ok(writer) => writer,
         Err(msg) => fail!("Unable to write file: %s", msg),
     }
