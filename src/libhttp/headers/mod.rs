@@ -8,7 +8,7 @@ use std::rt::io::{Reader, Writer};
 use std::rt::io::extensions::ReaderUtil;
 use extra::time::{Tm, strptime};
 use extra::url::Url;
-use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON, DOUBLE_QUOTE, BACKSLASH};
+use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON};
 use method::Method;
 
 use self::serialization_utils::{normalise_header_name};
@@ -132,11 +132,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
 #[deriving(Eq)]
 enum HeaderValueByteIteratorState {
     Normal,  // Anything other than the rest.
-    InsideQuotedString,  // no LWS compacting here. TODO: check spec on CR LF SP in quoted-string.
-    InsideQuotedStringEscape,  // don't let a " close quoted-string if it comes next
-    CompactingLWS,  // Got at least one linear white space character; turning it into just one SP
-    GotCR,  // Last character was CR
-    GotCRLF,  // Last two characters were CR LF
+    GotLF,  // Last two characters were CR LF
     Finished,  // Finished, so next() should always return ``None`` immediately (no side effects)
 }
 
@@ -226,14 +222,21 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
         out
     }
 
+    // It doesn't handle CR or LF  at the moment since next() only returns SP or HT when it finds any LWS.
     pub fn consume_optional_lws(&mut self) {
-        match self.next() {
-            Some(b) if b != ' ' as u8 => {
-                // TODO: manually verify this holds
-                assert_eq!(self.next_byte, None);
-                self.next_byte = Some(b);
-            },
-            _ => (),
+        loop {
+            match self.next() {
+                Some(b) if b == SP || b == HT => {
+                    continue;
+                },
+                Some(b) => {
+                    // TODO: manually verify this holds
+                    assert_eq!(self.next_byte, None);
+                    self.next_byte = Some(b);
+                    break;
+                },
+                None => { break; },
+            }
         }
     }
 
@@ -391,6 +394,7 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
                 Some(b) if is_separator(b) => {
                     assert_eq!(self.next_byte, None);
                     self.next_byte = Some(b);
+                    //self.consume_optional_lws();
                     break;
                 },
                 Some(b) if is_token_item(b) => {
@@ -431,83 +435,47 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                 }
             };
             match self.state {
-                Normal | CompactingLWS if b == CR => {
-                    // It's OK to go to GotCR on CompactingLWS: if it ends up ``CR LF SP`` it'll get
-                    // back to CompactingLWS, and if it ends up ``CR LF`` we didn't need the
-                    // trailing whitespace anyway.
-                    self.state = GotCR;
+                Normal if b == SP || b == HT => {
+                    if self.at_start {
+                        continue;
+                    } else {
+                        return Some(b);
+                    }
+                },
+                Normal if b == CR => {
+                    // RFC 2616 section 19.3, paragraph 3: "The line terminator for message-header
+                    // fields is the sequence CRLF. However, we recommend that applications, when
+                    // parsing such headers, recognize a single LF as a line terminator and ignore
+                    // the leading CR."
                     continue;
                 },
-
-                // TODO: fix up these quoted-string rules, they're probably wrong (CRLF inside it?)
-                Normal | CompactingLWS if b == DOUBLE_QUOTE => {
-                    self.at_start = false;
-                    self.state = InsideQuotedString;
-                    return Some(b);
+                Normal if b == LF => {
+                    self.state = GotLF;
+                    continue;
                 },
-                InsideQuotedString if b == BACKSLASH => {
-                    self.state = InsideQuotedStringEscape;
-                    return Some(b);
-                }
-                InsideQuotedStringEscape => {
-                    self.state = InsideQuotedString;
-                    return Some(b);
-                }
-                InsideQuotedString if b == DOUBLE_QUOTE => {
+                GotLF if b == SP || b == HT => {
+                    // Header value can be split into multiple lines.
+                    // New line is a candidate if it starts with LWS (SP or HT).
+                    // RFC2616 Section 4.2 paragraph 1:
+                    // "... Header fields can be extended over multiple lines by preceding each extra line
+                    // with at least one SP or HT."
+
                     self.state = Normal;
                     return Some(b);
-                }
-                InsideQuotedString => {
-                    return Some(b);
-                }
-
-                GotCR | Normal if b == LF => {
-                    // TODO: check RFC 2616's precise rules, I think it does say that a server
-                    // should also accept missing CR
-                    self.state = GotCRLF;
-                    continue;
                 },
-                GotCR => {
-                    // False alarm, CR without LF. Hmm... was it LWS then? TODO.
-                    // FIXME: this is BAD, but I'm dropping the CR for now;
-                    // when we can have yield it'd be better. Also again, check speck.
-                    self.next_byte = Some(b);
-                    self.state = Normal;
-                    return Some(CR);
-                },
-                GotCRLF if b == SP || b == HT => {
-                    // CR LF SP is a suitable linear whitespace, so don't stop yet
-                    self.state = CompactingLWS;
-                    continue;
-                },
-                GotCRLF => {
+                GotLF => {
                     // Ooh! We got to a genuine end of line, so we're done.
                     // But first, we must makes sure not to lose that byte.
                     self.next_byte = Some(b);
                     self.state = Finished;
                     return None;
                 },
-                Normal | CompactingLWS if b == SP || b == HT => {
-                    // Start or continue to compact linear whitespace
-                    self.state = CompactingLWS;
-                    continue;
-                },
-                CompactingLWS => {
-                    // End of LWS, compact it down to a single space, unless it's at the start.
-                    self.state = Normal;
-                    if self.at_start {
-                        return Some(b);
-                    } else {
-                        self.next_byte = Some(b);
-                        return Some(SP);
-                    }
-                },
                 Normal => {
                     self.at_start = false;
                     return Some(b);
                 },
                 Finished => unreachable!(),
-            };
+            }
         }
     }
 }
@@ -517,8 +485,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
  */
 pub trait HeaderConvertible: Eq + Clone {
     /**
-     * Read a header value from an iterator over the raw value. That iterator compacts linear white
-     * space to a single SP, so this static method should just expect a single SP. There will be no
+     * Read a header value from an iterator over the raw value. There will be no
      * leading or trailing space, either; also the ``CR LF`` which would indicate the end of the
      * header line in the stream is removed.
      *
@@ -718,26 +685,7 @@ impl HeaderConvertible for Tm {
             Err(*) => ()
         }
 
-        // FIXME: remove this if/when I take automatic LWS collapsing out of
-        // HeaderValueByteIterator.next(). This is a nasty hack. asctime is formatted with a leading
-        // zero on a single-digit day of month, so:
-        //
-        //     Sun Nov  6 08:49:37 1994
-        //
-        // But the LWS collapsing currently (and unsatisfactorily) employed breaks that.
-        // There's no suitable format for this in strptime, so we must (gulp) add it back in.
-
-        let mut asctime_value;
-        if value[9] == ' ' as u8 {
-            // Single digit day of month
-            asctime_value = value.slice_to(8).to_owned();
-            asctime_value.push_char(' ');
-            asctime_value.push_str(value.slice_from(8));
-        } else {
-            // Double digit day of month
-            asctime_value = value.to_owned();
-        }
-        match strptime(asctime_value, "%c") {  // ANSI C's asctime() format
+        match strptime(value, "%c") {  // ANSI C's asctime() format
             Ok(time) => Some(time),
             Err(*) => None
         }
@@ -826,9 +774,11 @@ mod test {
     #[test]
     fn test_from_stream_asctime() {
         assert_eq!(from_stream_with_str("Sun Nov  6 08:49:37 1994"), Some(sample_tm(~"")));
-        // According to the spec, this should fail; but at present it succeeds. See
-        // HeaderConvertible::from_stream<Tm> above for more info.
-        // This is here so that I don't leave slowing-down code in there when I fix it. :-)
+    }
+
+    #[test]
+    #[should_fail]
+    fn test_from_stream_asctime_remove_LWS() {
         assert_eq!(from_stream_with_str("Sun Nov 6 08:49:37 1994"), Some(sample_tm(~"")));
     }
 
