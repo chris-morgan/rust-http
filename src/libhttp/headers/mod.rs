@@ -153,6 +153,7 @@ pub struct HeaderValueByteIterator<'self, R> {
 
     at_start: bool,
     state: HeaderValueByteIteratorState,
+    last_value: ~[u8],
 }
 
 impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
@@ -163,6 +164,7 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
             next_byte: None,
             at_start: true,
             state: Normal,
+            last_value: ~[],
         }
     }
 
@@ -219,6 +221,7 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
         for b in self {
             out.push_char(b as char);
         }*/
+        println(::std::str::from_utf8(self.last_value));
         out
     }
 
@@ -431,7 +434,10 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                         self.state = Finished;
                         return None
                     },
-                    Some(b) => b,
+                    Some(b) => {
+                            self.last_value.push(b);
+                        b
+                    },
                 }
             };
             match self.state {
@@ -468,6 +474,10 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     // But first, we must makes sure not to lose that byte.
                     self.next_byte = Some(b);
                     self.state = Finished;
+
+
+                    //Remove the last read byte from the last_value. It belongs to the next line.
+                    self.last_value.pop_opt();
                     return None;
                 },
                 Normal => {
