@@ -227,19 +227,38 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
      * gets to something other than SP and HT or gets to the end of the header.
      */
     pub fn consume_optional_lws(&mut self) {
-        // No need to deal with CR and LF here as `CR LF SP`-style LWS is collapsed by next().
+        // This is the dirty secret of this method.
+        let _ = self.consume_lws();
+    }
+
+    /**
+     * Consume `1*LWS`. That is, one or more of SP and HT, until it gets to
+     * something other than SP and HT or gets to the end of the header.
+     */
+    pub fn consume_lws(&mut self) -> bool {
+        // This doesn't need to deal with CR and LF; next() collapses that LWS.
+        // (This Serious Comment had to come here rather than lower where it would normally be more
+        // suitable as it would otherwise have messed up the poetry of the Less Serious Comments.)
+
+        // Don't you love descriptive variable names?
+        let mut the_savages_gobbled_up_at_least_one_white_space_char = false;
         loop {
+            // 1000 hairy (?) white space chars, sitting in a stream...
             match self.next() {
-                Some(b) if b == SP || b == HT => continue,
+                // Gobble, gobble, glup, glup, much, munch, munch.
+                Some(b) if b == SP || b == HT => (),
                 Some(b) => {
-                    // TODO: manually verify this holds
-                    assert_eq!(self.next_byte, None);
+                    // "Oy! Who put a non-white-space-char on my plate?"
+                    // Better take it off or someone might eat it by accident...
+                    assert_eq!(self.next_byte, None);  // TODO: manually verify this holds
                     self.next_byte = Some(b);
                     break;
                 },
-                None => break,
-            }
+                None => break,  // Sorry, you're going to go hungry today...
+            };
+            the_savages_gobbled_up_at_least_one_white_space_char = true;
         }
+        the_savages_gobbled_up_at_least_one_white_space_char
     }
 
     /// Return values:
