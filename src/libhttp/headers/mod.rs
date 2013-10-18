@@ -132,7 +132,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
 #[deriving(Eq)]
 enum HeaderValueByteIteratorState {
     Normal,  // Anything other than the rest.
-    GotLF,  // Last two characters were CR LF
+    GotLF,  // Last character was LF (could be end of header or, if followed by SP or HT, LWS)
     Finished,  // Finished, so next() should always return ``None`` immediately (no side effects)
 }
 
@@ -222,20 +222,22 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
         out
     }
 
-    // It doesn't handle CR or LF  at the moment since next() only returns SP or HT when it finds any LWS.
+    /**
+     * Consume optional `*LWS`. That is, zero or more of SP and HT, until it
+     * gets to something other than SP and HT or gets to the end of the header.
+     */
     pub fn consume_optional_lws(&mut self) {
+        // No need to deal with CR and LF here as `CR LF SP`-style LWS is collapsed by next().
         loop {
             match self.next() {
-                Some(b) if b == SP || b == HT => {
-                    continue;
-                },
+                Some(b) if b == SP || b == HT => continue,
                 Some(b) => {
                     // TODO: manually verify this holds
                     assert_eq!(self.next_byte, None);
                     self.next_byte = Some(b);
                     break;
                 },
-                None => { break; },
+                None => break,
             }
         }
     }
@@ -394,7 +396,6 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
                 Some(b) if is_separator(b) => {
                     assert_eq!(self.next_byte, None);
                     self.next_byte = Some(b);
-                    //self.consume_optional_lws();
                     break;
                 },
                 Some(b) if is_token_item(b) => {
@@ -454,11 +455,16 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     continue;
                 },
                 GotLF if b == SP || b == HT => {
-                    // Header value can be split into multiple lines.
-                    // New line is a candidate if it starts with LWS (SP or HT).
-                    // RFC2616 Section 4.2 paragraph 1:
-                    // "... Header fields can be extended over multiple lines by preceding each extra line
-                    // with at least one SP or HT."
+                    // This isn't an end of header, this is LWS.
+                    //
+                    // RFC 2616, section 2.2:
+                    //
+                    //     LWS            = [CRLF] 1*( SP | HT )
+                    //
+                    // RFC 2616, section 4.2, paragraph 1:
+                    //
+                    //     Header fields can be extended over multiple lines by
+                    //     preceding each extra line with at least one SP or HT.
 
                     self.state = Normal;
                     return Some(b);
@@ -485,9 +491,12 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
  */
 pub trait HeaderConvertible: Eq + Clone {
     /**
-     * Read a header value from an iterator over the raw value. There will be no
-     * leading or trailing space, either; also the ``CR LF`` which would indicate the end of the
-     * header line in the stream is removed.
+     * Read a header value from an iterator over the raw value.
+     *
+     * There will be no leading white space, but there may be trailing white space.
+     * White space comes only in the form SP or HT; the `CR LF SP` form of whitespace is collapsed
+     * to just the last character, and the `CR LF` which would indicate the end of the header line
+     * in the stream is removed.
      *
      * For types that implement ``FromStr``, a sane-but-potentially-not-as-fast-as-possible default
      * would be::
@@ -776,10 +785,29 @@ mod test {
         assert_eq!(from_stream_with_str("Sun Nov  6 08:49:37 1994"), Some(sample_tm(~"")));
     }
 
+    /// Test `from_stream` with the ANSI C's asctime() format on a single digit
+    /// day with only one space (which is invalid).
+    ///
+    /// The spec requires *exactly* two spaces for such a day number as this
+    /// and will not accept one, in spite of its dodgy LWS collapsing stance.
+    /// ("All linear white space, including folding, has the same semantics as SP.")
+    ///
+    /// This is a test of dubious value, I'll admit, but it does make it
+    /// defensible that it's deliberate, should someone complain. :P
     #[test]
-    #[should_fail]
-    fn test_from_stream_asctime_remove_LWS() {
-        assert_eq!(from_stream_with_str("Sun Nov 6 08:49:37 1994"), Some(sample_tm(~"")));
+    fn test_from_stream_asctime_remove_lws() {
+        assert_eq!(from_stream_with_str::<Tm>("Sun Nov 6 08:49:37 1994"), None);
+    }
+
+    /// Test `from_stream` with the ANSI C's asctime() format on a two-digit day.
+    ///
+    /// This is necessary to contrast with `test_from_stream_asctime_remove_lws`,
+    /// because a double-digit day doesn't have that padding space.
+    #[test]
+    fn test_from_stream_asctime_double_digit_date() {
+        let mut tm = sample_tm(~"");
+        tm.tm_mday = 13;
+        assert_eq!(from_stream_with_str("Sun Nov 13 08:49:37 1994"), Some(tm));
     }
 
     /// Test `http_value`, which outputs an RFC 1123 time
