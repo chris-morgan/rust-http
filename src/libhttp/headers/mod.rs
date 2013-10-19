@@ -94,7 +94,7 @@ pub trait HeaderEnum {
 
 /// Shifted out of being a default method to fix an ICE (not yet reported, TODO)
 pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
-        -> (Result<E, HeaderLineErr>, Option<u8>) {
+        -> (Result<E, HeaderLineErr>, Option<u8>, Option<~[u8]>) {
     enum State { Start, ReadingName, NameFinished, GotCR }
     let mut state = Start;
     let mut header_name = ~"";
@@ -107,12 +107,12 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
             // TODO: check up on the rules for a line like "Name : value". Full LWS?
             (Start, Some(b)) if b == CR => GotCR,
             (Start, Some(b)) | (GotCR, Some(b)) if b == LF => {
-                return (Err(EndOfHeaders), None);
+                return (Err(EndOfHeaders), None, None);
             },
             (_, Some(b)) if b == SP => NameFinished,
             (_, Some(b)) if b == COLON => break,
-            (_, Some(_)) => return (Err(MalformedHeaderSyntax), None),
-            (_, None) => return (Err(EndOfFile), None),
+            (_, Some(_)) => return (Err(MalformedHeaderSyntax), None, None),
+            (_, None) => return (Err(EndOfFile), None, None),
         }
     }
     let mut iter = HeaderValueByteIterator::new(reader);
@@ -120,11 +120,10 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
     // Ensure that the entire header line is consumed (don't want to mess up next header!)
     for _ in iter { }
     match header {
-        Some(h) => (Ok(h), iter.next_byte),
+        Some(h) => (Ok(h), iter.next_byte, None),
         None => {
             debug!("malformed header value for %s", header_name);
-            // Alas, I can't tell you what the value actually was... TODO: improve that situation
-            (Err(MalformedHeaderValue), iter.next_byte)
+            (Err(MalformedHeaderValue), iter.next_byte, Some(iter.last_read_value))
         },
     }
 }
@@ -153,7 +152,7 @@ pub struct HeaderValueByteIterator<'self, R> {
 
     at_start: bool,
     state: HeaderValueByteIteratorState,
-    last_value: ~[u8],
+    last_read_value: ~[u8],
 }
 
 impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
@@ -164,7 +163,7 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
             next_byte: None,
             at_start: true,
             state: Normal,
-            last_value: ~[],
+            last_read_value: ~[],
         }
     }
 
@@ -221,7 +220,6 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
         for b in self {
             out.push_char(b as char);
         }*/
-        println(::std::str::from_utf8(self.last_value));
         out
     }
 
@@ -455,7 +453,7 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                         return None
                     },
                     Some(b) => {
-                            self.last_value.push(b);
+                            self.last_read_value.push(b);
                         b
                     },
                 }
@@ -501,8 +499,8 @@ impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
                     self.state = Finished;
 
 
-                    //Remove the last read byte from the last_value. It belongs to the next line.
-                    self.last_value.pop_opt();
+                    //Remove the last read byte from the last_read_value. It belongs to the next line.
+                    self.last_read_value.pop();
                     return None;
                 },
                 Normal => {

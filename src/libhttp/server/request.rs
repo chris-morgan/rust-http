@@ -100,16 +100,18 @@ impl<'self, S: Stream> RequestBuffer<'self, S> {
     pub fn read_header<T: headers::HeaderEnum>(&mut self) -> Result<T, HeaderLineErr> {
         match headers::header_enum_from_stream(self.stream) {
         //match headers::HeaderEnum::from_stream(self.stream) {
-            (Err(m), None) => Err(m),
-            (Err(m), Some(b)) => {
+            (Err(m), None, _) => Err(m),
+            (Err(m), Some(b), Some(invalid)) => {
+                // Invalid header value. The part that was read is available in 'invalid'
                 self.stream.poke_byte(b);
                 Err(m)
             },
-            (Ok(header), Some(b)) => {
+            (Err(m), Some(b), None) => Err(m),
+            (Ok(header), Some(b), _) => {
                 self.stream.poke_byte(b);
                 Ok(header)
             }
-            (Ok(header), None) => {
+            (Ok(header), None, _) => {
                 // This should have read an extra byte, on account of the CR LF SP possibility
                 error!("header with no next byte, did reading go wrong?");
                 Ok(header)
