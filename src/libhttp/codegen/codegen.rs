@@ -40,6 +40,6 @@ pub fn get_writer(output_dir: &Path, filename: &str) -> @Writer {
     output_dir.push(filename);
     match file_writer(&output_dir, [Create, Truncate]) {
         Ok(writer) => writer,
-        Err(msg) => fail!("Unable to write file: %s", msg),
+        Err(msg) => fail2!("Unable to write file: {}", msg),
     }
 }
