@@ -44,7 +44,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
 	 */
     fn serve_forever(self) {
         let config = self.get_config();
-        debug!("About to bind to %?", config.bind_address);
+        debug!("About to bind to {:?}", config.bind_address);
         match TcpListener::bind(config.bind_address).listen() {
             None => {
                 error!("bind or listen failed :-(");
@@ -67,7 +67,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
 
                     let time_start = precise_time_ns();
                     if optstream.is_none() {
-                        debug!("accept failed: %?", error);
+                        debug!("accept failed: {:?}", error);
                         // Question: is this the correct thing to do? We should probably be more
                         // intelligent, for there are some accept failures that are likely to be
                         // permanent, such that continuing would be a very bad idea, such as
@@ -82,7 +82,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                         let mut time_start = time_start;
                         let mut stream = BufferedStream::new(stream.take(),
                                                              /* TcpStream.flush() fails! */ false);
-                        debug!("accepted connection, got %?", stream);
+                        debug!("accepted connection, got {:?}", stream);
                         loop {  // A keep-alive loop, condition at end
                             let time_spawned = precise_time_ns();
                             let (request, err_status) = Request::load(&mut stream);

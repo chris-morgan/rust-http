@@ -113,7 +113,7 @@ impl<S: Reader + Writer> RequestWriter<S> {
         };
 
         let remote_addr = url_to_socket_addr(&url);
-        info!("using ip address %s for %s", remote_addr.to_str(), url.host);
+        info!("using ip address {} for {}", remote_addr.to_str(), url.host);
 
         fn url_to_socket_addr(url: &Url) -> SocketAddr {
             // Just grab the first IPv4 address
