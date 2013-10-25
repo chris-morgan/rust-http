@@ -2,7 +2,7 @@ use super::branchify::generate_branchified_method;
 use super::get_writer;
 
 pub fn generate(output_dir: &Path) {
-    let writer = get_writer(output_dir, "read_method.rs");
+    let mut writer = get_writer(output_dir, "read_method.rs");
     writer.write(bytes!("\
 // This automatically generated file is included in request.rs.
 {
@@ -13,7 +13,7 @@ pub fn generate(output_dir: &Path) {
 "));
 
     generate_branchified_method(
-        writer,
+        &mut writer,
         branchify!(case sensitive,
             "CONNECT" => Connect,
             "DELETE"  => Delete,
