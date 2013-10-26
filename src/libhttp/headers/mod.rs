@@ -124,7 +124,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
         None => {
             debug!("malformed header value for {}", header_name);
             // Alas, I can't tell you what the value actually was... TODO: improve that situation
-            (Err(MalformedHeaderValue), iter.next_byte)
+            (Err(MalformedHeaderValue), iter.next_byte, Some(iter.last_read_value))
         },
     }
 }
