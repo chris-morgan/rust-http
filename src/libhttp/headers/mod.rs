@@ -337,7 +337,8 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
         let mut result = ~[];
         loop {
             match self.next() {
-                //This catches the LWS after the last ';.
+                //This catches the LWS after the last ';', and can probably be replaced with
+                //consume_optional_lws().
                 Some(b) if b == SP || b == HT => (),
                 Some(b) if b == ';' as u8 => {
                     match self.read_parameter(true) {
