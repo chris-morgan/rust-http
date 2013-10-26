@@ -1,6 +1,8 @@
 #[macro_escape];
 
 use std::str::CharIterator;
+use std::rt::io::file::FileWriter;
+use std::rt::io::Writer;
 
 struct ParseBranch {
     matches: ~[u8],
@@ -77,7 +79,7 @@ macro_rules! branchify(
 ///         replaced with an expression (literal or non-literal) evaluating to a ``~str`` (it is
 ///         ``{}`` only, not arbitrary format strings)
 pub fn generate_branchified_method(
-        writer: @Writer,
+        writer: &mut FileWriter,
         branches: &[ParseBranch],
         indent: uint,
         read_call: &str,
@@ -86,7 +88,7 @@ pub fn generate_branchified_method(
         valid: &str,
         unknown: &str) {
 
-    fn r(writer: @Writer, branch: &ParseBranch, prefix: &str, indent: uint, read_call: &str,
+    fn r(writer: &mut FileWriter, branch: &ParseBranch, prefix: &str, indent: uint, read_call: &str,
             end: &str, max_len: &str, valid: &str, unknown: &str) {
         let indentstr = " ".repeat(indent * 4);
         let w = |s: &str| {
