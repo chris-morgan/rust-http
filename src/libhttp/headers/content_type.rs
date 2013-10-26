@@ -78,14 +78,12 @@ fn test_content_type() {
 }
 
 #[test]
-#[ignore(reason="lws collapse bug")]  // FIXME: triggers infinite loop.
 fn test_content_type_BROKEN() {
     ::headers::test_utils::assert_conversion_correct("type/subtype;key=value;q=0.1",
             MediaType(~"type", ~"subtype", ~[(~"key", ~"value"), (~"q", ~"0.1")]));
 }
 
 #[test]
-#[ignore(reason="lws collapse bug")]  // FIXME: assertion failure
 fn test_content_type_BROKEN_2() {
     ::headers::test_utils::assert_interpretation_correct("type/subtype ; key = value ; q = 0.1",
             MediaType(~"type", ~"subtype", ~[(~"key", ~"value"), (~"q", ~"0.1")]));
@@ -99,14 +97,12 @@ fn test_invalid_content_type() {
 }
 
 #[test]
-#[ignore(reason="lws collapse bug")]  // FIXME: assertion failure
 fn test_invalid_content_type_BROKEN() {
     ::headers::test_utils::assert_invalid::<MediaType>("type /subtype");
     ::headers::test_utils::assert_invalid::<MediaType>("type/ subtype");
 }
 
 #[test]
-#[ignore(reason="lws collapse bug")]  // FIXME: triggers infinite loop.
 fn test_invalid_content_type_BROKEN_2() {
     ::headers::test_utils::assert_invalid::<MediaType>("type/subtype;foo=bar,foo=bar");
 }
