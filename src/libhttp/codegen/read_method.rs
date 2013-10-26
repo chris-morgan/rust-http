@@ -1,5 +1,6 @@
 use super::branchify::generate_branchified_method;
 use super::get_writer;
+use std::rt::io::Writer;
 
 pub fn generate(output_dir: &Path) {
     let mut writer = get_writer(output_dir, "read_method.rs");
@@ -13,7 +14,7 @@ pub fn generate(output_dir: &Path) {
 "));
 
     generate_branchified_method(
-        &mut writer,
+        writer,
         branchify!(case sensitive,
             "CONNECT" => Connect,
             "DELETE"  => Delete,
