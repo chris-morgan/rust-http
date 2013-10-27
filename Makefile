@@ -1,44 +1,62 @@
 RUSTC ?= rustc
+RUSTPKG ?= rustpkg
 RUSTFLAGS ?= -O -Z debug-info
-VERSION=0.1-pre
 
-libhttp_so=build/libhttp-20af9b1d3441fe5a-$(VERSION).so
-libhttp_files=\
-		      src/libhttp/lib.rs \
-		      src/libhttp/buffer.rs \
-		      src/libhttp/common.rs \
-		      src/libhttp/generated/read_method.rs \
-		      src/libhttp/generated/status.rs \
-		      $(wildcard src/libhttp/headers/*.rs) \
-		      $(wildcard src/libhttp/client/*.rs) \
-		      $(wildcard src/libhttp/server/*.rs) \
-		      src/libhttp/memstream.rs \
-		      src/libhttp/method.rs \
-		      src/libhttp/rfc2616.rs
+codegen_files=\
+	        src/codegen/branchify.rs \
+	        src/codegen/main.rs \
+	        src/codegen/read_method.rs \
+	        src/codegen/status.rs \
 
-$(libhttp_so): $(libhttp_files)
-	mkdir -p build/
-	$(RUSTC) $(RUSTFLAGS) src/libhttp/lib.rs --out-dir=build
+http_files=\
+		      src/http/lib.rs \
+		      src/http/buffer.rs \
+		      src/http/common.rs \
+		      src/http/generated/read_method.rs \
+		      src/http/generated/status.rs \
+		      $(wildcard src/http/headers/*.rs) \
+		      $(wildcard src/http/client/*.rs) \
+		      $(wildcard src/http/server/*.rs) \
+		      src/http/memstream.rs \
+		      src/http/method.rs \
+		      src/http/rfc2616.rs
 
-all: $(libhttp_so) examples
+all: http examples
 
-src/libhttp/codegen/codegen: $(wildcard src/libhttp/codegen/*.rs)
-	$(RUSTC) $(RUSTFLAGS) $@.rs
+src/http/generated:
+	mkdir -p src/http/generated
 
-src/libhttp/generated/%.rs: src/libhttp/codegen/codegen
-	src/libhttp/codegen/codegen $(patsubst src/libhttp/generated/%,%,$@) src/libhttp/generated/
+src/http/generated/%.rs: bin/codegen src/http/generated
+	./bin/codegen $(patsubst src/http/generated/%,%,$@) src/http/generated/
 
-build/%:: src/%.rs $(libhttp_so)
-	mkdir -p '$(dir $@)'
-	$(RUSTC) $(RUSTFLAGS) $< -o $@ -L build/
+http: $(http_files)
+	$(RUSTPKG) install $(RUSTFLAGS) http
 
-examples: $(patsubst src/examples/%.rs,build/examples/%,$(wildcard src/examples/*/*.rs))
+bin/codegen: $(codegen_files)
+	$(RUSTPKG) install $(RUSTFLAGS) codegen
 
-build/tests: $(libhttp_files)
-	$(RUSTC) $(RUSTFLAGS) --test -o build/tests src/libhttp/lib.rs
+bin/client: http src/examples/client/main.rs
+	$(RUSTPKG) install $(RUSTFLAGS) examples/client
 
-build/quicktests: $(libhttp_files)
-	$(RUSTC) --test -o build/quicktests src/libhttp/lib.rs
+bin/apache_fake: http src/examples/server/apache_fake/main.rs
+	$(RUSTPKG) install $(RUSTFLAGS) examples/server/apache_fake
+
+bin/hello_world: http src/examples/server/hello_world/main.rs
+	$(RUSTPKG) install $(RUSTFLAGS) examples/server/hello_world
+
+bin/info: http src/examples/server/info/main.rs
+	$(RUSTPKG) install $(RUSTFLAGS) examples/server/info
+
+bin/request_uri: http src/examples/server/request_uri/main.rs
+	$(RUSTPKG) install $(RUSTFLAGS) examples/server/request_uri
+
+examples: bin/apache_fake bin/apache_fake bin/hello_world bin/info bin/request_uri
+
+build/tests: $(http_files)
+	$(RUSTC) $(RUSTFLAGS) --test -o build/tests src/http/lib.rs
+
+build/quicktests: $(http_files)
+	$(RUSTC) --test -o build/quicktests src/http/lib.rs
 
 # Can't wait for everything to build, optimised too? OK, you can save some time here.
 quickcheck: build/quicktests
@@ -48,7 +66,6 @@ check: all build/tests
 	build/tests --test
 
 clean:
-	rm -rf src/libhttp/generated/ src/libhttp/codegen/codegen
-	rm -rf build/
+	rm -rf bin build lib src/http/generated
 
-.PHONY: all examples clean check
+.PHONY: all http examples clean check quickcheck
