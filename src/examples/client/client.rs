@@ -3,7 +3,7 @@ use http::client::RequestWriter;
 use http::method::Get;
 use http::headers::HeaderEnum;
 use std::str;
-use std::rt::io::extensions::ReaderUtil;
+use std::rt::io::Reader;
 use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
 
 fn main() {

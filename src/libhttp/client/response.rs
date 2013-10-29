@@ -1,5 +1,4 @@
 use std::rt::io::{Reader, Stream};
-use std::rt::io::extensions::ReaderUtil;
 use std::rt::io::{io_error, OtherIoError, IoError};
 use client::request::RequestWriter;
 use rfc2616::{CR, LF, SP};
