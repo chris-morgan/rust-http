@@ -1,6 +1,8 @@
 *~
 *.dSYM/
 *.swp
-src/libhttp/codegen/codegen
-src/libhttp/generated/
+src/http/generated/
+bin/
 build/
+lib/
+.rust/
