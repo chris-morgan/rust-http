@@ -5,7 +5,6 @@
 //! unknown headers are stored in a map in the traditional way.
 
 use std::rt::io::{Reader, Writer};
-use std::rt::io::extensions::ReaderUtil;
 use extra::time::{Tm, strptime};
 use extra::url::Url;
 use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON};

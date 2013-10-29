@@ -1,6 +1,5 @@
 //! Schizofrenic methods which are useful in more than one of request-or-response reading-or-writing
 use std::rt::io::Reader;
-use std::rt::io::extensions::ReaderUtil;
 
 pub fn read_uint<R: Reader>(reader: &mut R, max_digits: u8, next_u8: u8) -> Option<uint> {
     let mut digits = 0u8;
