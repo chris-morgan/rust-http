@@ -1,22 +1,12 @@
 #[feature(macro_rules)];
 
 use std::rt::io::{Writer, CreateOrTruncate};
-use std::rt::io::file::{FileInfo, FileWriter};
+use std::rt::io::file::FileInfo;
 use std::os;
 
 pub mod branchify;
 pub mod status;
 pub mod read_method;
-
-trait WriterExtensions {
-    fn write_str(&mut self, msg: &str);
-}
-
-impl<T: Writer> WriterExtensions for T {
-    fn write_str(&mut self, msg: &str) {
-        self.write(msg.as_bytes());
-    }
-}
 
 fn main() {
     let args = os::args();
@@ -46,11 +36,11 @@ fn main() {
     }
 }
 
-pub fn get_writer(output_dir: &Path, filename: &str) -> FileWriter {
+pub fn get_writer(output_dir: &Path, filename: &str) -> ~Writer {
     let mut output_file = output_dir.clone();
     output_file.push(filename);
     match output_file.open_writer(CreateOrTruncate) {
-        Some(writer) => writer,
+        Some(writer) => ~writer as ~Writer,
         None => fail!("Unable to write file"),
     }
 }
