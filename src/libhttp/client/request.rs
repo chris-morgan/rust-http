@@ -206,12 +206,8 @@ impl RequestWriter<TcpStream> {
         // one statement ("error: borrowed value does not live long enough")
         let s = format!("{} {}{}{} HTTP/1.0\r\n",
                         self.method.to_str(),
-                        self.url.path,
-                        if self.url.query.len() > 0 {
-                            "?"
-                        } else {
-                            ""
-                        },
+                        if self.url.path.len()  > 0 { self.url.path.as_slice() } else { "/" },
+                        if self.url.query.len() > 0 { "?" } else { "" },
                         url::query_to_str(&self.url.query));
         self.stream.write(s.as_bytes());
 
