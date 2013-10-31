@@ -1,11 +1,12 @@
 use extra::url::Url;
 use method::{Method, Options};
 use status;
-use std::rt::io::Stream;
+use std::rt::io::{Stream, Reader};
 use std::rt::io::net::ip::SocketAddr;
+use std::rt::io::net::tcp::TcpStream;
 use rfc2616::{CR, LF, SP};
 use headers;
-use buffer::{BufferedStream, BufTcpStream};
+use buffer::BufferedStream;
 use common::read_http_version;
 
 use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeaderSyntax, MalformedHeaderValue};
@@ -204,7 +205,7 @@ impl FromStr for RequestUri {
 impl Request {
 
     /// Get a response from an open socket.
-    pub fn load(stream: &mut BufTcpStream) -> (~Request, Result<(), status::Status>) {
+    pub fn load(stream: &mut BufferedStream<TcpStream>) -> (~Request, Result<(), status::Status>) {
         let mut buffer = RequestBuffer::new(stream);
 
         // Start out with dummy values

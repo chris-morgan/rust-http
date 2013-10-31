@@ -1,7 +1,8 @@
 use std::rt;
 use std::rt::io::Writer;
+use std::rt::io::net::tcp::TcpStream;
 
-use buffer::BufTcpStream;
+use buffer::BufferedStream;
 use server::Request;
 use status;
 use headers::response::HeaderCollection;
@@ -20,7 +21,7 @@ static RESPONSE_HTTP_VERSION: &'static str = "HTTP/1.1";
 
 pub struct ResponseWriter<'self> {
     // The place to write to (typically a TCP stream, rt::io::net::tcp::TcpStream)
-    priv writer: &'self mut BufTcpStream,
+    priv writer: &'self mut BufferedStream<TcpStream>,
     priv headers_written: bool,
     request: &'self Request,
     headers: ~HeaderCollection,
@@ -29,7 +30,7 @@ pub struct ResponseWriter<'self> {
 
 impl<'self> ResponseWriter<'self> {
     /// Create a `ResponseWriter` writing to the specified location
-    pub fn new(writer: &'self mut BufTcpStream, request: &'self Request) -> ResponseWriter<'self> {
+    pub fn new(writer: &'self mut BufferedStream<TcpStream>, request: &'self Request) -> ResponseWriter<'self> {
         ResponseWriter {
             writer: writer,
             headers_written: false,

@@ -80,8 +80,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                     let child_self = self.clone();
                     do spawn_supervised {
                         let mut time_start = time_start;
-                        let mut stream = BufferedStream::new(stream.take(),
-                                                             /* TcpStream.flush() fails! */ false);
+                        let mut stream = BufferedStream::new(stream.take());
                         debug!("accepted connection, got {:?}", stream);
                         loop {  // A keep-alive loop, condition at end
                             let time_spawned = precise_time_ns();

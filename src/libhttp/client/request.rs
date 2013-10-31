@@ -173,7 +173,7 @@ impl RequestWriter<TcpStream> {
 
         self.stream = match self.remote_addr {
             Some(addr) => match TcpStream::connect(addr) {
-                Some(stream) => Some(BufferedStream::new(stream, false)),
+                Some(stream) => Some(BufferedStream::new(stream)),
                 None => return false,
             },
             None => fail!("connect() called before remote_addr was set"),

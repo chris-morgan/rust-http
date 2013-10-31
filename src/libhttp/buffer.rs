@@ -24,16 +24,11 @@ struct BufferedStream<T> {
     write_buffer: [u8, ..WRITE_BUF_SIZE],
     write_len: uint,
 
-    /// Some things being written may not like flush() being called yet (e.g. explicitly fail!())
-    /// The BufferedReader may need to be flushed for good control, but let it provide for such
-    /// cases by not calling the wrapped object's flush method in turn.
-    call_wrapped_flush: bool,
-
     writing_chunked_body: bool,
 }
 
 impl<T: Stream> BufferedStream<T> {
-    pub fn new(stream: T, call_wrapped_flush: bool) -> BufferedStream<T> {
+    pub fn new(stream: T) -> BufferedStream<T> {
         BufferedStream {
             wrapped: stream,
             read_buffer: [0u8, ..READ_BUF_SIZE],
@@ -41,7 +36,6 @@ impl<T: Stream> BufferedStream<T> {
             read_max: 0u,
             write_buffer: [0u8, ..WRITE_BUF_SIZE],
             write_len: 0u,
-            call_wrapped_flush: call_wrapped_flush,
             writing_chunked_body: false,
         }
     }
@@ -176,9 +170,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
             }
             self.write_len = 0;
         }
-        if self.call_wrapped_flush {
-            self.wrapped.flush();
-        }
+        self.wrapped.flush();
     }
 }
 
