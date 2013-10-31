@@ -224,13 +224,12 @@ impl RequestWriter<TcpStream> {
      * FIXME: ~self is currently used rather than self to work around a Rust bug in by-val self at
      * present which led to a segfault on calling `ResponseReader::construct()`.
      */
-    pub fn read_response(~self) -> Result<ResponseReader<TcpStream>, ~RequestWriter<TcpStream>> {
-        let mut mut_self = self;
-        mut_self.try_write_headers();
-        mut_self.flush();
-        match mut_self.stream.take() {
-            Some(stream) => ResponseReader::construct(stream, mut_self),
-            None => Err(mut_self), // TODO: raise condition
+    pub fn read_response(mut ~self) -> Result<ResponseReader<TcpStream>, ~RequestWriter<TcpStream>> {
+        self.try_write_headers();
+        self.flush();
+        match self.stream.take() {
+            Some(stream) => ResponseReader::construct(stream, self),
+            None => Err(self), // TODO: raise condition
         }
     }
 }
