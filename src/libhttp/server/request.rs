@@ -48,11 +48,70 @@ impl<'self, S: Stream> RequestBuffer<'self, S> {
             None => return Err(status::BadRequest),
         };
 
-        let request_uri = match self.read_request_uri() {
-            Ok(m) => m,
-            Err(e) => return Err(e),
+        // Finished reading the method, including consuming a single SP.
+        // Before we read the Request-URI, we should consume *SP (it's invalid,
+        // but the spec recommends supporting it anyway).
+        let mut next_byte;
+        loop {
+            match self.stream.read_byte() {
+                Some(_b@SP) => continue,
+                Some(b) => {
+                    next_byte = b;
+                    break;
+                },
+                None => return Err(status::BadRequest),
+            };
+        }
+
+        // Good, we're now into the Request-URI. Bear in mind that as well as
+        // ending in SP, it can for HTTP/0.9 end in CR LF or LF.
+        let mut raw_request_uri = ~"";
+        loop {
+            if next_byte == CR {
+                // For CR, we must have an LF immediately afterwards.
+                if self.stream.read_byte() != Some(LF) {
+                    return Err(status::BadRequest);
+                } else {
+                    // Simplify it by just dealing with the LF possibility
+                    next_byte = LF;
+                    break;
+                }
+            } else if next_byte == SP || next_byte == LF {
+                break;
+            }
+
+            if raw_request_uri.len() == MAX_REQUEST_URI_LEN {
+                return Err(status::RequestUriTooLong)
+            }
+            raw_request_uri.push_char(next_byte as char);
+
+            next_byte = match self.stream.read_byte() {
+                Some(b) => b,
+                None => return Err(status::BadRequest),
+            }
+        }
+
+        // Now parse it into a RequestUri.
+        let request_uri = match FromStr::from_str(raw_request_uri) {
+            Some(r) => r,
+            None => return Err(status::BadRequest),
         };
 
+        // At this point, we need to consider what came immediately after the
+        // Request-URI. If it was a SP, then we expect (again after allowing for
+        // possible *SP, though illegal) to get an HTTP-Version. If it was CR LF
+        // or LF, we consider it to be HTTP/0.9.
+        if next_byte == LF {
+            // Good, we got CR LF or LF; HTTP/0.9 it is.
+            return Ok((method, request_uri, (0, 9)));
+        }
+
+        // By this point, next_byte can only be SP. Now we want an HTTP-Version.
+
+        // FIXME: we have a couple of inconsistencies here:
+        // (a) this isn't trimming *SP
+        // (b) this is requiring CR LF, rather than allowing just LF,
+        //      which is what RFC 2616 recommends
         match (read_http_version(self.stream, CR), self.stream.read_byte()) {
             (Some(vv), Some(b)) if b == LF => Ok((method, request_uri, vv)),
             _ => return Err(status::BadRequest),
@@ -62,28 +121,6 @@ impl<'self, S: Stream> RequestBuffer<'self, S> {
     #[inline]
     fn read_method(&mut self) -> Option<Method> {
         include!("../generated/read_method.rs");
-    }
-
-    #[inline]
-    fn read_request_uri(&mut self) -> Result<RequestUri, status::Status> {
-        // Got that, including consuming the SP; now get the request_uri
-        let mut request_uri = ~"";
-        loop {
-            match self.stream.read_byte() {
-                None => return Err(status::BadRequest),
-                Some(b) if b == SP => break,
-                Some(b) => {
-                    if request_uri.len() == MAX_REQUEST_URI_LEN {
-                        return Err(status::RequestUriTooLong)
-                    }
-                    request_uri.push_char(b as char);
-                }
-            }
-        }
-        match FromStr::from_str(request_uri) {
-            Some(r) => Ok(r),
-            None => Err(status::BadRequest),
-        }
     }
 
     /// Read a header (name, value) pair.
@@ -117,6 +154,53 @@ impl<'self, S: Stream> RequestBuffer<'self, S> {
             }
         }
     }
+}
+
+#[test]
+fn test_read_request_line() {
+    use method::{Get, Options, Connect, ExtensionMethod};
+    use buffer::BufferedStream;
+    use memstream::MemReaderFakeStream;
+
+    macro_rules! tt(
+        ($value:expr => $expected:expr) => {{
+            let expected = $expected;
+            let mut stream = BufferedStream::new(
+                MemReaderFakeStream::new($value.as_bytes().to_owned()));
+            assert_eq!(RequestBuffer::new(&mut stream).read_request_line(), expected);
+            if expected.is_ok() {
+                assert!(stream.eof());
+            }
+        }}
+    )
+
+    // TODO: support just \n on ones with an HTTP-Version (would currently fail)
+    //tt!("GET / HTTP/1.1\n" => Ok((Get, AbsolutePath(~"/"), (1, 1))));
+    tt!("GET / HTTP/1.1\r\n" => Ok((Get, AbsolutePath(~"/"), (1, 1))));
+    tt!("OPTIONS /foo/bar HTTP/1.1\r\n" => Ok((Options, AbsolutePath(~"/foo/bar"), (1, 1))));
+    tt!("OPTIONS * HTTP/1.1\r\n" => Ok((Options, Star, (1, 1))));
+    tt!("CONNECT example.com HTTP/1.1\r\n" => Ok((Connect,
+                                                Authority(~"example.com"),
+                                                (1, 1))));
+    tt!("FOO /\r\n" => Ok((ExtensionMethod(~"FOO"), AbsolutePath(~"/"), (0, 9))));
+    tt!("FOO /\n" => Ok((ExtensionMethod(~"FOO"), AbsolutePath(~"/"), (0, 9))));
+    tt!("get    http://example.com/ HTTP/42.17\r\n"
+            => Ok((ExtensionMethod(~"get"),
+                    AbsoluteUri(from_str("http://example.com/").unwrap()),
+                    (42, 17))));
+
+    // Now for some failing cases.
+
+    // method name is not a token
+    tt!("GE,T / HTTP/1.1\r\n" => Err(status::BadRequest));
+
+    // Request-URI is missing ("HTTP/1.1" isn't a valid Request-URI; I confirmed this by tracing the
+    // rule through RFC 2396: the "/" prevents it from being a reg_name authority, and it doesn't
+    // satisfy any of the other possibilities for Request-URI either)
+    tt!("GET  HTTP/1.1\r\n" => Err(status::BadRequest));
+
+    // Invalid HTTP-Version
+    tt!("GET / HTTX/1.1\r\n" => Err(status::BadRequest));
 }
 
 /// An HTTP request sent to the server.
