@@ -1,4 +1,5 @@
 RUSTC ?= rustc
+RUSTDOC ?= rustdoc
 RUSTFLAGS ?= -O -Z debug-info
 RUST_REPOSITORY ?= ../rust
 RUST_CTAGS ?= $(RUST_REPOSITORY)/src/etc/ctags.rust
@@ -22,7 +23,7 @@ $(libhttp_so): $(libhttp_files)
 	mkdir -p build/
 	$(RUSTC) $(RUSTFLAGS) src/libhttp/lib.rs --out-dir=build
 
-all: $(libhttp_so) examples
+all: $(libhttp_so) examples docs
 
 src/libhttp/codegen/codegen: $(wildcard src/libhttp/codegen/*.rs)
 	$(RUSTC) $(RUSTFLAGS) $@.rs
@@ -35,6 +36,11 @@ build/%:: src/%.rs $(libhttp_so)
 	$(RUSTC) $(RUSTFLAGS) $< -o $@ -L build/
 
 examples: $(patsubst src/examples/%.rs,build/examples/%,$(wildcard src/examples/*/*.rs))
+
+docs: doc/http/index.html
+
+doc/http/index.html: $(libhttp_files)
+	$(RUSTDOC) src/libhttp/lib.rs
 
 build/tests: $(libhttp_files)
 	$(RUSTC) $(RUSTFLAGS) --test -o build/tests src/libhttp/lib.rs
@@ -56,4 +62,4 @@ clean:
 TAGS:
 	ctags -f TAGS --options=$(RUST_CTAGS) -R src
 
-.PHONY: all examples clean check
+.PHONY: all examples docs clean check

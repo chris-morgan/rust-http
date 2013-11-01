@@ -4,3 +4,5 @@
 ^src/libhttp/generated/
 ^build/
 ^TAGS$
+^doc/http/
+^doc/src/http/
