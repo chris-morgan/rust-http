@@ -1,5 +1,7 @@
 RUSTC ?= rustc
 RUSTFLAGS ?= -O -Z debug-info
+RUST_REPOSITORY ?= ../rust
+RUST_CTAGS ?= $(RUST_REPOSITORY)/src/etc/ctags.rust
 VERSION=0.1-pre
 
 libhttp_so=build/libhttp-20af9b1d3441fe5a-$(VERSION).so
@@ -50,5 +52,8 @@ check: all build/tests
 clean:
 	rm -rf src/libhttp/generated/ src/libhttp/codegen/codegen
 	rm -rf build/
+
+TAGS:
+	ctags -f TAGS --options=$(RUST_CTAGS) -R src
 
 .PHONY: all examples clean check
