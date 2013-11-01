@@ -48,15 +48,15 @@ and Apache config got broken.)
 
 (For higher concurrency, alter the value of ``-c``.)
 
-=========== ==== ==== ====
-Concurrency Node Go   Rust
-=========== ==== ==== ====
-1           3550 3800 2600
-2           4750 7000 2750
-3           4850 8000 2850
-4           4800 8450 3000
-8           4775 9150 2950
-=========== ==== ==== ====
+=========== ==== ===== ====
+Concurrency Node Go    Rust
+=========== ==== ===== ====
+1           4150  3920 4300
+2           5200  9000 4520
+3           5350  9650 5200
+4           5400  9750 5280
+8           5670 10200 5450
+=========== ==== ===== ====
 
 I have not attempted ``ab`` with ``-k`` (keep-alive) as it doesn’t seem to
 work. (Haven’t had time to assess why, yet.)
