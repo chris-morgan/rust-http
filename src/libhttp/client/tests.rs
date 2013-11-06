@@ -5,7 +5,7 @@ use client::request::RequestWriter;
 use client::response::ResponseReader;
 
 fn test() {
-    let mut request = ~RequestWriter::new(Get, FromStr::from_str("http://example.com/").unwrap());
+    let mut request = ~RequestWriter::new(Get, from_str("http://example.com/").unwrap());
     ResponseReader::construct(MemReaderFakeStream::new(bytes!("\
 HTTP/1.1 200 OK\r\n\
 ETag: W/\"it's an entity-tag!\"\r\n\

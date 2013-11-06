@@ -523,7 +523,7 @@ pub trait HeaderConvertible: Eq + Clone {
      * For types that implement ``FromStr``, a sane-but-potentially-not-as-fast-as-possible default
      * would be::
      *
-     *     FromStr::from_str(reader.collect_to_str())
+     *     from_str(reader.collect_to_str())
      *
      * (This is not provided as a default implementation as owing to present upstream limitations
      * that would require the type to implement FromStr also, which is not considered reasonable.)
@@ -610,7 +610,7 @@ impl HeaderConvertible for ~str {
 
 impl HeaderConvertible for uint {
     fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<uint> {
-        FromStr::from_str(reader.collect_to_str())
+        from_str(reader.collect_to_str())
     }
 
     fn http_value(&self) -> ~str {
@@ -620,7 +620,7 @@ impl HeaderConvertible for uint {
 
 impl HeaderConvertible for Url {
     fn from_stream<T: Reader>(reader: &mut HeaderValueByteIterator<T>) -> Option<Url> {
-        FromStr::from_str(reader.collect_to_str())
+        from_str(reader.collect_to_str())
     }
 
     fn http_value(&self) -> ~str {

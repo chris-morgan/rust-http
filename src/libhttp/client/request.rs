@@ -10,7 +10,7 @@ use http::client::RequestWriter;
 use http::method::Get;
 
 fn main() {
-    let request = ~RequestWriter::new(Get, FromStr::from_str("http://example.com/").unwrap());
+    let request = ~RequestWriter::new(Get, from_str("http://example.com/").unwrap());
     let mut response = match request.read_response() {
         Ok(response) => response,
         Err(_request) => unreachable!(), // Uncaught condition will have failed first
@@ -108,7 +108,7 @@ impl<S: Reader + Writer> RequestWriter<S> {
             },
             Some(ref p) => Host {
                 name: url.host.to_owned(),
-                port: Some(FromStr::from_str(*p).expect("You didn’t aught to give a bad port!")),
+                port: Some(from_str(*p).expect("You didn’t aught to give a bad port!")),
                 // TODO: fix extra::url to use u16 rather than ~str
             },
         };
@@ -132,7 +132,7 @@ impl<S: Reader + Writer> RequestWriter<S> {
             let addr = addr.unwrap();
 
             let port = url.port.clone().unwrap_or(~"80");
-            let port = FromStr::from_str(port);
+            let port = from_str(port);
             // TODO: Error handling
             let port = port.unwrap();
 

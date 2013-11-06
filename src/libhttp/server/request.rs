@@ -92,7 +92,7 @@ impl<'self, S: Stream> RequestBuffer<'self, S> {
         }
 
         // Now parse it into a RequestUri.
-        let request_uri = match FromStr::from_str(raw_request_uri) {
+        let request_uri = match from_str(raw_request_uri) {
             Some(r) => r,
             None => return Err(status::BadRequest),
         };
@@ -275,7 +275,7 @@ impl FromStr for RequestUri {
             Some(AbsolutePath(request_uri.to_owned()))
         } else if request_uri.contains("/") {
             // An authority can't have a slash in it
-            match FromStr::from_str(request_uri) {
+            match from_str(request_uri) {
                 Some(url) => Some(AbsoluteUri(url)),
                 None => None,
             }
