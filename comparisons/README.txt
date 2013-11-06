@@ -58,14 +58,13 @@ Concurrency Node Go    Rust
 8           5670 10200 5450
 =========== ==== ===== ====
 
-I have not attempted ``ab`` with ``-k`` (keep-alive) as it doesn’t seem to
-work. (Haven’t had time to assess why, yet.)
+``ab -k`` (keep-alive) also works, but gets 5-10% *worse* performance, rather
+than very significantly better, for some as-yet-unassessed reason.
 
 ``wrk`` (same connection)
 `````````````````````````
 
-**THIS BENCHMARK IS CURRENTLY OUT OF DATE.** I haven't automated it yet and had
-no time to run it when I updated the above figures.
+*This benchmark is not currently automated, but it is, at present, up to date.*
 
 Ten seconds of benchmarking, with one connection kept per thread.
 
@@ -75,32 +74,39 @@ Ten seconds of benchmarking, with one connection kept per thread.
 
 (For higher concurrency, alter the value of both ``-c`` and ``-t``.)
 
-=========== ===== ===== ====
+=========== ===== ===== =====
 Concurrency Node  Go    Rust
-=========== ===== ===== ====
-1            9400  9000 6900
-2           11200 20500 7200
-3           11600 20500 7400
-=========== ===== ===== ====
+=========== ===== ===== =====
+1           10400  8600 10100
+2           11400 21000 12300
+3           11900 22000 13300
+8           12400 21000 15000
+=========== ===== ===== =====
 
 Conclusions
 ===========
 
-There is still a lot of work to be done; the Rust version is able to take
-advantage of very little of a second core at present, and while its performance
-is par for new connections its keep-alive performance is distinctly poor. This
-suggests that opening a connection performs well, but reading and writing are
-comparatively slow.
+Single request performance is now pretty much on par with Node and Go (often
+just a tad better). This is a Good Thing™. However, with higher concurrency,
+Rust is fairing almost as badly as Node, not demonstrating the expected speedup
+(as demonstrated very well by Go) of a factor of 2 on a dual-core machine. That
+suggests there are areas in which the Rust scheduler can improve very
+significantly.
 
-There is scope for further performance increases at all levels, from the
-TCP library (probably even in the scheduler) to my server library. There are a
-number of things known to be suboptimal which will be improved. (Request
-reading is very poor, for example, and accounts for over half the time taken
-with ``wrk``, and about a third with ``ab``.)
+Further tests need to be done, of course, benchmarking other servers for
+comparison and other tech stacks, to ensure that it's all fair.
+
+There is scope for further performance increases at all levels, among which I
+include the Rust scheduler, the TCP library and writer interface (that is,
+mostly, the libuv interfacing, things like requiring fewer allocations) and my
+server library. There are a number of things known to be suboptimal which will
+be improved. (Request reading is still not great, for example, and accounts for
+about a third of the time taken with both ``wrk`` and ``ab``.)
 
 Although my server library claims to be HTTP/1.1, it is by no means a compliant
 HTTP/1.1 server; many things are not yet implemented (e.g. full request
 reading, transfer codings). However, the general framework is in place and
-general performance characteristics are not expected to change radically. (By
-that I mean that I don’t believe any new things I add should slow it down
-enormously.)
+general performance characteristics (as far as rust-http is concerned,
+excluding improvements in the Rust scheduler) are not expected to change
+radically. (By that I mean that I don’t believe any new things I add should
+slow it down enormously.)
