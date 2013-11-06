@@ -1,7 +1,7 @@
 #[feature(macro_rules)];
 
-use std::rt::io::{Writer, CreateOrTruncate};
-use std::rt::io::file::FileInfo;
+use std::rt::io;
+use std::rt::io::{File, Truncate, Write, fs};
 use std::os;
 
 pub mod branchify;
@@ -16,9 +16,11 @@ fn main() {
             os::set_exit_status(1); 
         },
         3 => {
-            let output_dir = from_str(args[2]).unwrap();
+            let output_dir = Path::new(args[2].as_slice());
             // TODO: maybe not 0777?
-            os::make_dir(&output_dir, 0b111_111_111);
+            if !output_dir.exists() {
+                fs::mkdir(&output_dir, 0b111_111_111);
+            }
 
             match args[1] {
                 ~"read_method.rs" => read_method::generate(&output_dir),
@@ -39,8 +41,8 @@ fn main() {
 pub fn get_writer(output_dir: &Path, filename: &str) -> ~Writer {
     let mut output_file = output_dir.clone();
     output_file.push(filename);
-    match output_file.open_writer(CreateOrTruncate) {
-        Some(writer) => ~writer as ~Writer,
-        None => fail!("Unable to write file"),
+    match io::result(|| File::open_mode(&output_file, Truncate, Write)) {
+        Ok(writer) => ~writer as ~Writer,
+        Err(e) => fail!("Unable to write file: {}", e.desc),
     }
 }
