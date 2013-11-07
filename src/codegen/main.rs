@@ -12,7 +12,7 @@ fn main() {
     let args = os::args();
     match args.len() {
         0 => {
-            println("usage: codegen [read_method|status].rs");
+            println("usage: codegen [read_method|status].rs <output-dir>");
             os::set_exit_status(1); 
         },
         3 => {
