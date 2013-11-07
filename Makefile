@@ -1,6 +1,10 @@
 RUSTC ?= rustc
+RUSTDOC ?= rustdoc
 RUSTPKG ?= rustpkg
 RUSTFLAGS ?= -O -Z debug-info
+RUST_REPOSITORY ?= ../rust
+RUST_CTAGS ?= $(RUST_REPOSITORY)/src/etc/ctags.rust
+VERSION=0.1-pre
 
 codegen_files=\
 	        src/codegen/branchify.rs \
@@ -21,16 +25,16 @@ http_files=\
 		      src/http/method.rs \
 		      src/http/rfc2616.rs
 
-all: http examples
+http: $(http_files)
+	$(RUSTPKG) install $(RUSTFLAGS) http
+
+all: http examples docs
 
 src/http/generated:
 	mkdir -p src/http/generated
 
 src/http/generated/%.rs: bin/codegen src/http/generated
 	./bin/codegen $(patsubst src/http/generated/%,%,$@) src/http/generated/
-
-http: $(http_files)
-	$(RUSTPKG) install $(RUSTFLAGS) http
 
 bin/codegen: $(codegen_files)
 	$(RUSTPKG) install $(RUSTFLAGS) codegen
@@ -52,6 +56,11 @@ bin/request_uri: http src/examples/server/request_uri/main.rs
 
 examples: bin/apache_fake bin/apache_fake bin/hello_world bin/info bin/request_uri
 
+docs: doc/http/index.html
+
+doc/http/index.html: $(http_files)
+	$(RUSTDOC) src/http/lib.rs
+
 build/tests: $(http_files)
 	$(RUSTC) $(RUSTFLAGS) --test -o build/tests src/http/lib.rs
 
@@ -66,6 +75,9 @@ check: all build/tests
 	build/tests --test
 
 clean:
-	rm -rf bin build lib src/http/generated
+	rm -rf bin build lib src/http/generated .rust
 
-.PHONY: all http examples clean check quickcheck
+TAGS:
+	ctags -f TAGS --options=$(RUST_CTAGS) -R src
+
+.PHONY: all http examples docs clean check quickcheck
