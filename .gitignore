@@ -1,9 +1,11 @@
 *~
 *.dSYM/
 *.swp
-src/libhttp/codegen/codegen
-src/libhttp/generated/
+src/http/generated/
+bin/
 build/
 TAGS
 doc/http/
 doc/src/http/
+lib/
+.rust/
