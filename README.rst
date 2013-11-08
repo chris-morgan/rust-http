@@ -19,13 +19,22 @@ Goals
 The goal of the present phase of this project is, quite simply, to create a
 generic HTTP server and client library for Rust.
 
-Eventually the client and server may be placed in different crates (with a
-common dependency), but I'm not sure about this yet.
+When I say “generic”, generic is what I mean: it is quite feasible to write
+non-origin servers (e.g. a proxy or a gateway) with rust-http; there will
+merely be a slightly higher level abstraction available for origin servers to
+use.
 
-This server is not opinionated; it provides the tools, handles communication,
-the HTTP/1.1 protocol and the basic headers and then leaves the rest to you.
-Things like URL routing do not belong in here; that is the domain of a
-framework.
+At present this is all one crate, but it may be separated into multiple crates
+(e.g. common HTTP, client, server); I am not sure about this yet.
+
+This server is not (in the normal sense) opinionated; it provides the tools,
+handles communication, the HTTP/1.1 protocol and the basic headers and then
+leaves the rest to you. Things like URL routing do not belong in here; that is
+the domain of a framework.
+
+There is, however, one thing on which it has strong opinions: using the type
+system. rust-http forces you to make type-safe code. This has benefits in
+safety and correctness, and also typically in speed.
 
 Getting started
 ---------------
