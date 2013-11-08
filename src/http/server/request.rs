@@ -108,13 +108,13 @@ impl<'self, S: Stream> RequestBuffer<'self, S> {
 
         // By this point, next_byte can only be SP. Now we want an HTTP-Version.
 
-        // FIXME: we have a couple of inconsistencies here:
-        // (a) this isn't trimming *SP
-        // (b) this is requiring CR LF, rather than allowing just LF,
-        //      which is what RFC 2616 recommends
-        match (read_http_version(self.stream, CR), self.stream.read_byte()) {
-            (Some(vv), Some(b)) if b == LF => Ok((method, request_uri, vv)),
-            _ => return Err(status::BadRequest),
+        let mut read_b = 0;
+
+        // FIXME: we still have one inconsistency here: this isn't trimming *SP.
+        match read_http_version(self.stream, |b| { read_b = b; b == CR || b == LF }) {
+            Some(vv) if read_b == LF || self.stream.read_byte() == Some(LF)
+                => Ok((method, request_uri, vv)),  // LF or CR LF: valid
+            _   => Err(status::BadRequest),  // invalid, or CR but no LF: not valid
         }
     }
 
@@ -174,8 +174,7 @@ fn test_read_request_line() {
         }}
     )
 
-    // TODO: support just \n on ones with an HTTP-Version (would currently fail)
-    //tt!("GET / HTTP/1.1\n" => Ok((Get, AbsolutePath(~"/"), (1, 1))));
+    tt!("GET / HTTP/1.1\n" => Ok((Get, AbsolutePath(~"/"), (1, 1))));
     tt!("GET / HTTP/1.1\r\n" => Ok((Get, AbsolutePath(~"/"), (1, 1))));
     tt!("OPTIONS /foo/bar HTTP/1.1\r\n" => Ok((Options, AbsolutePath(~"/foo/bar"), (1, 1))));
     tt!("OPTIONS * HTTP/1.1\r\n" => Ok((Options, Star, (1, 1))));
