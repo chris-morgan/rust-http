@@ -63,7 +63,7 @@ fn camel_case(msg: &str) -> ~str {
             result.push(c);
         }
     }
-    result.to_str_ascii()
+    result.into_str()
 }
 
 static mut longest_ident: uint = 0;

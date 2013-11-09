@@ -33,7 +33,7 @@ pub fn normalise_header_name(name: &str) -> ~str {
         // ASCII 45 is '-': in that case, capitalise the next char
         capitalise = c.to_byte() == 45;
     }
-    result.to_str_ascii()
+    result.into_str()
 }
 
 /// Split a value on commas, as is common for HTTP headers.
