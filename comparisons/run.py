@@ -6,7 +6,6 @@ import sys
 import time
 import urllib2
 from contextlib import contextmanager
-from itertools import product
 
 
 @contextmanager
@@ -103,7 +102,7 @@ class GoServerRunner(ServerRunner):
 
     def __init__(self, *args, **kwargs):
         super(GoServerRunner, self).__init__(*args, **kwargs)
-        assert self.source.endswith('.go'), 'source must end in ".rs"'
+        assert self.source.endswith('.go'), 'source must end in ".go"'
         self.bin_name = 'go-' + os.path.basename(self.source[:-3])
 
     def compile_server(self):
