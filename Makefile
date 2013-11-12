@@ -54,7 +54,7 @@ bin/info: http src/examples/server/info/main.rs
 bin/request_uri: http src/examples/server/request_uri/main.rs
 	$(RUSTPKG) install $(RUSTFLAGS) examples/server/request_uri
 
-examples: bin/apache_fake bin/apache_fake bin/hello_world bin/info bin/request_uri
+examples: bin/client bin/apache_fake bin/hello_world bin/info bin/request_uri
 
 docs: doc/http/index.html
 
