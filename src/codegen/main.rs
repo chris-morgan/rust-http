@@ -1,3 +1,5 @@
+#[link(name = "codegen")];
+
 #[feature(macro_rules)];
 
 use std::rt::io;
