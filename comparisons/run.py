@@ -143,7 +143,7 @@ class RustServerRunner(ServerRunner):
         subprocess.Popen(('rustc',
             '--opt-level=3', self.source,
             #'--out-dir', self.build_dir,
-            '-L', '../build/{}/http/'.format(RustServerRunner.HOST),
+            '-L', '../build', # '../build/{}/http/'.format(RustServerRunner.HOST),
             # Sorry, this main.rs business needs me to do this, or use rustpkg:
             '-o', os.path.join(self.build_dir, self.bin_name))).communicate()
 

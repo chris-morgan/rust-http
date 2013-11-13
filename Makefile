@@ -12,6 +12,7 @@ codegen_files=\
 	        src/codegen/read_method.rs \
 	        src/codegen/status.rs \
 
+libhttp_so=build/libhttp-1a63dc49587b4f20-$(VERSION).so
 http_files=\
 		      src/http/lib.rs \
 		      src/http/buffer.rs \
@@ -25,36 +26,27 @@ http_files=\
 		      src/http/method.rs \
 		      src/http/rfc2616.rs
 
-http: $(http_files)
-	$(RUSTPKG) install $(RUSTFLAGS) http
+http: $(libhttp_so)
+
+$(libhttp_so): $(http_files)
+	mkdir -p build/
+	$(RUSTC) $(RUSTFLAGS) src/http/lib.rs --out-dir=build
 
 all: http examples docs
 
-src/http/generated:
-	mkdir -p src/http/generated
+build/codegen: $(codegen_files)
+	mkdir -p build/
+	$(RUSTC) $(RUSTFLAGS) src/codegen/main.rs --out-dir=build
 
-src/http/generated/%.rs: bin/codegen src/http/generated
-	./bin/codegen $(patsubst src/http/generated/%,%,$@) src/http/generated/
+src/http/generated/%.rs: build/codegen
+	build/codegen $(patsubst src/http/generated/%,%,$@) src/http/generated/
 
-bin/codegen: $(codegen_files)
-	$(RUSTPKG) install $(RUSTFLAGS) codegen
+build/%:: src/%/main.rs http
+	mkdir -p "$(dir $@)"
+	$(RUSTC) $(RUSTFLAGS) $< -o $@ -L build/
 
-bin/client: http src/examples/client/main.rs
-	$(RUSTPKG) install $(RUSTFLAGS) examples/client
-
-bin/apache_fake: http src/examples/server/apache_fake/main.rs
-	$(RUSTPKG) install $(RUSTFLAGS) examples/server/apache_fake
-
-bin/hello_world: http src/examples/server/hello_world/main.rs
-	$(RUSTPKG) install $(RUSTFLAGS) examples/server/hello_world
-
-bin/info: http src/examples/server/info/main.rs
-	$(RUSTPKG) install $(RUSTFLAGS) examples/server/info
-
-bin/request_uri: http src/examples/server/request_uri/main.rs
-	$(RUSTPKG) install $(RUSTFLAGS) examples/server/request_uri
-
-examples: bin/client bin/apache_fake bin/hello_world bin/info bin/request_uri
+examples: $(patsubst src/examples/%/main.rs,build/examples/%,$(wildcard src/examples/*/main.rs)) \
+		  $(patsubst src/examples/%/main.rs,build/examples/%,$(wildcard src/examples/*/*/main.rs))
 
 docs: doc/http/index.html
 
@@ -75,7 +67,9 @@ check: all build/tests
 	build/tests --test
 
 clean:
-	rm -rf bin build lib src/http/generated .rust
+	rm -rf src/http/generated/ src/http/codegen/codegen
+	rm -rf build/
+	rm -rf bin/ .rust/
 
 TAGS:
 	ctags -f TAGS --options=$(RUST_CTAGS) -R src
