@@ -1,6 +1,6 @@
-use std::rt;
-use std::rt::io::Writer;
-use std::rt::io::net::tcp::TcpStream;
+use std::io;
+use std::io::Writer;
+use std::io::net::tcp::TcpStream;
 
 use buffer::BufferedStream;
 use server::Request;
@@ -20,7 +20,7 @@ static RESPONSE_HTTP_VERSION: &'static str = "HTTP/1.1";
 // Maybe we could provide a response interface
 
 pub struct ResponseWriter<'self> {
-    // The place to write to (typically a TCP stream, rt::io::net::tcp::TcpStream)
+    // The place to write to (typically a TCP stream, io::net::tcp::TcpStream)
     priv writer: &'self mut BufferedStream<TcpStream>,
     priv headers_written: bool,
     request: &'self Request,
@@ -105,7 +105,7 @@ impl<'self> ResponseWriter<'self> {
     }
 }
 
-impl<'self> rt::io::Writer for ResponseWriter<'self> {
+impl<'self> io::Writer for ResponseWriter<'self> {
 
     fn write(&mut self, buf: &[u8]) {
         if (!self.headers_written) {

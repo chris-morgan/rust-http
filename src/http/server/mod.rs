@@ -3,12 +3,12 @@ extern mod extra;
 use std::cell::Cell;
 use std::comm::SharedChan;
 use std::task::{spawn_with, spawn_supervised};
-use std::rt::io::{Listener, Acceptor, Writer};
-use std::rt::io::net::ip::SocketAddr;
-use std::rt::io::io_error;
+use std::io::{Listener, Acceptor, Writer};
+use std::io::net::ip::SocketAddr;
+use std::io::io_error;
 use extra::time::precise_time_ns;
 
-use std::rt::io::net::tcp::TcpListener;
+use std::io::net::tcp::TcpListener;
 
 use buffer::BufferedStream;
 

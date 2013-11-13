@@ -1,7 +1,7 @@
 /// TODO: submit upstream
 
-use std::rt::io::{Reader, Writer, Seek, SeekStyle};
-use std::rt::io::mem::{MemReader, MemWriter};
+use std::io::{Reader, Writer, Seek, SeekStyle};
+use std::io::mem::{MemReader, MemWriter};
 
 /// Writes to an owned, growable byte vector but also implements read with fail-on-call methods.
 struct MemWriterFakeStream(MemWriter);

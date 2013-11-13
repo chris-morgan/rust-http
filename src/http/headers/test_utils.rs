@@ -1,5 +1,5 @@
-use std::rt::io::Decorator;
-use std::rt::io::mem::{MemReader, MemWriter};
+use std::io::Decorator;
+use std::io::mem::{MemReader, MemWriter};
 use std::str;
 use headers::{HeaderConvertible, HeaderValueByteIterator};
 

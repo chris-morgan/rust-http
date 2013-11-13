@@ -1,6 +1,6 @@
-/// Memory buffers for the benefit of `std::rt::io::net` which has slow read/write.
+/// Memory buffers for the benefit of `std::io::net` which has slow read/write.
 
-use std::rt::io::{Reader, Writer, Stream};
+use std::io::{Reader, Writer, Stream};
 use std::cmp::min;
 use std::vec;
 

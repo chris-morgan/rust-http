@@ -1,7 +1,7 @@
 //! The Accept-Ranges request header, defined in RFC 2616, Section 14.5.
 
 use std::ascii::StrAsciiExt;
-use std::rt::io::{Reader, Writer};
+use std::io::{Reader, Writer};
 
 #[deriving(Clone,Eq)]
 // RFC 2616: range-unit = bytes-unit | other-range-unit

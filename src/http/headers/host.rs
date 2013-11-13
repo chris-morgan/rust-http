@@ -1,6 +1,6 @@
 //! The Host request header, defined in RFC 2616, Section 14.23.
 
-use std::rt::io::Reader;
+use std::io::Reader;
 
 /// A simple little thing for the host of a request
 #[deriving(Clone, Eq)]

@@ -1,6 +1,6 @@
 //! The Content-Type entity header, defined in RFC 2616, Section 14.17.
 use headers::serialization_utils::{push_parameters, WriterUtil};
-use std::rt::io::{Reader, Writer};
+use std::io::{Reader, Writer};
 
 #[deriving(Clone, Eq)]
 pub struct MediaType {

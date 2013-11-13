@@ -4,8 +4,8 @@
 extern mod extra;
 extern mod http;
 
-use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
-use std::rt::io::Writer;
+use std::io::net::ip::{SocketAddr, Ipv4Addr};
+use std::io::Writer;
 use extra::time;
 
 use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};

@@ -2,7 +2,7 @@
 
 use std::vec;
 use std::ascii::Ascii;
-use std::rt::io::Writer;
+use std::io::Writer;
 use rfc2616::is_token;
 
 /// Normalise an HTTP header name.

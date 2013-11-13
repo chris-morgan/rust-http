@@ -4,7 +4,7 @@ use http::method::Get;
 use http::headers::HeaderEnum;
 use std::os;
 use std::str;
-use std::rt::io::Reader;
+use std::io::Reader;
 
 fn main() {
     format!("{}", Get);
