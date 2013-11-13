@@ -35,8 +35,8 @@ and Apache config got broken.)
 
 :Hardware: Over-six-year-old Core 2 Duo laptop with 4GB ("plenty") of RAM
 :OS: Ubuntu 13.10 (alpha) 64-bit
-:Rust version: 0.8 (a94158c 2013-09-26 18:46:10 -0700)
-:Node version: 0.10.19
+:Rust version: 0.9-pre (11b0784 2013-11-12 02:31:15 -0800)
+:Node version: 0.10.20
 :Go version: 1.1.2
 
 ``ab`` (new connections)
@@ -51,11 +51,11 @@ and Apache config got broken.)
 =========== ==== ===== ====
 Concurrency Node Go    Rust
 =========== ==== ===== ====
-1           4150  3920 4300
-2           5200  9000 4520
-3           5350  9650 5200
-4           5400  9750 5280
-8           5670 10200 5450
+1           4300  4100 4825
+2           5300  9500 5640
+3           5450 10000 6575
+4           5650 10500 7100
+8           5750 10750 7900
 =========== ==== ===== ====
 
 ``ab -k`` (keep-alive) also works, but gets 5-10% *worse* performance, rather
@@ -64,7 +64,8 @@ than very significantly better, for some as-yet-unassessed reason.
 ``wrk`` (same connection)
 `````````````````````````
 
-*This benchmark is not currently automated, but it is, at present, up to date.*
+*This benchmark is not currently automated and IS OUT OF DATE (the expected
+change is that Rust should now be faring much better for higher concurrency).*
 
 Ten seconds of benchmarking, with one connection kept per thread.
 
@@ -86,12 +87,12 @@ Concurrency Node  Go    Rust
 Conclusions
 ===========
 
-Single request performance is now pretty much on par with Node and Go (often
-just a tad better). This is a Good Thing™. However, with higher concurrency,
-Rust is fairing almost as badly as Node, not demonstrating the expected speedup
-(as demonstrated very well by Go) of a factor of 2 on a dual-core machine. That
-suggests there are areas in which the Rust scheduler can improve very
-significantly.
+Single request performance is now distinctly better than Node and Go. This is a
+Good Thing™. However, with higher concurrency, Rust is not faring as well as it
+might, demonstrating a speedup of around 1.2× for concurrency of 2, rather than
+the theoretical optimum of 2× (I don't understand how or why, but Go is getting
+2.1× consistently!). Still, by the time it gets to concurrency of 8, speedup is
+to about 1.65×, which is not bad; certainly it is better than Node.
 
 Further tests need to be done, of course, benchmarking other servers for
 comparison and other tech stacks, to ensure that it's all fair.
