@@ -25,16 +25,12 @@ static BUF_SIZE: uint = 0x10000;  // Let's try 64KB chunks
 pub struct RequestBuffer<'self, S> {
     /// The socket connection to read from
     stream: &'self mut BufferedStream<S>,
-
-    /// A working space for 
-    line_bytes: ~[u8],
 }
 
 impl<'self, S: Stream> RequestBuffer<'self, S> {
     pub fn new<'a>(stream: &'a mut BufferedStream<S>) -> RequestBuffer<'a, S> {
         RequestBuffer {
             stream: stream,
-            line_bytes: ~[0u8, ..MAX_LINE_LEN],
         }
     }
 

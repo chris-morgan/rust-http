@@ -11,12 +11,12 @@ static WRITE_BUF_SIZE: uint = 0x10000;
 
 struct BufferedStream<T> {
     wrapped: T,
-    read_buffer: [u8, ..READ_BUF_SIZE],
+    read_buffer: ~[u8],
     // The current position in the buffer
     read_pos: uint,
     // The last valid position in the reader
     read_max: uint,
-    write_buffer: [u8, ..WRITE_BUF_SIZE],
+    write_buffer: ~[u8],
     write_len: uint,
 
     writing_chunked_body: bool,
@@ -24,12 +24,16 @@ struct BufferedStream<T> {
 
 impl<T: Stream> BufferedStream<T> {
     pub fn new(stream: T) -> BufferedStream<T> {
+        let mut read_buffer = vec::with_capacity(READ_BUF_SIZE);
+        unsafe { vec::raw::set_len(&mut read_buffer, READ_BUF_SIZE); }
+        let mut write_buffer = vec::with_capacity(WRITE_BUF_SIZE);
+        unsafe { vec::raw::set_len(&mut write_buffer, WRITE_BUF_SIZE); }
         BufferedStream {
             wrapped: stream,
-            read_buffer: [0u8, ..READ_BUF_SIZE],
+            read_buffer: read_buffer,
             read_pos: 0u,
             read_max: 0u,
-            write_buffer: [0u8, ..WRITE_BUF_SIZE],
+            write_buffer: write_buffer,
             write_len: 0u,
             writing_chunked_body: false,
         }
