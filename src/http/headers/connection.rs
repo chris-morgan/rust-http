@@ -4,7 +4,7 @@
 // whether they should be interpreted (I recall its being a header name thing for legacy code,
 // perhaps I should normalise header case or some such thing?)
 
-use std::rt::io::{Reader, Writer};
+use std::io::{Reader, Writer};
 use headers::serialization_utils::normalise_header_name;
 
 /// A value for the Connection header. Note that should it be a ``Token``, the string is in

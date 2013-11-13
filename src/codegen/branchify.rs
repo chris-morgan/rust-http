@@ -1,7 +1,7 @@
 #[macro_escape];
 
 use std::str::CharIterator;
-use std::rt::io::Writer;
+use std::io::Writer;
 
 struct ParseBranch {
     matches: ~[u8],

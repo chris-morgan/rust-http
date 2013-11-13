@@ -3,7 +3,7 @@
 //! Transfer-Encoding       = "Transfer-Encoding" ":" 1#transfer-coding
 
 use std::ascii::StrAsciiExt;
-use std::rt::io::{Reader, Writer};
+use std::io::{Reader, Writer};
 use headers::serialization_utils::{WriterUtil, push_parameters};
 
 /// RFC 2616, section 3.6:

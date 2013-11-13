@@ -11,7 +11,7 @@ use std::ascii::StrAsciiExt;
 use std::hashmap::HashSet;
 use std::either::{Either, Left, Right};
 use std::vec;
-use std::rt::io::Writer;
+use std::io::Writer;
 use super::get_writer;
 
 type HeadingOrStatus = Either<&'static str, Status>;

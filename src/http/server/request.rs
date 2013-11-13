@@ -1,9 +1,9 @@
 use extra::url::Url;
 use method::{Method, Options};
 use status;
-use std::rt::io::{Stream, Reader};
-use std::rt::io::net::ip::SocketAddr;
-use std::rt::io::net::tcp::TcpStream;
+use std::io::{Stream, Reader};
+use std::io::net::ip::SocketAddr;
+use std::io::net::tcp::TcpStream;
 use rfc2616::{CR, LF, SP};
 use headers;
 use buffer::BufferedStream;

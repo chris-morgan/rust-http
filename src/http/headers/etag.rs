@@ -1,5 +1,5 @@
 use headers::serialization_utils::{push_quoted_string, quoted_string, WriterUtil};
-use std::rt::io::{Reader, Writer};
+use std::io::{Reader, Writer};
 
 #[deriving(Clone, Eq)]
 pub struct EntityTag {

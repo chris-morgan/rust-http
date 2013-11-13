@@ -6,9 +6,9 @@
  * TODO: refactor all this to store things in more usefully categorised places.
  */
 use std::num::{Zero, cast};
-use std::rt::io::Reader;
+use std::io::Reader;
 #[cfg(test)]
-use std::rt::io::mem::MemReader;
+use std::io::mem::MemReader;
 
 /**
  * Read a positive decimal integer from the given reader.

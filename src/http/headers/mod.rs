@@ -4,7 +4,7 @@
 //! known HTTP headers are type checked, rather than being dealt with as strings all the time. Only
 //! unknown headers are stored in a map in the traditional way.
 
-use std::rt::io::{Reader, Writer};
+use std::io::{Reader, Writer};
 use extra::time::{Tm, strptime};
 use extra::url::Url;
 use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON};
@@ -866,7 +866,7 @@ macro_rules! headers_mod {
             $attr;
 
             use extra;
-            use std::rt::io::{Reader, Writer};
+            use std::io::{Reader, Writer};
             use extra::treemap::{TreeMap, TreeMapIterator};
             use headers;
             use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};

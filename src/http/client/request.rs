@@ -42,10 +42,10 @@ that's due to a Rust bug; when that's resolved, we'll go back to using just `Req
 use extra::url::Url;
 use extra::url;
 use method::Method;
-use std::rt::io::{Reader, Writer};
-use std::rt::io::net::get_host_addresses;
-use std::rt::io::net::ip::{SocketAddr, Ipv4Addr};
-use std::rt::io::net::tcp::TcpStream;
+use std::io::{Reader, Writer};
+use std::io::net::get_host_addresses;
+use std::io::net::ip::{SocketAddr, Ipv4Addr};
+use std::io::net::tcp::TcpStream;
 use buffer::BufferedStream;
 use headers::request::HeaderCollection;
 use headers::host::Host;
@@ -70,7 +70,7 @@ use client::response::ResponseReader;
 }*/
 
 pub struct RequestWriter<S> {
-    // The place to write to (typically a TCP stream, rt::io::net::tcp::TcpStream)
+    // The place to write to (typically a TCP stream, io::net::tcp::TcpStream)
     priv stream: Option<BufferedStream<S>>,
     priv headers_written: bool,
 

@@ -12,7 +12,7 @@ location (``http::*``, probably). *Package separation state:* complete.
 
 Types:
 
-- ``RequestWriter``, which satisfies ``std::rt::io::Writer``, but also provides
+- ``RequestWriter``, which satisfies ``std::io::Writer``, but also provides
   various convenience methods for managing other ways of doing things.
 
 To begin with, the client user will formulate an ``http::client::Request``.
