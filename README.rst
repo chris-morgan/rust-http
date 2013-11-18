@@ -44,7 +44,7 @@ branch.
 
 Build everything::
 
-   make
+   make all
 
 Run one of the servers::
 
