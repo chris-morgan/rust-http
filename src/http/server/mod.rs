@@ -1,6 +1,5 @@
 extern mod extra;
 
-use std::cell::Cell;
 use std::comm::SharedChan;
 use std::io::{Listener, Acceptor, Writer};
 use std::io::net::ip::SocketAddr;
@@ -76,12 +75,11 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                         // ECONNABORTED. TODO.
                         continue;
                     }
-                    let stream = Cell::new(optstream.unwrap());
                     let child_perf_ch = perf_ch.clone();
                     let child_self = self.clone();
                     do spawn {
                         let mut time_start = time_start;
-                        let mut stream = BufferedStream::new(stream.take());
+                        let mut stream = BufferedStream::new(optstream.unwrap());
                         debug!("accepted connection, got {:?}", stream);
                         loop {  // A keep-alive loop, condition at end
                             let time_spawned = precise_time_ns();
