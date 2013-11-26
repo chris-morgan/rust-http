@@ -52,7 +52,7 @@ fn camel_case(msg: &str) -> ~str {
     let msg = msg.replace("-", " ").replace("'", "");
     let mut result: ~[Ascii] = vec::with_capacity(msg.len());
     let mut capitalise = true;
-    for c in msg.iter() {
+    for c in msg.chars() {
         let c = match capitalise {
             true => c.to_ascii().to_upper(),
             false => c.to_ascii().to_lower(),
