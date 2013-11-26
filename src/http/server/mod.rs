@@ -2,7 +2,7 @@ extern mod extra;
 
 use std::cell::Cell;
 use std::comm::SharedChan;
-use std::task::{spawn_with, spawn_supervised};
+use std::task::spawn;
 use std::io::{Listener, Acceptor, Writer};
 use std::io::net::ip::SocketAddr;
 use std::io::io_error;
@@ -54,7 +54,9 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                 debug!("listening");
                 let (perf_po, perf_ch) = stream();
                 let perf_ch = SharedChan::new(perf_ch);
-                spawn_with(perf_po, perf_dumper);
+                do spawn {
+                  perf_dumper(perf_po);
+                }
                 loop {
                     // OK, we're sort of shadowing an IoError here. Perhaps this should be done in a
                     // separate task so that it can safely fail...
@@ -78,7 +80,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                     let stream = Cell::new(optstream.unwrap());
                     let child_perf_ch = perf_ch.clone();
                     let child_self = self.clone();
-                    do spawn_supervised {
+                    do spawn {
                         let mut time_start = time_start;
                         let mut stream = BufferedStream::new(stream.take());
                         debug!("accepted connection, got {:?}", stream);
@@ -103,6 +105,7 @@ impl<T: Send + Clone + Server> ServerUtil for T {
                                     response.write_headers();
                                 },
                             }
+
                             // Ensure the request is flushed, any Transfer-Encoding completed, etc.
                             response.finish_response();
                             let time_finished = precise_time_ns();
