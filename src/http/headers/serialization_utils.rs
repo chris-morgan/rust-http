@@ -24,7 +24,7 @@ use rfc2616::is_token;
 pub fn normalise_header_name(name: &str) -> ~str {
     let mut result: ~[Ascii] = vec::with_capacity(name.len());
     let mut capitalise = true;
-    for c in name.iter() {
+    for c in name.chars() {
         let c = match capitalise {
             true => c.to_ascii().to_upper(),
             false => c.to_ascii().to_lower(),
@@ -46,12 +46,12 @@ pub fn normalise_header_name(name: &str) -> ~str {
 /// assert_eq!(comma_split(" en;q=0.8, en_AU, text/html"), ["en;q=0.8", "en_AU", "text/html"])
 /// ~~~
 pub fn comma_split(value: &str) -> ~[~str] {
-    value.split_iter(',').map(|w| w.trim_left().to_owned()).collect()
+    value.split(',').map(|w| w.trim_left().to_owned()).collect()
 }
 
 pub fn comma_split_iter<'a>(value: &'a str)
         -> ::std::iter::Map<'a, &'a str, &'a str, ::std::str::CharSplitIterator<'a, char>> {
-    value.split_iter(',').map(|w| w.trim_left())
+    value.split(',').map(|w| w.trim_left())
 }
 
 pub trait WriterUtil {
@@ -75,7 +75,7 @@ impl<W: Writer> WriterUtil for W {
 
     fn write_quoted_string(&mut self, s: &str) {
         self.write(['"' as u8]);
-        for b in s.byte_iter() {
+        for b in s.bytes() {
             if b == '\\' as u8 || b == '"' as u8 {
                 self.write(['\\' as u8]);
             }
@@ -165,7 +165,7 @@ pub fn push_quoted_string(mut s: ~str, t: &str) -> ~str {
     let i = s.len();
     s.reserve_at_least(i + t.len() + 2);
     s.push_char('"');
-    for c in t.iter() {
+    for c in t.chars() {
         if c == '\\' || c == '"' {
             s.push_char('\\');
         }
@@ -188,7 +188,7 @@ pub fn unquote_string(s: &str) -> Option<~str> {
     let mut output = ~"";
     // Strings with escapes cause overallocation, but it's not worth a second pass to avoid this!
     output.reserve(s.len() - 2);
-    let mut iter = s.iter();
+    let mut iter = s.chars();
     loop {
         state = match (state, iter.next()) {
             (Start, Some(c)) if c == '"' => Normal,
