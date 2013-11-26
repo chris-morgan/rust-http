@@ -121,12 +121,12 @@ impl<S: Reader + Writer> RequestWriter<S> {
             let addrs = get_host_addresses(url.host);
             // TODO: Error handling
             let addrs = addrs.unwrap();
-            let addr = do addrs.move_iter().find |&a| {
+            let addr = addrs.move_iter().find(|&a| {
                 match a {
                     Ipv4Addr(*) => true,
                     _ => false
                 }
-            };
+            });
 
             // TODO: Error handling
             let addr = addr.unwrap();

@@ -28,7 +28,7 @@ use std::io::mem::MemReader;
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
 pub fn read_decimal<R: Reader, N: Unsigned + NumCast + Ord>
-                   (reader: &mut R, expected_end: &fn(u8) -> bool)
+                   (reader: &mut R, expected_end: |u8| -> bool)
                    -> Option<N> {
     // Here and in `read_hexadecimal` there is the possibility of infinite sequence of zeroes. The
     // spec allows this, but it may not be a good thing to allow. It's not a particularly good
@@ -71,7 +71,7 @@ pub fn read_decimal<R: Reader, N: Unsigned + NumCast + Ord>
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
 pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + Ord>
-                       (reader: &mut R, expected_end: &fn(u8) -> bool)
+                       (reader: &mut R, expected_end: |u8| -> bool)
                        -> Option<N> {
     let mut n: N = Zero::zero();
     let mut new_n: N;
@@ -116,7 +116,7 @@ pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + Ord>
  */
 #[inline]
 pub fn read_http_version<R: Reader>
-                        (reader: &mut R, expected_end: &fn(u8) -> bool)
+                        (reader: &mut R, expected_end: |u8| -> bool)
                         -> Option<(uint, uint)> {
     let mut buf = [0u8, ..5];
     reader.read(buf);
