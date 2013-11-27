@@ -41,7 +41,7 @@ build/codegen: $(codegen_files)
 src/http/generated/%.rs: build/codegen
 	build/codegen $(patsubst src/http/generated/%,%,$@) src/http/generated/
 
-build/%:: src/%/main.rs http
+build/%:: src/%/main.rs $(libhttp_so)
 	mkdir -p "$(dir $@)"
 	$(RUSTC) $(RUSTFLAGS) $< -o $@ -L build/
 
