@@ -10,7 +10,7 @@ use http::client::RequestWriter;
 use http::method::Get;
 
 fn main() {
-    let request = ~RequestWriter::new(Get, from_str("http://example.com/").unwrap());
+    let request = RequestWriter::new(Get, from_str("http://example.com/").unwrap());
     let mut response = match request.read_response() {
         Ok(response) => response,
         Err(_request) => unreachable!(), // Uncaught condition will have failed first
@@ -24,7 +24,7 @@ not *good* support for this yet. However, it can be done; here is an example:
 
 ```rust
 let data: ~[u8];
-let mut request: ~RequestWriter;
+let mut request: RequestWriter;
 
 request.headers.content_length = Some(data.len());
 request.write(data);
@@ -33,9 +33,6 @@ let response = match request.read_response() {
     Err(_request) => unreachable!(), // Uncaught condition will have failed first
 };
 ```
-
-Finally, if you're wondering why you need to work with `~RequestWriter` rather than `RequestWriter`:
-that's due to a Rust bug; when that's resolved, we'll go back to using just `RequestWriter`.
 
 */
 
@@ -218,11 +215,8 @@ impl RequestWriter<TcpStream> {
      *
      * If the request sending fails in any way, a condition will be raised; if handled, the original
      * request will be returned as an `Err`.
-     *
-     * FIXME: ~self is currently used rather than self to work around a Rust bug in by-val self at
-     * present which led to a segfault on calling `ResponseReader::construct()`.
      */
-    pub fn read_response(mut ~self) -> Result<ResponseReader<TcpStream>, ~RequestWriter<TcpStream>> {
+    pub fn read_response(mut self) -> Result<ResponseReader<TcpStream>, RequestWriter<TcpStream>> {
         self.try_write_headers();
         self.flush();
         match self.stream.take() {

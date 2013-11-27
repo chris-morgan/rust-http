@@ -20,7 +20,7 @@ fn main() {
 }
 
 fn make_and_print_request(url: ~str) {
-    let request = ~RequestWriter::new(Get, from_str(url).expect("Invalid URL :-("));
+    let request = RequestWriter::new(Get, from_str(url).expect("Invalid URL :-("));
 
     println("[33;1mRequest[0m");
     println("[33;1m=======[0m");
