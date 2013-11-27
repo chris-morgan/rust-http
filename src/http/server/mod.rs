@@ -129,68 +129,6 @@ pub struct Config {
 	bind_address: SocketAddr,
 }
 
-/* Sorry, but Rust isn't ready for this yet; SimpleServer can't be made Clone just yet. (For
- * starters, ~fn() isn't cloneable.)
-
-/// A simple `Server`-implementing class, allowing code to be written in an imperative style.
-pub struct SimpleServer {
-    config: Config,
-    handler: ~fn(&Request, &mut ResponseWriter),
-}
-
-impl SimpleServer {
-    /// Create a new `SimpleServer` instance with the provided members.
-    pub fn new(config: Config, handler: ~fn(&Request, &mut ResponseWriter)) -> SimpleServer {
-        SimpleServer {
-            config: config,
-            handler: handler,
-        }
-    }
-}
-
-impl Server for SimpleServer {
-    /// Handles a request by passing it on to the structure's handler function.
-    #[inline]
-	pub fn handle_request(&self, request: &Request, response: &mut ResponseWriter) {
-        (self.handler)(request, response);
-    }
-
-    /// Returns the structure's known config.
-    #[inline]
-	pub fn get_config(&self) -> Config {
-        self.config
-    }
-}
-
-/// Create a simple server and immediately start serving forever.
-///
-/// This is equivalent to
-///
-/// ~~~ {.rust}
-/// SimpleServer::new(Config { bind_address: socket_addr }, handler).serve_forever();
-/// ~~~
-///
-/// But it's nicer this way with `do` blocks and closures:
-///
-/// ~~~ {.rust}
-/// do serve_forever(socket_addr) |r, mut w| {
-///     // Now you can handle the request here and write the wresponse.
-/// }
-/// ~~~
-///
-/// The signature of this method is liable to change if `Config` gets more members.
-// Please, pretty please, don't correct the word "wresponse".
-#[inline]
-pub fn serve_forever(socket_addr: SocketAddr, handler: ~fn(&Request, &mut ResponseWriter)) {
-    SimpleServer::new(Config { bind_address: socket_addr }, handler).serve_forever();
-}
-
-/// 0.0.0.0, port 80: publicly bound to the standard HTTP port.
-/// Not recommended at present as this server is not hardened against the sort of traffic you may
-/// encounter on the Internet and is vulnerable to various DoS attacks. Sit it behind a gateway.
-static PUBLIC: SocketAddr = SocketAddr { ip: Ipv4Addr(0, 0, 0, 0), port: 80 };
-*/
-
 static PERF_DUMP_FREQUENCY : u64 = 10_000;
 
 /// Simple function to dump out perf stats every `PERF_DUMP_FREQUENCY` requests
