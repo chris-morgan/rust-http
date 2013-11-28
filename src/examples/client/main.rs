@@ -47,5 +47,6 @@ fn make_and_print_request(url: ~str) {
         println!(" - {}: {}", header.header_name(), header.header_value());
     }
     println("[1mBody:[0m");
-    println(str::from_utf8(response.read_to_end()));
+    let body = response.read_to_end();
+    println(str::from_utf8_slice(body));
 }

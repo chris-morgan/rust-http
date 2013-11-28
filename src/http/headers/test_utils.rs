@@ -14,7 +14,7 @@ pub fn from_stream_with_str<T: HeaderConvertible>(s: &str) -> Option<T> {
 pub fn to_stream_into_str<T: HeaderConvertible>(v: &T) -> ~str {
     let mut writer = MemWriter::new();
     v.to_stream(&mut writer);
-    str::from_utf8(writer.inner_ref().as_slice())
+    str::from_utf8_owned(writer.inner_ref().to_owned())
 }
 
 // Verify that a value cannot be successfully interpreted as a header value of the specified type.
