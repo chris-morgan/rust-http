@@ -8,7 +8,7 @@ use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;
 use extra::time;
 
-use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};
+use http::server::{Config, Server, Request, ResponseWriter};
 use http::headers::HeaderEnum;
 use http::headers::content_type::MediaType;
 

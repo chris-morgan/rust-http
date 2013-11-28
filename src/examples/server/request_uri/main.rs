@@ -11,7 +11,7 @@ use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;
 use extra::time;
 
-use http::server::{Config, Server, ServerUtil, Request, ResponseWriter};
+use http::server::{Config, Server, Request, ResponseWriter};
 use http::server::request::{Star, AbsoluteUri, AbsolutePath, Authority};
 use http::status::{BadRequest, MethodNotAllowed};
 use http::method::{Get, Head, Post, Put, Delete, Trace, Options, Connect, Patch};

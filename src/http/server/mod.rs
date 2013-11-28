@@ -16,25 +16,12 @@ pub use self::response::ResponseWriter;
 pub mod request;
 pub mod response;
 
-// TODO: when mozilla/rust#7661 is resolved, assuming also that specifying inheritance of kinds for
-// the trait works:
-// - Scrap ServerUtil (including any using it into the local scope)
-// - Change "trait Server" to "trait Server: Send"
-// - Shift the serve_forever method into Server
-pub trait Server {
+pub trait Server: Send + Clone {
 	fn handle_request(&self, request: &Request, response: &mut ResponseWriter) -> ();
 
 	// XXX: this could also be implemented on the serve methods
 	fn get_config(&self) -> Config;
-}
 
-/// A temporary trait to fix current deficiencies in Rust's default methods on traits.
-/// You'll need to import `ServerUtil` to be able to call `serve_forever` on a Server.
-pub trait ServerUtil {
-    fn serve_forever(self);
-}
-
-impl<T: Send + Clone + Server> ServerUtil for T {
 	/**
 	 * Attempt to bind to the address and port and start serving forever.
 	 *
