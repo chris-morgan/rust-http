@@ -54,17 +54,7 @@ pub fn comma_split_iter<'a>(value: &'a str)
     value.split(',').map(|w| w.trim_left())
 }
 
-pub trait WriterUtil {
-    fn write_maybe_quoted_string(&mut self, s: &str);
-    fn write_quoted_string(&mut self, s: &str);
-    fn write_parameter(&mut self, k: &str, v: &str);
-    // TODO: &Str instead of ~str?
-    fn write_parameters(&mut self, parameters: &[(~str, ~str)]);
-    fn write_quality(&mut self, quality: Option<f64>);
-    fn write_token(&mut self, token: &str);
-}
-
-impl<W: Writer> WriterUtil for W {
+pub trait WriterUtil: Writer {
     fn write_maybe_quoted_string(&mut self, s: &str) {
         if is_token(s) {
             self.write(s.as_bytes());
@@ -117,6 +107,8 @@ impl<W: Writer> WriterUtil for W {
         self.write(token.as_bytes());
     }
 }
+
+impl<W: Writer> WriterUtil for W { }
 
 /// Join a vector of values with commas, as is common for HTTP headers.
 ///
