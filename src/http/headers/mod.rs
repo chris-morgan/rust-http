@@ -708,17 +708,17 @@ impl HeaderConvertible for Tm {
         // XXX: %Z actually ignores any timezone other than UTC. Probably not a good idea?
         match strptime(value, "%a, %d %b %Y %T %Z") {  // RFC 822, updated by RFC 1123
             Ok(time) => return Some(time),
-            Err(*) => ()
+            Err(_) => ()
         }
 
         match strptime(value, "%A, %d-%b-%y %T %Z") {  // RFC 850, obsoleted by RFC 1036
             Ok(time) => return Some(time),
-            Err(*) => ()
+            Err(_) => ()
         }
 
         match strptime(value, "%c") {  // ANSI C's asctime() format
             Ok(time) => Some(time),
-            Err(*) => None
+            Err(_) => None
         }
     }
 
@@ -958,7 +958,7 @@ macro_rules! headers_mod {
                 fn header_name(&self) -> ~str {
                     match *self {
                         // FIXME: $output_name is "...", I want ~"..." rather than "...".to_owned()
-                        $($caps_ident(*) => $output_name.to_owned(),)*
+                        $($caps_ident(_) => $output_name.to_owned(),)*
                         ExtensionHeader(ref name, _) => name.to_owned(),
                     }
                 }
@@ -990,14 +990,14 @@ macro_rules! headers_mod {
                     }
 
                     writer.write(match *self {
-                        $($caps_ident(*) => bytes!($output_name, ": "),)*
-                        ExtensionHeader(*) => unreachable!(),  // Already returned
+                        $($caps_ident(_) => bytes!($output_name, ": "),)*
+                        ExtensionHeader(..) => unreachable!(),  // Already returned
                     });
 
                     // FIXME: all the `h` cases satisfy HeaderConvertible, can it be simplified?
                     match *self {
                         $($caps_ident(ref h) => h.to_stream(writer),)*
-                        ExtensionHeader(*) =>     unreachable!(),  // Already returned
+                        ExtensionHeader(..) => unreachable!(),  // Already returned
                     };
                     writer.write(bytes!("\r\n"));
                 }

@@ -120,7 +120,7 @@ impl<S: Reader + Writer> RequestWriter<S> {
             let addrs = addrs.unwrap();
             let addr = addrs.move_iter().find(|&a| {
                 match a {
-                    Ipv4Addr(*) => true,
+                    Ipv4Addr(..) => true,
                     _ => false
                 }
             });

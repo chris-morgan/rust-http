@@ -66,7 +66,7 @@ impl Server for RequestUriServer {
         w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>"));
 
         match r.request_uri {
-            Star | Authority(*) => {
+            Star | Authority(_) => {
                 w.status = BadRequest;
                 // Actually, valid for the CONNECT method.
             },
