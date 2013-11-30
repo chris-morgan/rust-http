@@ -18,7 +18,7 @@ fn main() {
             os::set_exit_status(1); 
         },
         3 => {
-            let output_dir = Path::new(args[2].as_slice());
+            let output_dir = Path::init(args[2].as_slice());
             // TODO: maybe not 0777?
             if !output_dir.exists() {
                 fs::mkdir(&output_dir, 0b111_111_111);
