@@ -19,18 +19,18 @@ use headers::transfer_encoding::Chunked;
 static RESPONSE_HTTP_VERSION: &'static str = "HTTP/1.1";
 // Maybe we could provide a response interface
 
-pub struct ResponseWriter<'self> {
+pub struct ResponseWriter<'a> {
     // The place to write to (typically a TCP stream, io::net::tcp::TcpStream)
-    priv writer: &'self mut BufferedStream<TcpStream>,
+    priv writer: &'a mut BufferedStream<TcpStream>,
     priv headers_written: bool,
-    request: &'self Request,
+    request: &'a Request,
     headers: ~HeaderCollection,
     status: status::Status,
 }
 
-impl<'self> ResponseWriter<'self> {
+impl<'a> ResponseWriter<'a> {
     /// Create a `ResponseWriter` writing to the specified location
-    pub fn new(writer: &'self mut BufferedStream<TcpStream>, request: &'self Request) -> ResponseWriter<'self> {
+    pub fn new(writer: &'a mut BufferedStream<TcpStream>, request: &'a Request) -> ResponseWriter<'a> {
         ResponseWriter {
             writer: writer,
             headers_written: false,
@@ -105,7 +105,7 @@ impl<'self> ResponseWriter<'self> {
     }
 }
 
-impl<'self> io::Writer for ResponseWriter<'self> {
+impl<'a> io::Writer for ResponseWriter<'a> {
 
     fn write(&mut self, buf: &[u8]) {
         if (!self.headers_written) {

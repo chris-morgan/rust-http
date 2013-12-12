@@ -22,13 +22,13 @@ static MAX_HTTP_VERSION_LEN: uint = 1024;
 /// Moderately arbitrary figure: read in 64KB chunks. GET requests should never be this large.
 static BUF_SIZE: uint = 0x10000;  // Let's try 64KB chunks
 
-pub struct RequestBuffer<'self, S> {
+pub struct RequestBuffer<'a, S> {
     /// The socket connection to read from
-    stream: &'self mut BufferedStream<S>,
+    stream: &'a mut BufferedStream<S>,
 }
 
-impl<'self, S: Stream> RequestBuffer<'self, S> {
-    pub fn new<'a>(stream: &'a mut BufferedStream<S>) -> RequestBuffer<'a, S> {
+impl<'a, S: Stream> RequestBuffer<'a, S> {
+    pub fn new(stream: &'a mut BufferedStream<S>) -> RequestBuffer<'a, S> {
         RequestBuffer {
             stream: stream,
         }

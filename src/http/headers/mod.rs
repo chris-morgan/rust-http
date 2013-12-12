@@ -139,8 +139,8 @@ enum HeaderValueByteIteratorState {
 /// This ensures one cannot read past the end of a header mistakenly and that linear white space is
 /// handled correctly so that nothing else needs to worry about it. Any linear whitespace (multiple
 /// spaces outside of a quoted-string) is compacted into a single SP.
-pub struct HeaderValueByteIterator<'self, R> {
-    reader: &'self mut R,
+pub struct HeaderValueByteIterator<'r, R> {
+    reader: &'r mut R,
 
     /// This field serves two purposes. *During* iteration, it will typically be ``None``, but
     /// certain cases will cause it to be a ``Some``, meaning that the next ``next()`` call will
@@ -154,9 +154,9 @@ pub struct HeaderValueByteIterator<'self, R> {
     state: HeaderValueByteIteratorState,
 }
 
-impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
+impl<'r, R: Reader> HeaderValueByteIterator<'r, R> {
 
-    pub fn new(reader: &'self mut R) -> HeaderValueByteIterator<'self, R> {
+    pub fn new(reader: &'r mut R) -> HeaderValueByteIterator<'r, R> {
         HeaderValueByteIterator {
             reader: reader,
             next_byte: None,
@@ -437,7 +437,7 @@ impl<'self, R: Reader> HeaderValueByteIterator<'self, R> {
     }
 }
 
-impl<'self, R: Reader> Iterator<u8> for HeaderValueByteIterator<'self, R> {
+impl<'r, R: Reader> Iterator<u8> for HeaderValueByteIterator<'r, R> {
     fn next(&mut self) -> Option<u8> {
         if self.state == Finished {
             return None;
@@ -931,13 +931,13 @@ macro_rules! headers_mod {
                 }
             }
 
-            pub struct HeaderCollectionIterator<'self> {
+            pub struct HeaderCollectionIterator<'a> {
                 pos: uint,
-                coll: &'self HeaderCollection,
-                ext_iter: Option<TreeMapIterator<'self, ~str, ~str>>
+                coll: &'a HeaderCollection,
+                ext_iter: Option<TreeMapIterator<'a, ~str, ~str>>
             }
 
-            impl<'self> Iterator<Header> for HeaderCollectionIterator<'self> {
+            impl<'a> Iterator<Header> for HeaderCollectionIterator<'a> {
                 fn next(&mut self) -> Option<Header> {
                     loop {
                         self.pos += 1;
