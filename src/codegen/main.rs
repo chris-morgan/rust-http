@@ -1,4 +1,4 @@
-#[link(name = "codegen")];
+#[pkgid = "codegen"];
 
 #[feature(macro_rules)];
 

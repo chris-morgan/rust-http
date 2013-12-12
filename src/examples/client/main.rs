@@ -1,3 +1,5 @@
+#[pkgid = "client"];
+
 extern mod http;
 use http::client::RequestWriter;
 use http::method::Get;

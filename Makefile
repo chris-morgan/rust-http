@@ -12,7 +12,7 @@ codegen_files=\
 	        src/codegen/read_method.rs \
 	        src/codegen/status.rs \
 
-libhttp_so=build/libhttp-1a63dc49587b4f20-$(VERSION).so
+libhttp_so=build/libhttp-9296ff29-0.1-pre.so
 http_files=\
 		      src/http/lib.rs \
 		      src/http/buffer.rs \
