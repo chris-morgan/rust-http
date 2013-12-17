@@ -38,8 +38,7 @@ pub trait Server: Send + Clone {
             Some(acceptor) => acceptor,
         };
         debug!("listening");
-        let (perf_po, perf_ch) = stream();
-        let perf_ch = SharedChan::new(perf_ch);
+        let (perf_po, perf_ch) = SharedChan::new();
         do spawn {
             perf_dumper(perf_po);
         }
