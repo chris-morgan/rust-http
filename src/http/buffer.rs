@@ -25,9 +25,9 @@ struct BufferedStream<T> {
 impl<T: Stream> BufferedStream<T> {
     pub fn new(stream: T) -> BufferedStream<T> {
         let mut read_buffer = vec::with_capacity(READ_BUF_SIZE);
-        unsafe { vec::raw::set_len(&mut read_buffer, READ_BUF_SIZE); }
+        unsafe { read_buffer.set_len(READ_BUF_SIZE); }
         let mut write_buffer = vec::with_capacity(WRITE_BUF_SIZE);
-        unsafe { vec::raw::set_len(&mut write_buffer, WRITE_BUF_SIZE); }
+        unsafe { write_buffer.set_len(WRITE_BUF_SIZE); }
         BufferedStream {
             wrapped: stream,
             read_buffer: read_buffer,
@@ -109,7 +109,7 @@ impl<T: Reader> Reader for BufferedStream<T> {
             return None;
         }
         let size = min(self.read_max - self.read_pos, buf.len());
-        vec::bytes::copy_memory(buf, self.read_buffer.slice_from(self.read_pos), size);
+        vec::bytes::copy_memory(buf, self.read_buffer.slice_from(self.read_pos).slice_to(size));
         self.read_pos += size;
         Some(size)
     }
@@ -139,8 +139,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
                 self.wrapped.write(bytes!("\r\n"));
             }
         } else {
-            vec::bytes::copy_memory(self.write_buffer.mut_slice_from(self.write_len),
-                                    buf, buf.len());
+            unsafe { self.write_buffer.mut_slice_from(self.write_len).copy_memory(buf); }
 
             self.write_len += buf.len();
             if self.write_len == self.write_buffer.len() {
