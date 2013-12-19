@@ -9,7 +9,7 @@ static READ_BUF_SIZE: uint = 0x10000;
 static WRITE_BUF_SIZE: uint = 0x10000;
 // TODO: consider removing constants and giving a buffer size in the constructor
 
-struct BufferedStream<T> {
+pub struct BufferedStream<T> {
     wrapped: T,
     read_buffer: ~[u8],
     // The current position in the buffer

@@ -10,7 +10,7 @@ use buffer::BufferedStream;
 use server::request::{RequestBuffer};
 use headers::{EndOfFile, EndOfHeaders, MalformedHeaderSyntax, MalformedHeaderValue};
 
-struct ResponseReader<S> {
+pub struct ResponseReader<S> {
     priv stream: BufferedStream<S>,
 
     /// The request which this is a response to
