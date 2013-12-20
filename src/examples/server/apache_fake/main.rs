@@ -2,7 +2,7 @@
 //! configuration. Potentially useful for a smidgeon of performance comparison, though naturally
 //! Apache is doing a lot more than this does.
 
-#[pkgid = "apache_fake"];
+#[crate_id = "apache_fake"];
 
 extern mod extra;
 extern mod http;

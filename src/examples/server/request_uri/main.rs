@@ -4,7 +4,7 @@
 //! This demonstrates some handling of the RequestURI, which has several possibilities and for which
 //! the correct values depend on the method.
 
-#[pkgid = "request_uri"];
+#[crate_id = "request_uri"];
 
 extern mod extra;
 extern mod http;

@@ -1,4 +1,4 @@
-#[pkgid = "client"];
+#[crate_id = "client"];
 
 extern mod http;
 use http::client::RequestWriter;

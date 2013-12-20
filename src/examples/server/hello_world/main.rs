@@ -1,6 +1,6 @@
 //! A very simple HTTP server which responds with the plain text "Hello, World!" to every request.
 
-#[pkgid = "hello_world"];
+#[crate_id = "hello_world"];
 
 extern mod extra;
 extern mod http;

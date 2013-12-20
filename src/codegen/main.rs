@@ -1,4 +1,4 @@
-#[pkgid = "codegen"];
+#[crate_id = "codegen"];
 
 #[feature(macro_rules)];
 
