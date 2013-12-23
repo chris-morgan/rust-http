@@ -37,7 +37,7 @@ all: http examples docs
 
 build/codegen: $(codegen_files)
 	mkdir -p build/
-	$(RUSTC) $(RUSTFLAGS) src/codegen/main.rs --out-dir=build
+	$(RUSTC) src/codegen/main.rs --out-dir=build
 
 src/http/generated/%.rs: build/codegen
 	build/codegen $(patsubst src/http/generated/%,%,$@) src/http/generated/
