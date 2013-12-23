@@ -9,14 +9,14 @@ use headers::response::HeaderCollection;
 use headers::content_type::MediaType;
 use headers::transfer_encoding::Chunked;
 
-/**
+/*
  * The HTTP version tag which will be used for the response.
  *
  * At present, responses will always respond with `HTTP/1.1`, as there doesn't
  * seem much value in responding HTTP/1.0 when we don't really support it.
  * Others do this too, so there's my justification.
  */
-static RESPONSE_HTTP_VERSION: &'static str = "HTTP/1.1";
+//static RESPONSE_HTTP_VERSION: &'static str = "HTTP/1.1";
 // Maybe we could provide a response interface
 
 pub struct ResponseWriter<'a> {

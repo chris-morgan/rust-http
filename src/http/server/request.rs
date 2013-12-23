@@ -11,16 +11,12 @@ use common::read_http_version;
 
 use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeaderSyntax, MalformedHeaderValue};
 
-/// Line/header can't be more than 4KB long (note that with the compacting of LWS the actual source
-/// data could be longer than 4KB)
-static MAX_LINE_LEN: uint = 0x1000;
+// /// Line/header can't be more than 4KB long (note that with the compacting of LWS the actual source
+// /// data could be longer than 4KB)
+// static MAX_LINE_LEN: uint = 0x1000;
 
 static MAX_REQUEST_URI_LEN: uint = 1024;
 pub static MAX_METHOD_LEN: uint = 64;
-static MAX_HTTP_VERSION_LEN: uint = 1024;
-
-/// Moderately arbitrary figure: read in 64KB chunks. GET requests should never be this large.
-static BUF_SIZE: uint = 0x10000;  // Let's try 64KB chunks
 
 pub struct RequestBuffer<'a, S> {
     /// The socket connection to read from
