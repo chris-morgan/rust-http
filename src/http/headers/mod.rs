@@ -883,19 +883,10 @@ macro_rules! headers_mod {
                 ExtensionHeader(~str, ~str),
             }
 
-            // Can't use #[deriving(Clone)] because of https://github.com/mozilla/rust/issues/6976
+            #[deriving(Clone)]
             pub struct HeaderCollection {
                 $($lower_ident: Option<$htype>,)*
                 extensions: TreeMap<~str, ~str>,
-            }
-
-            impl Clone for HeaderCollection {
-                fn clone(&self) -> HeaderCollection {
-                    HeaderCollection {
-                        $($lower_ident: self.$lower_ident.clone(),)*
-                        extensions: self.extensions.clone(),
-                    }
-                }
             }
 
             impl HeaderCollection {
