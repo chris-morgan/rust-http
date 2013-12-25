@@ -1,6 +1,3 @@
-#[link(name = "http",
-       uuid = "d2ad8df0-547a-4ce1-99c6-a9da3b98fb3e",
-       url = "https://github.com/chris-morgan/rust-http/tree/master/src/http")];
 #[crate_id = "http#0.1-pre"];
 
 #[comment = "Rust HTTP server"];
