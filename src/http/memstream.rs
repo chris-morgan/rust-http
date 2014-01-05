@@ -11,13 +11,27 @@ impl MemWriterFakeStream {
 }
 
 impl Writer for MemWriterFakeStream {
-    fn write(&mut self, buf: &[u8]) { (**self).write(buf) }
-    fn flush(&mut self) { (**self).flush() }
+    fn write(&mut self, buf: &[u8]) {
+        let &MemWriterFakeStream(ref mut s) = self;
+        s.write(buf)
+    }
+
+    fn flush(&mut self) {
+        let &MemWriterFakeStream(ref mut s) = self;
+        s.flush()
+    }
 }
 
 impl Seek for MemWriterFakeStream {
-    fn tell(&self) -> u64 { (**self).tell() }
-    fn seek(&mut self, pos: i64, style: SeekStyle) { (**self).seek(pos, style) }
+    fn tell(&self) -> u64 {
+        let &MemWriterFakeStream(ref s) = self;
+        s.tell()
+    }
+
+    fn seek(&mut self, pos: i64, style: SeekStyle) {
+        let &MemWriterFakeStream(ref mut s) = self;
+        s.seek(pos, style)
+    }
 }
 
 impl Reader for MemWriterFakeStream {
@@ -37,13 +51,27 @@ impl MemReaderFakeStream {
 }
 
 impl Reader for MemReaderFakeStream {
-    fn read(&mut self, buf: &mut [u8]) -> Option<uint> { (**self).read(buf) }
-    fn eof(&mut self) -> bool { (**self).eof() }
+    fn read(&mut self, buf: &mut [u8]) -> Option<uint> {
+        let &MemReaderFakeStream(ref mut s) = self;
+        s.read(buf)
+    }
+
+    fn eof(&mut self) -> bool {
+        let &MemReaderFakeStream(ref mut s) = self;
+        s.eof()
+    }
 }
 
 impl Seek for MemReaderFakeStream {
-    fn tell(&self) -> u64 { (**self).tell() }
-    fn seek(&mut self, pos: i64, style: SeekStyle) { (**self).seek(pos, style) }
+    fn tell(&self) -> u64 {
+        let &MemReaderFakeStream(ref s) = self;
+        s.tell()
+    }
+
+    fn seek(&mut self, pos: i64, style: SeekStyle) {
+        let &MemReaderFakeStream(ref mut s) = self;
+        s.seek(pos, style)
+    }
 }
 
 impl Writer for MemReaderFakeStream {
