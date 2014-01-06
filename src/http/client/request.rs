@@ -36,7 +36,7 @@ let response = match request.read_response() {
 
 */
 #[cfg(openssl)]
-extern mod ssl (name = "rust-ssl");
+extern mod ssl = "rust-openssl";
 
 #[cfg(nss)]
 extern mod nss;

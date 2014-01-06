@@ -1,4 +1,4 @@
-extern mod ssl(name = "rust-ssl");
+extern mod ssl = "rust-openssl";
 
 use std::io::net::ip::SocketAddr;
 use std::io::net::tcp::TcpStream;

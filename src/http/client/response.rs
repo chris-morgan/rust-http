@@ -36,7 +36,7 @@ fn bad_response_err() -> IoError {
 }
 
 impl<S: Stream> ResponseReader<S> {
-    pub fn construct(mut stream: BufferedStream<NetworkStream>, request: RequestWriter<S>)
+    pub fn construct(mut stream: BufferedStream<S>, request: RequestWriter<S>)
             -> Result<ResponseReader<S>, RequestWriter<S>> {
         // TODO: raise condition at the points where Err is returned
         //let mut b = [0u8, ..4096];
