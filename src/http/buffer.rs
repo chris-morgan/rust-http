@@ -113,11 +113,6 @@ impl<T: Reader> Reader for BufferedStream<T> {
         self.read_pos += size;
         Some(size)
     }
-
-    /// Return whether the Reader has reached the end of the stream AND exhausted its buffer.
-    fn eof(&mut self) -> bool {
-        self.read_pos == self.read_max && self.wrapped.eof()
-    }
 }
 
 impl<T: Writer> Writer for BufferedStream<T> {

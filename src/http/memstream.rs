@@ -38,9 +38,6 @@ impl Reader for MemWriterFakeStream {
     fn read(&mut self, _buf: &mut [u8]) -> Option<uint> {
         fail!("Uh oh, you didn't aught to call MemWriterFakeStream.read()!")
     }
-    fn eof(&mut self) -> bool {
-        fail!("Uh oh, you didn't aught to call MemWriterFakeStream.eof()!")
-    }
 }
 
 /// Reads from an owned byte vector, but also implements write with fail-on-call methods.
@@ -54,11 +51,6 @@ impl Reader for MemReaderFakeStream {
     fn read(&mut self, buf: &mut [u8]) -> Option<uint> {
         let &MemReaderFakeStream(ref mut s) = self;
         s.read(buf)
-    }
-
-    fn eof(&mut self) -> bool {
-        let &MemReaderFakeStream(ref mut s) = self;
-        s.eof()
     }
 }
 
@@ -114,8 +106,6 @@ mod test {
         assert_eq!(buf, [1, 2, 3, 4]);
         assert_eq!(reader.read(buf), Some(3));
         assert_eq!(buf.slice(0, 3), [5, 6, 7]);
-        assert!(reader.eof());
         assert_eq!(reader.read(buf), None);
-        assert!(reader.eof());
     }
 }
