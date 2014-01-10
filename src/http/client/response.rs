@@ -146,8 +146,4 @@ impl<S: Stream> Reader for ResponseReader<S> {
     fn read(&mut self, buf: &mut [u8]) -> Option<uint> {
         self.stream.read(buf)
     }
-
-    fn eof(&mut self) -> bool {
-        self.stream.eof()
-    }
 }

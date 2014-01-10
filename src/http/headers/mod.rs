@@ -736,6 +736,7 @@ impl HeaderConvertible for Tm {
 mod test {
     use extra::time::Tm;
     use headers::test_utils::{from_stream_with_str, to_stream_into_str};
+    use super::HeaderConvertible;
 
     #[test]
     fn test_from_stream_str() {

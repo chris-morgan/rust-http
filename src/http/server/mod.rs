@@ -1,7 +1,7 @@
 extern mod extra;
 
 use std::comm::SharedChan;
-use std::io::{Listener, Acceptor, Writer};
+use std::io::{Listener, Acceptor};
 use std::io::net::ip::SocketAddr;
 use std::io::io_error;
 use extra::time::precise_time_ns;
