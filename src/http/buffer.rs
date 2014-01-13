@@ -113,6 +113,10 @@ impl<T: Reader> Reader for BufferedStream<T> {
         self.read_pos += size;
         Some(size)
     }
+
+    fn eof(&mut self) -> bool {
+        self.read_pos == self.read_max
+    }
 }
 
 impl<T: Writer> Writer for BufferedStream<T> {
