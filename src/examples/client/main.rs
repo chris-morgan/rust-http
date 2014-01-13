@@ -6,7 +6,7 @@ use http::method::Get;
 use http::headers::HeaderEnum;
 use std::os;
 use std::str;
-use std::io::Reader;
+use std::io::{Reader, println};
 
 fn main() {
     format!("{}", Get);
@@ -50,5 +50,5 @@ fn make_and_print_request(url: ~str) {
     }
     println!("[1mBody:[0m");
     let body = response.read_to_end();
-    println!(str::from_utf8(body));
+    println(str::from_utf8(body));
 }
