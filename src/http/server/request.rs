@@ -316,11 +316,11 @@ impl Request {
                 Err(EndOfFile) => fail!("client disconnected, nowhere to send response"),
                 Err(EndOfHeaders) => break,
                 Err(MalformedHeaderSyntax) => {
-                    println("BAD REQUEST: malformed header (TODO: is this right?)");
+                    println!("BAD REQUEST: malformed header (TODO: is this right?)");
                     return (request, Err(status::BadRequest));
                 },
                 Err(MalformedHeaderValue) => {
-                    println("Bad header encountered. TODO: handle this better.");
+                    println!("Bad header encountered. TODO: handle this better.");
                     // Now just ignore the header
                 },
                 Ok(header) => {
@@ -331,7 +331,7 @@ impl Request {
 
         // HTTP/1.0 doesn't have Host, but HTTP/1.1 requires it
         if request.version == (1, 1) && request.headers.host.is_none() {
-            println("BAD REQUEST: host is none for HTTP/1.1 request");
+            println!("BAD REQUEST: host is none for HTTP/1.1 request");
             return (request, Err(status::BadRequest));
         }
 

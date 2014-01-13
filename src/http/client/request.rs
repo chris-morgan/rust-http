@@ -55,7 +55,7 @@ use client::response::ResponseReader;
         match stream.read(buf) {
             None => fail!("Read error :-("),  // conditions for error interception, again
             Some(bytes_read) => {
-                println(str::from_bytes(buf.slice_to(bytes_read)));
+                println!(str::from_bytes(buf.slice_to(bytes_read)));
             }
         }
 

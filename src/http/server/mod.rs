@@ -135,7 +135,7 @@ fn perf_dumper(perf_po: Port<(u64, u64, u64, u64, u64)>) {
         td_total += finished - start;
         i += 1;
         if i % PERF_DUMP_FREQUENCY == 0 {
-            println("");
+            println!("");
             println!("{} requests made thus far. Current means:", i);
             println!("- Total:               100%, {:12f}",
                      td_total as f64 / i as f64);

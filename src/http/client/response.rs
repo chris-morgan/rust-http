@@ -121,7 +121,7 @@ impl<S: Stream> ResponseReader<S> {
                         return Err(request);
                     },
                     Err(MalformedHeaderValue) => {
-                        println("Bad header encountered. TODO: handle this better.");
+                        println!("Bad header encountered. TODO: handle this better.");
                         // Now just ignore the header
                     },
                     Ok(header) => {
