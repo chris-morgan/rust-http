@@ -41,7 +41,7 @@ impl super::HeaderConvertible for Connection {
 
     fn to_stream<T: Writer>(&self, writer: &mut T) {
         writer.write(match *self {
-            Close => bytes!("close"),
+            Close => "close".as_bytes(),
             Token(ref s) => s.as_bytes(),
         });
     }

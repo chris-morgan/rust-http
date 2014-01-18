@@ -874,7 +874,7 @@ macro_rules! headers_mod {
 
             use extra;
             use std::io::{Reader, Writer};
-            use extra::treemap::{TreeMap, TreeMapIterator};
+            use extra::treemap::{TreeMap, Entries};
             use headers;
             use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
 
@@ -926,7 +926,7 @@ macro_rules! headers_mod {
             pub struct HeaderCollectionIterator<'a> {
                 pos: uint,
                 coll: &'a HeaderCollection,
-                ext_iter: Option<TreeMapIterator<'a, ~str, ~str>>
+                ext_iter: Option<Entries<'a, ~str, ~str>>
             }
 
             impl<'a> Iterator<Header> for HeaderCollectionIterator<'a> {
@@ -988,9 +988,10 @@ macro_rules! headers_mod {
                     }
 
                     writer.write(match *self {
-                        $($caps_ident(_) => bytes!($output_name, ": "),)*
+                        $($caps_ident(_) => $output_name.as_bytes(),)*
                         ExtensionHeader(..) => unreachable!(),  // Already returned
                     });
+                    writer.write(bytes!(": "));
 
                     // FIXME: all the `h` cases satisfy HeaderConvertible, can it be simplified?
                     match *self {

@@ -1,6 +1,6 @@
 #[macro_escape];
 
-use std::str::CharIterator;
+use std::str::Chars;
 use std::io::Writer;
 
 struct ParseBranch {
@@ -22,7 +22,7 @@ impl ParseBranch {
 pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> ~[ParseBranch] {
     let mut root = ParseBranch::new();
 
-    fn go_down_moses(branch: &mut ParseBranch, mut chariter: CharIterator, result: &str, case_sensitive: bool) {
+    fn go_down_moses(branch: &mut ParseBranch, mut chariter: Chars, result: &str, case_sensitive: bool) {
         match chariter.next() {
             Some(c) => {
                 let first_case = if case_sensitive { c as u8 } else { c.to_ascii().to_upper().to_byte() };

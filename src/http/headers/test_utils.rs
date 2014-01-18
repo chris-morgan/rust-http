@@ -1,4 +1,4 @@
-use std::io::mem::{MemReader, MemWriter};
+use std::io::{MemReader, MemWriter};
 use std::str;
 use headers::{HeaderConvertible, HeaderValueByteIterator};
 
