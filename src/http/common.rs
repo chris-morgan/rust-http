@@ -8,7 +8,7 @@
 use std::num::{Zero, cast};
 use std::io::Reader;
 #[cfg(test)]
-use std::io::mem::MemReader;
+use std::io::MemReader;
 
 /**
  * Read a positive decimal integer from the given reader.

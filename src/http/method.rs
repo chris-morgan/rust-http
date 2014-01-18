@@ -65,15 +65,15 @@ impl FromStr for Method {
 impl fmt::Default for Method {
     fn fmt(s: &Method, f: &mut fmt::Formatter) {
         f.buf.write(match *s {
-            Options                => bytes!("OPTIONS"),
-            Get                    => bytes!("GET"),
-            Head                   => bytes!("HEAD"),
-            Post                   => bytes!("POST"),
-            Put                    => bytes!("PUT"),
-            Delete                 => bytes!("DELETE"),
-            Trace                  => bytes!("TRACE"),
-            Connect                => bytes!("CONNECT"),
-            Patch                  => bytes!("PATCH"),
+            Options                => "OPTIONS".as_bytes(),
+            Get                    => "GET".as_bytes(),
+            Head                   => "HEAD".as_bytes(),
+            Post                   => "POST".as_bytes(),
+            Put                    => "PUT".as_bytes(),
+            Delete                 => "DELETE".as_bytes(),
+            Trace                  => "TRACE".as_bytes(),
+            Connect                => "CONNECT".as_bytes(),
+            Patch                  => "PATCH".as_bytes(),
             ExtensionMethod(ref s) => s.as_bytes(),
         })
     }
