@@ -35,6 +35,20 @@ let response = match request.read_response() {
 ```
 
 */
+#[cfg(openssl)]
+extern mod ssl (name = "rust-ssl");
+
+#[cfg(nss)]
+extern mod nss;
+
+#[cfg(openssl)]
+use super::sslclients::openssl::ssl_connect;
+
+#[cfg(nss)]
+use super::sslclients::nssssl::ssl_connect;
+
+#[cfg(not(openssl), not(nss))]
+use super::sslclients::none::ssl_connect;
 
 use extra::url::Url;
 use extra::url;
@@ -66,6 +80,26 @@ use client::response::ResponseReader;
     }
 }*/
 
+#[cfg(openssl)]
+pub enum NetworkStream {
+    NormalStream(TcpStream),
+    SslProtectedStream(ssl::SslStream<TcpStream>),
+}
+
+#[cfg(nss)]
+pub enum NetworkStream {
+    NormalStream(TcpStream),
+    SslProtectedStream(nss::ssl::SSLStream),
+}
+
+
+#[cfg(not(openssl), not(nss))]
+pub enum NetworkStream {
+    NormalStream(TcpStream),
+    SslProtectedStream(TcpStream),
+}
+
+
 pub struct RequestWriter<S> {
     // The place to write to (typically a TCP stream, io::net::tcp::TcpStream)
     priv stream: Option<BufferedStream<S>>,
@@ -87,6 +121,9 @@ pub struct RequestWriter<S> {
 
     /// The URL being requested.
     url: Url,
+
+    /// Should we use SSL?
+    use_ssl: bool,
 }
 
 /// Low-level HTTP request writing support
@@ -98,6 +135,10 @@ pub struct RequestWriter<S> {
 impl<S: Reader + Writer> RequestWriter<S> {
     /// Create a `RequestWriter` writing to the specified location
     pub fn new(method: Method, url: Url) -> RequestWriter<S> {
+        RequestWriter::new_request(method, url, false, true)
+    }
+    
+    pub fn new_request(method: Method, url: Url, use_ssl: bool, auto_detect_ssl: bool) -> RequestWriter<S> {
         let host = match url.port {
             None => Host {
                 name: url.host.to_owned(),
@@ -128,10 +169,14 @@ impl<S: Reader + Writer> RequestWriter<S> {
             // TODO: Error handling
             let addr = addr.unwrap();
 
-            let port = url.port.clone().unwrap_or(~"80");
-            let port = from_str(port);
-            // TODO: Error handling
-            let port = port.unwrap();
+            let port = match url.port {
+                None =>  match url.scheme {
+                    ~"http" => Some(80),
+                    ~"https" => Some(443),
+                    _  => None,
+                    },
+                Some(ref p) => Some(from_str(*p).expect("You didn’t aught to give a bad port!")) };
+            let port = port.unwrap_or(80);
 
             SocketAddr {
                 ip: addr,
@@ -146,13 +191,23 @@ impl<S: Reader + Writer> RequestWriter<S> {
             headers: ~HeaderCollection::new(),
             method: method,
             url: url,
+            use_ssl: use_ssl,
         };
+
+        if auto_detect_ssl {
+            request.use_ssl = match request.url.scheme {
+                ~"http" => false,
+                ~"https" => true,
+                _ => false,
+                };
+        }
+
         request.headers.host = Some(host);
         request
     }
 }
 
-impl RequestWriter<TcpStream> {
+impl RequestWriter<NetworkStream> {
 
     /// Connect to the remote host if not already connected.
     pub fn try_connect(&mut self) {
@@ -169,9 +224,10 @@ impl RequestWriter<TcpStream> {
         }
 
         self.stream = match self.remote_addr {
-            Some(addr) => match TcpStream::connect(addr) {
-                Some(stream) => Some(BufferedStream::new(stream)),
-                None => return false,
+            Some(addr) => match if self.use_ssl { ssl_connect(addr, self.url.host.to_owned()) }
+                                else { Some(NormalStream(TcpStream::connect(addr).unwrap())) } {
+            Some(stream) => Some(BufferedStream::new(stream)),
+            None => return false,
             },
             None => fail!("connect() called before remote_addr was set"),
         };
@@ -216,7 +272,7 @@ impl RequestWriter<TcpStream> {
      * If the request sending fails in any way, a condition will be raised; if handled, the original
      * request will be returned as an `Err`.
      */
-    pub fn read_response(mut self) -> Result<ResponseReader<TcpStream>, RequestWriter<TcpStream>> {
+    pub fn read_response(mut self) -> Result<ResponseReader<NetworkStream>, RequestWriter<NetworkStream>> {
         self.try_write_headers();
         self.flush();
         match self.stream.take() {
@@ -227,7 +283,7 @@ impl RequestWriter<TcpStream> {
 }
 
 /// Write the request body. Note that any calls to `write()` will cause the headers to be sent.
-impl Writer for RequestWriter<TcpStream> {
+impl Writer for RequestWriter<NetworkStream> {
     fn write(&mut self, buf: &[u8]) {
         if (!self.headers_written) {
             self.write_headers();
@@ -239,3 +295,37 @@ impl Writer for RequestWriter<TcpStream> {
         self.stream.flush();
     }
 }
+
+impl Reader for NetworkStream { 
+    fn read(&mut self, buf: &mut [u8]) -> Option<uint> {
+        match *self {
+         NormalStream(ref mut ns) => ns.read(buf),
+         SslProtectedStream(ref mut ns) => ns.read(buf),
+        }
+    }
+
+    fn eof(&mut self) -> bool {
+        match *self {
+         NormalStream(ref mut ns) => ns.eof(),
+         SslProtectedStream(ref mut ns) => ns.eof(),
+        }
+    }
+
+}
+
+impl Writer for NetworkStream {
+    fn write(&mut self, buf: &[u8]) {
+        match *self {
+         NormalStream(ref mut ns) => ns.write(buf),
+         SslProtectedStream(ref mut ns) => ns.write(buf),
+        }
+    }
+
+    fn flush(&mut self) {
+        match *self {
+         NormalStream(ref mut ns) => ns.flush(),
+         SslProtectedStream(ref mut ns) => ns.flush(),
+        }
+    }
+}
+
