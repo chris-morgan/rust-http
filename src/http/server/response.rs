@@ -108,7 +108,7 @@ impl<'a> ResponseWriter<'a> {
 impl<'a> io::Writer for ResponseWriter<'a> {
 
     fn write(&mut self, buf: &[u8]) {
-        if (!self.headers_written) {
+        if !self.headers_written {
             self.write_headers();
         }
         self.writer.write(buf);

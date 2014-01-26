@@ -229,7 +229,7 @@ impl RequestWriter<TcpStream> {
 /// Write the request body. Note that any calls to `write()` will cause the headers to be sent.
 impl Writer for RequestWriter<TcpStream> {
     fn write(&mut self, buf: &[u8]) {
-        if (!self.headers_written) {
+        if !self.headers_written {
             self.write_headers();
         }
         self.stream.write(buf);
