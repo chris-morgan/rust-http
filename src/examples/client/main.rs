@@ -50,5 +50,5 @@ fn make_and_print_request(url: ~str) {
     }
     println!("[1mBody:[0m");
     let body = response.read_to_end();
-    println(str::from_utf8(body));
+    println(str::from_utf8(body).expect("Uh oh, response wasn't UTF-8"));
 }
