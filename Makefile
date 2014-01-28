@@ -2,7 +2,6 @@ RUSTC ?= rustc
 RUSTDOC ?= rustdoc
 RUSTPKG ?= rustpkg
 RUSTFLAGS ?= -O -Z debug-info
-RUSTLIBFLAGS ?= --dylib --rlib
 RUST_REPOSITORY ?= ../rust
 RUST_CTAGS ?= $(RUST_REPOSITORY)/src/etc/ctags.rust
 VERSION=0.1-pre
@@ -31,7 +30,7 @@ http: $(libhttp_so)
 
 $(libhttp_so): $(http_files)
 	mkdir -p build/
-	$(RUSTC) $(RUSTFLAGS) $(RUSTLIBFLAGS) src/http/lib.rs --out-dir=build
+	$(RUSTC) $(RUSTFLAGS) src/http/lib.rs --out-dir=build
 
 all: http examples docs
 
