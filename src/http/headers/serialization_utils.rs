@@ -80,11 +80,10 @@ pub trait WriterUtil: Writer {
         self.write_maybe_quoted_string(v);
     }
 
-    // TODO: &Str instead of ~str?
-    fn write_parameters(&mut self, parameters: &[(~str, ~str)]) {
+    fn write_parameters<K: Str, V: Str>(&mut self, parameters: &[(K, V)]) {
         for &(ref k, ref v) in parameters.iter() {
             self.write([';' as u8]);
-            self.write_parameter(*k, *v);
+            self.write_parameter(k.as_slice(), v.as_slice());
         }
     }
 
@@ -211,11 +210,10 @@ pub fn push_parameter(mut s: ~str, k: &str, v: &str) -> ~str {
     push_maybe_quoted_string(s, v)
 }
 
-// TODO: &Str instead of ~str?
-pub fn push_parameters(mut s: ~str, parameters: &[(~str, ~str)]) -> ~str {
+pub fn push_parameters<K: Str, V: Str>(mut s: ~str, parameters: &[(K, V)]) -> ~str {
     for &(ref k, ref v) in parameters.iter() {
         s.push_char(';');
-        s = push_parameter(s, *k, *v);
+        s = push_parameter(s, k.as_slice(), v.as_slice());
     }
     s
 }
@@ -348,14 +346,14 @@ mod test {
 
     #[test]
     fn test_push_parameters() {
-        assert_eq!(push_parameters(~"foo", []), ~"foo");
-        assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz")]), ~"foo;bar=baz");
-        assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz/quux")]), ~"foo;bar=\"baz/quux\"");
-        assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz"), (~"quux", ~"fuzz")]),
+        assert_eq!(push_parameters::<&str, &str>(~"foo", []), ~"foo");
+        assert_eq!(push_parameters(~"foo", [("bar", "baz")]), ~"foo;bar=baz");
+        assert_eq!(push_parameters(~"foo", [("bar", "baz/quux")]), ~"foo;bar=\"baz/quux\"");
+        assert_eq!(push_parameters(~"foo", [("bar", "baz"), ("quux", "fuzz")]),
                    ~"foo;bar=baz;quux=fuzz");
-        assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz"), (~"quux", ~"fuzz zee")]),
+        assert_eq!(push_parameters(~"foo", [("bar", "baz"), ("quux", "fuzz zee")]),
                    ~"foo;bar=baz;quux=\"fuzz zee\"");
-        assert_eq!(push_parameters(~"foo", [(~"bar", ~"baz/quux"), (~"fuzz", ~"zee")]),
+        assert_eq!(push_parameters(~"foo", [("bar", "baz/quux"), ("fuzz", "zee")]),
                    ~"foo;bar=\"baz/quux\";fuzz=zee");
     }
 }
