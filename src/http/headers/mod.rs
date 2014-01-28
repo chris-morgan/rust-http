@@ -1046,7 +1046,7 @@ headers_mod! {
     18, "If-Modified-Since",   "If-Modified-Since",   IfModifiedSince,    if_modified_since,   extra::time::Tm;
     19, "If-None-Match",       "If-None-Match",       IfNoneMatch,        if_none_match,       ~str;
     20, "If-Range",            "If-Range",            IfRange,            if_range,            ~str;
-    21, "If-Unmodified-Since", "If-Unmodified-Since", IfUnmodifiedSince,  if_unmodifiedSince,  extra::time::Tm;
+    21, "If-Unmodified-Since", "If-Unmodified-Since", IfUnmodifiedSince,  if_unmodified_since, extra::time::Tm;
     22, "Max-Forwards",        "Max-Forwards",        MaxForwards,        max_forwards,        uint;
     23, "Proxy-Authorization", "Proxy-Authorization", ProxyAuthorization, proxy_authorization, ~str;
     24, "Range",               "Range",               Range,              range,               ~str;
