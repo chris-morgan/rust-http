@@ -57,11 +57,11 @@ Build everything::
 
 Run one of the servers::
 
-   build/examples/apache_fake
+   build/examples/server/apache_fake
 
 To run the client example, start one of the servers and run::
 
-   build/examples/client/client
+   build/examples/client http://127.0.0.1:8001/
 
 At present, all of the example servers serve to http://127.0.0.1:8001/.
 
