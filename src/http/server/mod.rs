@@ -39,9 +39,9 @@ pub trait Server: Send + Clone {
         };
         debug!("listening");
         let (perf_po, perf_ch) = SharedChan::new();
-        do spawn {
+        spawn(proc() {
             perf_dumper(perf_po);
-        }
+        });
         loop {
             // OK, we're sort of shadowing an IoError here. Perhaps this should be done in a
             // separate task so that it can safely fail...
@@ -64,7 +64,7 @@ pub trait Server: Send + Clone {
             }
             let child_perf_ch = perf_ch.clone();
             let child_self = self.clone();
-            do spawn {
+            spawn(proc() {
                 let mut time_start = time_start;
                 let mut stream = BufferedStream::new(optstream.unwrap());
                 debug!("accepted connection, got {:?}", stream);
@@ -101,7 +101,7 @@ pub trait Server: Send + Clone {
                         break;
                     }
                 }
-            }
+            });
         }
     }
 }
