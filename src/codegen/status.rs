@@ -243,7 +243,7 @@ impl ToStr for Status {
 	}
 }
 
-impl fmt::Default for Status {
+impl fmt::Show for Status {
     fn fmt(s: &Status, f: &mut fmt::Formatter) {
         write!(f.buf, \"{} {}\", s.code(), s.reason());
     }

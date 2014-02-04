@@ -62,7 +62,7 @@ impl FromStr for Method {
     }
 }
 
-impl fmt::Default for Method {
+impl fmt::Show for Method {
     fn fmt(s: &Method, f: &mut fmt::Formatter) {
         f.buf.write(match *s {
             Options                => "OPTIONS".as_bytes(),
