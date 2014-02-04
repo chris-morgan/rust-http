@@ -1,19 +1,19 @@
 use super::branchify::generate_branchified_method;
 use super::get_writer;
-use std::io::Writer;
+use std::io::IoResult;
 
-pub fn generate(output_dir: &Path) {
+pub fn generate(output_dir: &Path) -> IoResult<()> {
     let mut writer = get_writer(output_dir, "read_method.rs");
-    writer.write(bytes!("\
+    if_ok!(writer.write(bytes!("\
 // This automatically generated file is included in request.rs.
 {
     use method::{Connect, Delete, Get, Head, Options, Patch, Post, Put, Trace, ExtensionMethod};
     use server::request::MAX_METHOD_LEN;
     use rfc2616::{SP, is_token_item};
 
-"));
+")));
 
-    generate_branchified_method(
+    if_ok!(generate_branchified_method(
         writer,
         branchify!(case sensitive,
             "CONNECT" => Connect,
@@ -31,6 +31,6 @@ pub fn generate(output_dir: &Path) {
         "SP",
         "MAX_METHOD_LEN",
         "is_token_item(b)",
-        "ExtensionMethod({})");
-    writer.write(bytes!("}\n"));
+        "ExtensionMethod({})"));
+    writer.write(bytes!("}\n"))
 }

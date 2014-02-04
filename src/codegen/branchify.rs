@@ -1,7 +1,7 @@
 #[macro_escape];
 
 use std::str::Chars;
-use std::io::Writer;
+use std::io::IoResult;
 
 struct ParseBranch {
     matches: ~[u8],
@@ -85,60 +85,63 @@ pub fn generate_branchified_method(
         end: &str,
         max_len: &str,
         valid: &str,
-        unknown: &str) {
+        unknown: &str) -> IoResult<()> {
 
     fn r(writer: &mut Writer, branch: &ParseBranch, prefix: &str, indent: uint, read_call: &str,
-            end: &str, max_len: &str, valid: &str, unknown: &str) {
+            end: &str, max_len: &str, valid: &str, unknown: &str) -> IoResult<()> {
         let indentstr = " ".repeat(indent * 4);
-        let w = |s: &str| {
-            writer.write(indentstr.as_bytes());
-            writer.write(s.as_bytes());
-            writer.write(bytes!("\n"));
-        };
+        macro_rules! w (
+            ($s:expr) => {
+                if_ok!(write!(writer, "{}{}\n", indentstr, $s))
+            }
+        )
         for &c in branch.matches.iter() {
             let next_prefix = format!("{}{}", prefix, c as char);
-            w(format!("Some(b) if b == '{}' as u8 => match {} \\{", c as char, read_call));
+            w!(format!("Some(b) if b == '{}' as u8 => match {} \\{", c as char, read_call));
             for b in branch.children.iter() {
-                r(writer, b, next_prefix, indent + 1, read_call, end, max_len, valid, unknown);
+                if_ok!(r(writer, b, next_prefix, indent + 1, read_call, end, max_len, valid, unknown));
             }
             match branch.result {
-                Some(ref result) => w(format!("    Some(b) if b == SP => return Some({}),", *result)),
-                None => w(format!("    Some(b) if b == SP => return Some({}),",
+                Some(ref result) =>
+                    w!(format!("    Some(b) if b == SP => return Some({}),", *result)),
+                None => w!(format!("    Some(b) if b == SP => return Some({}),",
                                   unknown.replace("{}", format!("~\"{}\"", next_prefix)))),
             }
-            w(format!("    Some(b) if {} => (\"{}\", b),", valid, next_prefix));
-            w("    _ => return None,");
-            w("},");
+            w!(format!("    Some(b) if {} => (\"{}\", b),", valid, next_prefix));
+            w!("    _ => return None,");
+            w!("},");
         }
+        Ok(())
     }
     let indentstr = " ".repeat(indent * 4);
-    let w = |s: &str| {
-        writer.write(indentstr.as_bytes());
-        writer.write(s.as_bytes());
-        writer.write(bytes!("\n"));
-    };
+    macro_rules! w (
+        ($s:expr) => {
+            if_ok!(write!(writer, "{}{}\n", indentstr, $s))
+        }
+    )
 
-    w(format!("let (s, next_byte) = match {} \\{", read_call));
+    w!(format!("let (s, next_byte) = match {} \\{", read_call));
     for b in branches.iter() {
-        r(writer, b, "", indent + 1, read_call, end, max_len, valid, unknown);
+        if_ok!(r(writer, b, "", indent + 1, read_call, end, max_len, valid, unknown));
     }
-    w(format!("    Some(b) if {} => (\"\", b),", valid));
-    w(       ("    _ => return None,"));
-    w(       ("};"));
-    w(       ("// OK, that didn't pan out. Let's read the rest and see what we get."));
-    w(       ("let mut s = s.to_owned();"));
-    w(       ("s.push_char(next_byte as char);"));
-    w(       ("loop {"));
-    w(format!("    match {} \\{", read_call));
-    w(format!("        Some(b) if b == {} => return Some({}),", end, unknown.replace("{}", "s")));
-    w(format!("        Some(b) if {} => \\{", valid));
-    w(format!("            if s.len() == {} \\{", max_len));
-    w(       ("                // Too long; bad request"));
-    w(       ("                return None;"));
-    w(       ("            }"));
-    w(       ("            s.push_char(b as char);"));
-    w(       ("        },"));
-    w(       ("        _ => return None,"));
-    w(       ("    }"));
-    w(       ("}"));
+    w!(format!("    Some(b) if {} => (\"\", b),", valid));
+    w!(       ("    _ => return None,"));
+    w!(       ("};"));
+    w!(       ("// OK, that didn't pan out. Let's read the rest and see what we get."));
+    w!(       ("let mut s = s.to_owned();"));
+    w!(       ("s.push_char(next_byte as char);"));
+    w!(       ("loop {"));
+    w!(format!("    match {} \\{", read_call));
+    w!(format!("        Some(b) if b == {} => return Some({}),", end, unknown.replace("{}", "s")));
+    w!(format!("        Some(b) if {} => \\{", valid));
+    w!(format!("            if s.len() == {} \\{", max_len));
+    w!(       ("                // Too long; bad request"));
+    w!(       ("                return None;"));
+    w!(       ("            }"));
+    w!(       ("            s.push_char(b as char);"));
+    w!(       ("        },"));
+    w!(       ("        _ => return None,"));
+    w!(       ("    }"));
+    w!(       ("}"));
+    Ok(())
 }
