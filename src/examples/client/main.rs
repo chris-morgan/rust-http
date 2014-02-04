@@ -7,6 +7,7 @@ use http::headers::HeaderEnum;
 use std::os;
 use std::str;
 use std::io::{Reader, println};
+use std::io::net::tcp::TcpStream;
 
 fn main() {
     format!("{}", Get);
@@ -22,7 +23,7 @@ fn main() {
 }
 
 fn make_and_print_request(url: ~str) {
-    let request = RequestWriter::new(Get, from_str(url).expect("Invalid URL :-("));
+    let request = RequestWriter::<TcpStream>::new(Get, from_str(url).expect("Invalid URL :-("));
 
     println!("[33;1mRequest[0m");
     println!("[33;1m=======[0m");

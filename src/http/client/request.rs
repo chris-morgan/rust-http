@@ -46,6 +46,7 @@ use std::io::net::tcp::TcpStream;
 use buffer::BufferedStream;
 use headers::request::HeaderCollection;
 use headers::host::Host;
+use connecter::Connecter;
 
 use client::response::ResponseReader;
 
@@ -152,7 +153,7 @@ impl<S: Reader + Writer> RequestWriter<S> {
     }
 }
 
-impl RequestWriter<TcpStream> {
+impl<S: Connecter + Reader + Writer> RequestWriter<S> {
 
     /// Connect to the remote host if not already connected.
     pub fn try_connect(&mut self) {
@@ -169,7 +170,7 @@ impl RequestWriter<TcpStream> {
         }
 
         self.stream = match self.remote_addr {
-            Some(addr) => match TcpStream::connect(addr) {
+            Some(addr) => match Connecter::connect(addr) {
                 Some(stream) => Some(BufferedStream::new(stream)),
                 None => return false,
             },
@@ -216,7 +217,7 @@ impl RequestWriter<TcpStream> {
      * If the request sending fails in any way, a condition will be raised; if handled, the original
      * request will be returned as an `Err`.
      */
-    pub fn read_response(mut self) -> Result<ResponseReader<TcpStream>, RequestWriter<TcpStream>> {
+    pub fn read_response(mut self) -> Result<ResponseReader<S>, RequestWriter<S>> {
         self.try_write_headers();
         self.flush();
         match self.stream.take() {
@@ -227,7 +228,7 @@ impl RequestWriter<TcpStream> {
 }
 
 /// Write the request body. Note that any calls to `write()` will cause the headers to be sent.
-impl Writer for RequestWriter<TcpStream> {
+impl<S: Reader + Writer + Connecter> Writer for RequestWriter<S> {
     fn write(&mut self, buf: &[u8]) {
         if !self.headers_written {
             self.write_headers();
