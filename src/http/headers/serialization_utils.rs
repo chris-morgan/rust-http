@@ -150,7 +150,7 @@ pub fn maybe_quoted_string(s: ~str) -> ~str {
 /// Quote a string, to turn it into an RFC 2616 quoted-string
 pub fn push_quoted_string(mut s: ~str, t: &str) -> ~str {
     let i = s.len();
-    s.reserve_at_least(i + t.len() + 2);
+    s.reserve(i + t.len() + 2);
     s.push_char('"');
     for c in t.chars() {
         if c == '\\' || c == '"' {
