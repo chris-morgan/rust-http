@@ -63,8 +63,8 @@ impl FromStr for Method {
 }
 
 impl fmt::Show for Method {
-    fn fmt(s: &Method, f: &mut fmt::Formatter) -> fmt::Result {
-        f.buf.write(match *s {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.buf.write(match *self {
             Options                => "OPTIONS".as_bytes(),
             Get                    => "GET".as_bytes(),
             Head                   => "HEAD".as_bytes(),
