@@ -1,5 +1,4 @@
-use std::io::{Reader, Stream};
-use std::io::{io_error, OtherIoError, IoError};
+use std::io::{Stream, IoResult, OtherIoError, IoError};
 use client::request::RequestWriter;
 use rfc2616::{CR, LF, SP};
 use common::read_http_version;
@@ -37,17 +36,14 @@ fn bad_response_err() -> IoError {
 
 impl<S: Stream> ResponseReader<S> {
     pub fn construct(mut stream: BufferedStream<S>, request: RequestWriter<S>)
-            -> Result<ResponseReader<S>, RequestWriter<S>> {
+            -> Result<ResponseReader<S>, (RequestWriter<S>, IoError)> {
         // TODO: raise condition at the points where Err is returned
         //let mut b = [0u8, ..4096];
         //let len = stream.read(b);
         //println!("{}", ::std::str::from_bytes(b.slice_to(len.unwrap())));
         let http_version = match read_http_version(&mut stream, |b| b == SP) {
-            Some(nums) => nums,
-            None => {
-                io_error::cond.raise(bad_response_err());
-                return Err(request);
-            }
+            Ok(nums) => nums,
+            Err(_) => return Err((request, bad_response_err())),
         };
 
         // Read the status code
@@ -56,18 +52,14 @@ impl<S: Stream> ResponseReader<S> {
         loop {
             if digits == 4u8 {
                 // Status code must be three digits long
-                io_error::cond.raise(bad_response_err());
-                return Err(request);
+                return Err((request, bad_response_err()));
             }
             match stream.read_byte() {
-                Some(b) if b >= '0' as u8 && b <= '9' as u8 => {
+                Ok(b) if b >= '0' as u8 && b <= '9' as u8 => {
                     status_code = status_code * 10 + b as u16 - '0' as u16;
                 },
-                Some(b) if b == SP => break,
-                _ => {
-                    io_error::cond.raise(bad_response_err());
-                    return Err(request);
-                }
+                Ok(b) if b == SP => break,
+                _ => return Err((request, bad_response_err())),
             }
             digits += 1;
         }
@@ -76,22 +68,18 @@ impl<S: Stream> ResponseReader<S> {
         let mut reason = ~"";
         loop {
             match stream.read_byte() {
-                Some(b) if b == CR => {
-                    if stream.read_byte() == Some(LF) {
+                Ok(b) if b == CR => {
+                    if stream.read_byte() == Ok(LF) {
                         break;
                     } else {
                         // Response-Line has CR without LF. Not yet resilient; TODO.
-                        io_error::cond.raise(bad_response_err());
-                        return Err(request);
+                        return Err((request, bad_response_err()));
                     }
                 }
-                Some(b) => {
+                Ok(b) => {
                     reason.push_char(b as char);
                 }
-                None => {
-                    io_error::cond.raise(bad_response_err());
-                    return Err(request);
-                }
+                Err(_) => return Err((request, bad_response_err())),
             }
         }
 
@@ -111,14 +99,12 @@ impl<S: Stream> ResponseReader<S> {
                 match xxx {
                 //match buffer.read_header::<headers::response::Header>() {
                     Err(EndOfFile) => {
-                        io_error::cond.raise(bad_response_err());
                         //fail!("server disconnected, no more response to receive :-(");
-                        return Err(request);
+                        return Err((request, bad_response_err()));
                     },
                     Err(EndOfHeaders) => break,
                     Err(MalformedHeaderSyntax) => {
-                        io_error::cond.raise(bad_response_err());
-                        return Err(request);
+                        return Err((request, bad_response_err()));
                     },
                     Err(MalformedHeaderValue) => {
                         println!("Bad header encountered. TODO: handle this better.");
@@ -143,7 +129,7 @@ impl<S: Stream> ResponseReader<S> {
 }
 
 impl<S: Stream> Reader for ResponseReader<S> {
-    fn read(&mut self, buf: &mut [u8]) -> Option<uint> {
+    fn read(&mut self, buf: &mut [u8]) -> IoResult<uint> {
         self.stream.read(buf)
     }
 }

@@ -1,6 +1,6 @@
 //! The Content-Type entity header, defined in RFC 2616, Section 14.17.
 use headers::serialization_utils::{push_parameters, WriterUtil};
-use std::io::{Reader, Writer};
+use std::io::IoResult;
 
 #[deriving(Clone, Eq)]
 pub struct MediaType {
@@ -32,7 +32,7 @@ impl ToStr for MediaType {
 }
 
 impl super::HeaderConvertible for MediaType {
-    fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>) -> Option<MediaType> {
+    fn from_stream<R: Reader>(reader: &mut super::HeaderValueByteIterator<R>) -> Option<MediaType> {
         let type_ = match reader.read_token() {
             Some(v) => v,
             None => return None,
@@ -58,11 +58,11 @@ impl super::HeaderConvertible for MediaType {
         }
     }
 
-    fn to_stream<W: Writer>(&self, writer: &mut W) {
-        writer.write_token(self.type_);
-        writer.write(['/' as u8]);
-        writer.write_token(self.subtype);
-        writer.write_parameters(self.parameters);
+    fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
+        if_ok!(writer.write_token(self.type_));
+        if_ok!(writer.write(['/' as u8]));
+        if_ok!(writer.write_token(self.subtype));
+        writer.write_parameters(self.parameters)
     }
 
     fn http_value(&self) -> ~str {

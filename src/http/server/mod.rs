@@ -3,7 +3,6 @@ extern mod extra;
 use std::comm::SharedChan;
 use std::io::{Listener, Acceptor};
 use std::io::net::ip::SocketAddr;
-use std::io::io_error;
 use extra::time::precise_time_ns;
 
 use std::io::net::tcp::TcpListener;
@@ -31,11 +30,11 @@ pub trait Server: Send + Clone {
         let config = self.get_config();
         debug!("About to bind to {:?}", config.bind_address);
         let mut acceptor = match TcpListener::bind(config.bind_address).listen() {
-            None => {
-                error!("bind or listen failed :-(");
+            Err(err) => {
+                error!("bind or listen failed :-(: {}", err);
                 return;
             },
-            Some(acceptor) => acceptor,
+            Ok(acceptor) => acceptor,
         };
         debug!("listening");
         let (perf_po, perf_ch) = SharedChan::new();
@@ -43,30 +42,24 @@ pub trait Server: Send + Clone {
             perf_dumper(perf_po);
         });
         loop {
-            // OK, we're sort of shadowing an IoError here. Perhaps this should be done in a
-            // separate task so that it can safely fail...
-            let mut error = None;
-            let optstream = io_error::cond.trap(|e| {
-                error = Some(e);
-            }).inside(|| {
-                acceptor.accept()
-            });
-
             let time_start = precise_time_ns();
-            if optstream.is_none() {
-                debug!("accept failed: {:?}", error);
-                // Question: is this the correct thing to do? We should probably be more
-                // intelligent, for there are some accept failures that are likely to be
-                // permanent, such that continuing would be a very bad idea, such as
-                // ENOBUFS/ENOMEM; and some where it should just be ignored, e.g.
-                // ECONNABORTED. TODO.
-                continue;
-            }
+            let stream = match acceptor.accept() {
+                Err(error) => {
+                    debug!("accept failed: {:?}", error);
+                    // Question: is this the correct thing to do? We should probably be more
+                    // intelligent, for there are some accept failures that are likely to be
+                    // permanent, such that continuing would be a very bad idea, such as
+                    // ENOBUFS/ENOMEM; and some where it should just be ignored, e.g.
+                    // ECONNABORTED. TODO.
+                    continue;
+                },
+                Ok(socket) => socket,
+            };
             let child_perf_ch = perf_ch.clone();
             let child_self = self.clone();
             spawn(proc() {
                 let mut time_start = time_start;
-                let mut stream = BufferedStream::new(optstream.unwrap());
+                let mut stream = BufferedStream::new(stream);
                 debug!("accepted connection, got {:?}", stream);
                 loop {  // A keep-alive loop, condition at end
                     let time_spawned = precise_time_ns();
@@ -78,7 +71,13 @@ pub trait Server: Send + Clone {
                         Ok(()) => {
                             child_self.handle_request(request, response);
                             // Ensure that we actually do send a response:
-                            response.try_write_headers();
+                            match response.try_write_headers() {
+                                Err(err) => {
+                                    error!("Writing headers failed: {}", err);
+                                    return;  // Presumably bad connection, so give up.
+                                },
+                                Ok(_) => (),
+                            }
                         },
                         Err(status) => {
                             // Uh oh, it's a response that I as a server cannot cope with.
@@ -86,11 +85,23 @@ pub trait Server: Send + Clone {
                             // at least I am content to send no body in the response.
                             response.status = status;
                             response.headers.content_length = Some(0);
-                            response.write_headers();
+                            match response.write_headers() {
+                                Err(err) => {
+                                    error!("Writing headers failed: {}", err);
+                                    return;  // Presumably bad connection, so give up.
+                                },
+                                Ok(_) => (),
+                            }
                         },
                     }
                     // Ensure the request is flushed, any Transfer-Encoding completed, etc.
-                    response.finish_response();
+                    match response.finish_response() {
+                        Err(err) => {
+                            error!("finishing response failed: {}", err);
+                            return;  // Presumably bad connection, so give up.
+                        },
+                        Ok(_) => (),
+                    }
                     let time_finished = precise_time_ns();
                     child_perf_ch.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
 

@@ -244,14 +244,14 @@ impl ToStr for Status {
 }
 
 impl fmt::Show for Status {
-    fn fmt(s: &Status, f: &mut fmt::Formatter) {
-        write!(f.buf, \"{} {}\", s.code(), s.reason());
+    fn fmt(s: &Status, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f.buf, \"{} {}\", s.code(), s.reason())
     }
 }
 
 impl fmt::Unsigned for Status {
-    fn fmt(s: &Status, f: &mut fmt::Formatter) {
-        fmt::Unsigned::fmt(&s.code(), f);
+    fn fmt(s: &Status, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Unsigned::fmt(&s.code(), f)
     }
 }
 

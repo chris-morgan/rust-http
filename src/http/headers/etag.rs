@@ -1,5 +1,5 @@
 use headers::serialization_utils::{push_quoted_string, quoted_string, WriterUtil};
-use std::io::{Reader, Writer};
+use std::io::IoResult;
 
 #[deriving(Clone, Eq)]
 pub struct EntityTag {
@@ -57,11 +57,11 @@ impl super::HeaderConvertible for EntityTag {
         })
     }
 
-    fn to_stream<W: Writer>(&self, writer: &mut W) {
+    fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
         if self.weak {
-            writer.write(bytes!("W/"));
+            if_ok!(writer.write(bytes!("W/")));
         }
-        writer.write_quoted_string(self.opaque_tag);
+        writer.write_quoted_string(self.opaque_tag)
     }
 
     fn http_value(&self) -> ~str {

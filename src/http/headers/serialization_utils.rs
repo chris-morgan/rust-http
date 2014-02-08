@@ -2,7 +2,7 @@
 
 use std::vec;
 use std::ascii::Ascii;
-use std::io::Writer;
+use std::io::IoResult;
 use rfc2616::is_token;
 
 /// Normalise an HTTP header name.
@@ -55,55 +55,51 @@ pub fn comma_split_iter<'a>(value: &'a str)
 }
 
 pub trait WriterUtil: Writer {
-    fn write_maybe_quoted_string(&mut self, s: &str) {
+    fn write_maybe_quoted_string(&mut self, s: &str) -> IoResult<()> {
         if is_token(s) {
-            self.write(s.as_bytes());
+            self.write(s.as_bytes())
         } else {
-            self.write_quoted_string(s);
+            self.write_quoted_string(s)
         }
     }
 
-    fn write_quoted_string(&mut self, s: &str) {
-        self.write(['"' as u8]);
+    fn write_quoted_string(&mut self, s: &str) -> IoResult<()> {
+        if_ok!(self.write(['"' as u8]));
         for b in s.bytes() {
             if b == '\\' as u8 || b == '"' as u8 {
-                self.write(['\\' as u8]);
+                if_ok!(self.write(['\\' as u8]));
             }
-            self.write([b]);
+            if_ok!(self.write([b]));
         }
-        self.write(['"' as u8]);
+        self.write(['"' as u8])
     }
 
-    fn write_parameter(&mut self, k: &str, v: &str) {
-        self.write(k.as_bytes());
-        self.write(['=' as u8]);
-        self.write_maybe_quoted_string(v);
+    fn write_parameter(&mut self, k: &str, v: &str) -> IoResult<()> {
+        if_ok!(self.write(k.as_bytes()));
+        if_ok!(self.write(['=' as u8]));
+        self.write_maybe_quoted_string(v)
     }
 
-    fn write_parameters<K: Str, V: Str>(&mut self, parameters: &[(K, V)]) {
+    fn write_parameters<K: Str, V: Str>(&mut self, parameters: &[(K, V)]) -> IoResult<()> {
         for &(ref k, ref v) in parameters.iter() {
-            self.write([';' as u8]);
-            self.write_parameter(k.as_slice(), v.as_slice());
+            if_ok!(self.write([';' as u8]));
+            if_ok!(self.write_parameter(k.as_slice(), v.as_slice()));
         }
+        Ok(())
     }
 
-    fn write_quality(&mut self, quality: Option<f64>) {
+    fn write_quality(&mut self, quality: Option<f64>) -> IoResult<()> {
         // TODO: remove second and third decimal places if zero, and use a better quality type anyway
         match quality {
-            Some(qvalue) => {
-                self.write(bytes!(";q="));
-                // TODO: don't use format! for this!
-                let s = format!("{:0.3f}", qvalue);
-                self.write(s.as_bytes());
-            },
-            None => (),
+            Some(qvalue) => write!(&mut *self, ";q={:0.3f}", qvalue),
+            None => Ok(()),
         }
     }
 
     #[inline]
-    fn write_token(&mut self, token: &str) {
+    fn write_token(&mut self, token: &str) -> IoResult<()> {
         assert!(is_token(token));
-        self.write(token.as_bytes());
+        self.write(token.as_bytes())
     }
 }
 

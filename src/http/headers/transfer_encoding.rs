@@ -3,7 +3,7 @@
 //! Transfer-Encoding       = "Transfer-Encoding" ":" 1#transfer-coding
 
 use std::ascii::StrAsciiExt;
-use std::io::{Reader, Writer};
+use std::io::IoResult;
 use headers::serialization_utils::{WriterUtil, push_parameters};
 
 /// RFC 2616, section 3.6:
@@ -19,7 +19,7 @@ pub enum TransferCoding {
 impl super::CommaListHeaderConvertible for TransferCoding {}
 
 impl super::HeaderConvertible for TransferCoding {
-    fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
+    fn from_stream<R: Reader>(reader: &mut super::HeaderValueByteIterator<R>)
             -> Option<TransferCoding> {
         match reader.read_token() {
             Some(token) => {
@@ -37,12 +37,12 @@ impl super::HeaderConvertible for TransferCoding {
         }
     }
 
-    fn to_stream<T: Writer>(&self, writer: &mut T) {
+    fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
         match *self {
             Chunked => writer.write(bytes!("chunked")),
             TransferExtension(ref token, ref parameters) => {
-                writer.write_token(*token);
-                writer.write_parameters(*parameters);
+                if_ok!(writer.write_token(*token));
+                writer.write_parameters(*parameters)
             }
         }
     }

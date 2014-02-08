@@ -30,9 +30,9 @@ impl Server for InfoServer {
             parameters: ~[(~"charset", ~"UTF-8")]
         });
         w.headers.server = Some(~"Rust Thingummy/0.0-pre");
-        w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>"));
+        w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>")).unwrap();
 
-        w.write(bytes!("<h1>Request</h1>"));
+        w.write(bytes!("<h1>Request</h1>")).unwrap();
         let s = format!("<dl>
             <dt>Method</dt><dd>{}</dd>
             <dt>Host</dt><dd>{:?}</dd>
@@ -44,35 +44,35 @@ impl Server for InfoServer {
             r.request_uri,
             r.version,
             r.close_connection);
-        w.write(s.as_bytes());
-        w.write(bytes!("<h2>Extension headers</h2>"));
-        w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
+        w.write(s.as_bytes()).unwrap();
+        w.write(bytes!("<h2>Extension headers</h2>")).unwrap();
+        w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>")).unwrap();
         for header in r.headers.iter() {
             let line = format!("<tr><td><code>{}</code></td><td><code>{}</code></td></tr>",
                                header.header_name(),
                                header.header_value());
-            w.write(line.as_bytes());
+            w.write(line.as_bytes()).unwrap();
         }
-        w.write(bytes!("</tbody></table>"));
-        w.write(bytes!("<h2>Body</h2><pre>"));
-        w.write(r.body.as_bytes());
-        w.write(bytes!("</pre>"));
+        w.write(bytes!("</tbody></table>")).unwrap();
+        w.write(bytes!("<h2>Body</h2><pre>")).unwrap();
+        w.write(r.body.as_bytes()).unwrap();
+        w.write(bytes!("</pre>")).unwrap();
 
-        w.write(bytes!("<h1>Response</h1>"));
+        w.write(bytes!("<h1>Response</h1>")).unwrap();
         let s = format!("<dl><dt>Status</dt><dd>{}</dd></dl>", w.status);
-        w.write(s.as_bytes());
-        w.write(bytes!("<h2>Headers</h2>"));
-        w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>"));
+        w.write(s.as_bytes()).unwrap();
+        w.write(bytes!("<h2>Headers</h2>")).unwrap();
+        w.write(bytes!("<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>")).unwrap();
         {
             let h = w.headers.clone();
             for header in h.iter() {
                 let line = format!("<tr><td><code>{}</code></td><td><code>{}</code></td></tr>",
                                 header.header_name(),
                                 header.header_value());
-                w.write(line.as_bytes());
+                w.write(line.as_bytes()).unwrap();
             }
         }
-        w.write(bytes!("</tbody></table>"));
+        w.write(bytes!("</tbody></table>")).unwrap();
     }
 }
 

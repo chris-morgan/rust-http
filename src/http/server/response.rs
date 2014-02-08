@@ -1,5 +1,4 @@
-use std::io;
-use std::io::Writer;
+use std::io::IoResult;
 use std::io::net::tcp::TcpStream;
 
 use buffer::BufferedStream;
@@ -42,18 +41,20 @@ impl<'a> ResponseWriter<'a> {
 
     /// Write a response with the specified Content-Type and content; the Content-Length header is
     /// set based upon the contents
-    pub fn write_content_auto(&mut self, content_type: MediaType, content: ~str) {
+    pub fn write_content_auto(&mut self, content_type: MediaType, content: ~str) -> IoResult<()> {
         self.headers.content_type = Some(content_type);
         let cbytes = content.as_bytes();
         self.headers.content_length = Some(cbytes.len());
-        self.write_headers();
-        self.write(cbytes);
+        if_ok!(self.write_headers());
+        self.write(cbytes)
     }
 
     /// Write the Status-Line and headers of the response, if we have not already done so.
-    pub fn try_write_headers(&mut self) {
+    pub fn try_write_headers(&mut self) -> IoResult<()> {
         if !self.headers_written {
-            self.write_headers();
+            self.write_headers()
+        } else {
+            Ok(())
         }
     }
 
@@ -64,7 +65,7 @@ impl<'a> ResponseWriter<'a> {
     /// has been specified, or to ``chunked`` if it has not, thus switching to the chunked coding.
     ///
     /// If the headers have already been written, this will fail. See also `try_write_headers`.
-    pub fn write_headers(&mut self) {
+    pub fn write_headers(&mut self) -> IoResult<()> {
         // This marks the beginning of the response (RFC2616 §6)
         if self.headers_written {
             fail!("ResponseWriter.write_headers() called, but headers already written");
@@ -75,7 +76,7 @@ impl<'a> ResponseWriter<'a> {
         // XXX: Rust's current lack of statement-duration lifetime handling prevents this from being
         // one statement ("error: borrowed value does not live long enough")
         let s = format!("HTTP/1.1 {}\r\n", self.status.to_str());
-        self.writer.write(s.as_bytes());
+        if_ok!(self.writer.write(s.as_bytes()));
 
         // FIXME: this is not an impressive way of handling it, but so long as chunked is the only
         // transfer-coding we want to deal with it's tolerable. However, it is *meant* to be an
@@ -87,35 +88,37 @@ impl<'a> ResponseWriter<'a> {
         } else {
             self.headers.transfer_encoding = None;
         }
-        self.headers.write_all(self.writer);
+        if_ok!(self.headers.write_all(&mut *self.writer));
         self.headers_written = true;
         if self.headers.content_length == None {
             // Flush so that the chunked body stuff can start working correctly. TODO: don't
             // actually flush it entirely, or else it'll send the headers in a separate TCP packet,
             // which is bad for performance.
-            self.writer.flush();
+            if_ok!(self.writer.flush());
             self.writer.writing_chunked_body = true;
         }
+        Ok(())
     }
 
-    pub fn finish_response(&mut self) {
-        self.writer.finish_response();
+    pub fn finish_response(&mut self) -> IoResult<()> {
+        if_ok!(self.writer.finish_response());
         // Ensure that we switch away from chunked in case another request comes on the same socket
         self.writer.writing_chunked_body = false;
+        Ok(())
     }
 }
 
-impl<'a> io::Writer for ResponseWriter<'a> {
+impl<'a> Writer for ResponseWriter<'a> {
 
-    fn write(&mut self, buf: &[u8]) {
+    fn write(&mut self, buf: &[u8]) -> IoResult<()> {
         if !self.headers_written {
-            self.write_headers();
+            if_ok!(self.write_headers());
         }
-        self.writer.write(buf);
+        self.writer.write(buf)
     }
 
-    fn flush(&mut self) {
-        self.writer.flush();
+    fn flush(&mut self) -> IoResult<()> {
+        self.writer.flush()
     }
 
 }

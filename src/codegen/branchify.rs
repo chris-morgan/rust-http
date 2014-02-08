@@ -97,18 +97,19 @@ pub fn generate_branchified_method(
         )
         for &c in branch.matches.iter() {
             let next_prefix = format!("{}{}", prefix, c as char);
-            w!(format!("Some(b) if b == '{}' as u8 => match {} \\{", c as char, read_call));
+            w!(format!("Ok(b) if b == '{}' as u8 => match {} \\{", c as char, read_call));
             for b in branch.children.iter() {
                 if_ok!(r(writer, b, next_prefix, indent + 1, read_call, end, max_len, valid, unknown));
             }
             match branch.result {
                 Some(ref result) =>
-                    w!(format!("    Some(b) if b == SP => return Some({}),", *result)),
-                None => w!(format!("    Some(b) if b == SP => return Some({}),",
+                    w!(format!("    Ok(b) if b == SP => return Ok({}),", *result)),
+                None => w!(format!("    Ok(b) if b == SP => return Ok({}),",
                                   unknown.replace("{}", format!("~\"{}\"", next_prefix)))),
             }
-            w!(format!("    Some(b) if {} => (\"{}\", b),", valid, next_prefix));
-            w!("    _ => return None,");
+            w!(format!("    Ok(b) if {} => (\"{}\", b),", valid, next_prefix));
+            w!("    Ok(_) => return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"bad value\", detail: None }),");
+            w!("    Err(err) => return Err(err),");
             w!("},");
         }
         Ok(())
@@ -124,23 +125,25 @@ pub fn generate_branchified_method(
     for b in branches.iter() {
         if_ok!(r(writer, b, "", indent + 1, read_call, end, max_len, valid, unknown));
     }
-    w!(format!("    Some(b) if {} => (\"\", b),", valid));
-    w!(       ("    _ => return None,"));
+    w!(format!("    Ok(b) if {} => (\"\", b),", valid));
+    w!(       ("    Ok(_) => return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"bad value\", detail: None }),"));
+    w!(       ("    Err(err) => return Err(err),"));
     w!(       ("};"));
     w!(       ("// OK, that didn't pan out. Let's read the rest and see what we get."));
     w!(       ("let mut s = s.to_owned();"));
     w!(       ("s.push_char(next_byte as char);"));
     w!(       ("loop {"));
     w!(format!("    match {} \\{", read_call));
-    w!(format!("        Some(b) if b == {} => return Some({}),", end, unknown.replace("{}", "s")));
-    w!(format!("        Some(b) if {} => \\{", valid));
+    w!(format!("        Ok(b) if b == {} => return Ok({}),", end, unknown.replace("{}", "s")));
+    w!(format!("        Ok(b) if {} => \\{", valid));
     w!(format!("            if s.len() == {} \\{", max_len));
     w!(       ("                // Too long; bad request"));
-    w!(       ("                return None;"));
+    w!(       ("                return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"too long, bad request\", detail: None });"));
     w!(       ("            }"));
     w!(       ("            s.push_char(b as char);"));
     w!(       ("        },"));
-    w!(       ("        _ => return None,"));
+    w!(       ("        Ok(_) => return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"bad value\", detail: None }),"));
+    w!(       ("        Err(err) => return Err(err),"));
     w!(       ("    }"));
     w!(       ("}"));
     Ok(())

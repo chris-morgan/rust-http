@@ -6,9 +6,25 @@
  * TODO: refactor all this to store things in more usefully categorised places.
  */
 use std::num::{Zero, cast};
-use std::io::Reader;
+use std::io::{IoError, IoResult, OtherIoError};
 #[cfg(test)]
 use std::io::MemReader;
+
+// XXX: IoError ain't a good representation of this.
+fn bad_input() -> IoError {
+    IoError {
+        kind: OtherIoError,
+        desc: "invalid number",
+        detail: None,
+    }
+}
+
+static ASCII_ZERO: u8 = '0' as u8;
+static ASCII_NINE: u8 = '9' as u8;
+static ASCII_LOWER_A: u8 = 'a' as u8;
+static ASCII_LOWER_F: u8 = 'f' as u8;
+static ASCII_UPPER_A: u8 = 'A' as u8;
+static ASCII_UPPER_F: u8 = 'F' as u8;
 
 /**
  * Read a positive decimal integer from the given reader.
@@ -27,28 +43,31 @@ use std::io::MemReader;
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_decimal<R: Reader, N: Unsigned + NumCast + Ord>
+pub fn read_decimal<R: Reader, N: Unsigned + NumCast + Ord + CheckedMul + CheckedAdd>
                    (reader: &mut R, expected_end: |u8| -> bool)
-                   -> Option<N> {
+                   -> IoResult<N> {
     // Here and in `read_hexadecimal` there is the possibility of infinite sequence of zeroes. The
     // spec allows this, but it may not be a good thing to allow. It's not a particularly good
     // attack surface, though, because of the low return.
     let mut n: N = Zero::zero();
-    let mut new_n: N;
     let mut got_content = false;
+    let ten: N = cast(10).unwrap();
     loop {
-        match reader.read_byte() {
-            Some(b) if b >= '0' as u8 && b <= '9' as u8 => {
-                new_n = n * cast(10).unwrap() + cast(b).unwrap() - cast('0' as u8).unwrap();
+        n = match reader.read_byte() {
+            Ok(b@ASCII_ZERO..ASCII_NINE) => {
+                // Written sanely, this is: n * 10 + (b - '0'), but we avoid
+                // (semantically unsound) overflow by using checked operations.
+                // There is no need in the b - '0' part as it is safe.
+                match n.checked_mul(&ten).and_then(
+                        |n| n.checked_add(&cast(b - ASCII_ZERO).unwrap())) {
+                    Some(new_n) => new_n,
+                    None => return Err(bad_input()),  // overflow
+                }
             },
-            Some(b) if got_content && expected_end(b) => return Some(n),
-            _ => return None,
-        }
-        if new_n < n {
-            // new_n < n implies overflow which is similarly not permitted.
-            return None
-        }
-        n = new_n;
+            Ok(b) if got_content && expected_end(b) => return Ok(n),
+            Ok(_) => return Err(bad_input()),  // not a valid number
+            Err(err) => return Err(err),  // I/O error
+        };
         got_content = true;
     }
 }
@@ -70,31 +89,39 @@ pub fn read_decimal<R: Reader, N: Unsigned + NumCast + Ord>
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + Ord>
+pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + Ord + CheckedMul + CheckedAdd>
                        (reader: &mut R, expected_end: |u8| -> bool)
-                       -> Option<N> {
+                       -> IoResult<N> {
     let mut n: N = Zero::zero();
-    let mut new_n: N;
     let mut got_content = false;
+    let sixteen: N = cast(16).unwrap();
     loop {
-        match reader.read_byte() {
-            Some(b) if b >= '0' as u8 && b <= '9' as u8 => {
-                new_n = n * cast(16).unwrap() + cast(b).unwrap() - cast('0' as u8).unwrap();
+        n = match reader.read_byte() {
+            Ok(b@ASCII_ZERO..ASCII_NINE) => {
+                match n.checked_mul(&sixteen).and_then(
+                        |n| n.checked_add(&cast(b - ASCII_ZERO).unwrap())) {
+                    Some(new_n) => new_n,
+                    None => return Err(bad_input()),  // overflow
+                }
             },
-            Some(b) if b >= 'a' as u8 && b <= 'f' as u8 => {
-                new_n = n * cast(16).unwrap() + cast(b).unwrap() - cast('a' as u8 - 10).unwrap();
+            Ok(b@ASCII_LOWER_A..ASCII_LOWER_F) => {
+                match n.checked_mul(&sixteen).and_then(
+                        |n| n.checked_add(&cast(b - ASCII_LOWER_A + 10).unwrap())) {
+                    Some(new_n) => new_n,
+                    None => return Err(bad_input()),  // overflow
+                }
             },
-            Some(b) if b >= 'A' as u8 && b <= 'F' as u8 => {
-                new_n = n * cast(16).unwrap() + cast(b).unwrap() - cast('A' as u8 - 10).unwrap();
+            Ok(b@ASCII_UPPER_A..ASCII_UPPER_F) => {
+                match n.checked_mul(&sixteen).and_then(
+                        |n| n.checked_add(&cast(b - ASCII_UPPER_A + 10).unwrap())) {
+                    Some(new_n) => new_n,
+                    None => return Err(bad_input()),  // overflow
+                }
             },
-            Some(b) if got_content && expected_end(b) => return Some(n),
-            _ => return None,
-        }
-        if new_n < n {
-            // new_n < n implies overflow which is similarly not permitted.
-            return None
-        }
-        n = new_n;
+            Ok(b) if got_content && expected_end(b) => return Ok(n),
+            Ok(_) => return Err(bad_input()),  // not a valid number
+            Err(err) => return Err(err),  // I/O error
+        };
         got_content = true;
     }
 }
@@ -117,26 +144,27 @@ pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + Ord>
 #[inline]
 pub fn read_http_version<R: Reader>
                         (reader: &mut R, expected_end: |u8| -> bool)
-                        -> Option<(uint, uint)> {
-    let mut buf = [0u8, ..5];
-    reader.read(buf);
-    if (buf[0] != 'h' as u8 && buf[0] != 'H' as u8) ||
-       (buf[1] != 't' as u8 && buf[1] != 'T' as u8) ||
-       (buf[2] != 't' as u8 && buf[2] != 'T' as u8) ||
-       (buf[3] != 'p' as u8 && buf[3] != 'P' as u8) ||
-       buf[4] != '/' as u8 {
-        return None;
+                        -> IoResult<(uint, uint)> {
+    // I'd read into a [0u8, ..5], but that buffer is not guaranteed to be
+    // filled, so I must read it byte by byte to guarantee correctness.
+    // (Sure, no sane person/library would send the first packet with "HTT"
+    // and leave the "P/1.1" to the next packet, but it's *possible*.)
+    let b0 = if_ok!(reader.read_byte());
+    let b1 = if_ok!(reader.read_byte());
+    let b2 = if_ok!(reader.read_byte());
+    let b3 = if_ok!(reader.read_byte());
+    let b4 = if_ok!(reader.read_byte());
+    if (b0 != 'h' as u8 && b0 != 'H' as u8) ||
+       (b1 != 't' as u8 && b1 != 'T' as u8) ||
+       (b2 != 't' as u8 && b2 != 'T' as u8) ||
+       (b3 != 'p' as u8 && b3 != 'P' as u8) ||
+       b4 != '/' as u8 {
+        return Err(bad_input());
     }
 
-    let n1 = match read_decimal(reader, |b| b == '.' as u8) {
-        Some(n) => n,
-        None => return None,
-    };
-    let n2 = match read_decimal(reader, expected_end) {
-        Some(n) => n,
-        None => return None,
-    };
-    Some((n1, n2))
+    let major = if_ok!(read_decimal(reader, |b| b == '.' as u8));
+    let minor = if_ok!(read_decimal(reader, expected_end));
+    Ok((major, minor))
 }
 
 // I couldn't think what to call it. Ah well. It's just trivial syntax sugar, anyway.
@@ -145,7 +173,7 @@ macro_rules! test_reads {
         $(
             assert_eq!(
                 concat_idents!(read_, $func)(&mut MemReader::new($value.as_bytes().into_owned()),
-                                             |b| b == 0),
+                                             |b| b == 0).ok(),
                 $expected);
         )*
     }}

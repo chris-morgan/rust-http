@@ -4,7 +4,7 @@
 // whether they should be interpreted (I recall its being a header name thing for legacy code,
 // perhaps I should normalise header case or some such thing?)
 
-use std::io::{Reader, Writer};
+use std::io::IoResult;
 use headers::serialization_utils::normalise_header_name;
 
 /// A value for the Connection header. Note that should it be a ``Token``, the string is in
@@ -26,7 +26,7 @@ impl ToStr for Connection {
 impl super::CommaListHeaderConvertible for Connection {}
 
 impl super::HeaderConvertible for Connection {
-    fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
+    fn from_stream<R: Reader>(reader: &mut super::HeaderValueByteIterator<R>)
             -> Option<Connection> {
         let s = match reader.read_token() {
             Some(s) => normalise_header_name(s),
@@ -39,11 +39,11 @@ impl super::HeaderConvertible for Connection {
         }
     }
 
-    fn to_stream<T: Writer>(&self, writer: &mut T) {
+    fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
         writer.write(match *self {
             Close => "close".as_bytes(),
             Token(ref s) => s.as_bytes(),
-        });
+        })
     }
 
     fn http_value(&self) -> ~str {

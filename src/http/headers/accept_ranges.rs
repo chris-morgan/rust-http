@@ -1,7 +1,7 @@
 //! The Accept-Ranges request header, defined in RFC 2616, Section 14.5.
 
+use std::io::IoResult;
 use std::ascii::StrAsciiExt;
-use std::io::{Reader, Writer};
 
 #[deriving(Clone,Eq)]
 // RFC 2616: range-unit = bytes-unit | other-range-unit
@@ -17,8 +17,11 @@ pub enum AcceptableRanges {
     NoAcceptableRanges,
 }
 
+// Merely here because of mozilla/rust#11641
+static BYTES: &'static [u8] = bytes!("bytes");
+
 impl super::HeaderConvertible for AcceptableRanges {
-    fn from_stream<T: Reader>(reader: &mut super::HeaderValueByteIterator<T>)
+    fn from_stream<R: Reader>(reader: &mut super::HeaderValueByteIterator<R>)
             -> Option<AcceptableRanges> {
         let mut range_units = ~[];
         loop {
@@ -37,14 +40,17 @@ impl super::HeaderConvertible for AcceptableRanges {
         Some(RangeUnits(range_units))
     }
 
-    fn to_stream<T: Writer>(&self, writer: &mut T) {
+    fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
         match *self {
             NoAcceptableRanges => writer.write(bytes!("none")),
-            RangeUnits(ref range_units) => for ru in range_units.iter() {
-                match ru {
-                    &Bytes => writer.write(bytes!("bytes")),
-                    &OtherRangeUnit(ref ru) => writer.write(ru.as_bytes()),
+            RangeUnits(ref range_units) => {
+                for ru in range_units.iter() {
+                    if_ok!(writer.write(match *ru {
+                        Bytes => BYTES,
+                        OtherRangeUnit(ref ru) => ru.as_bytes(),
+                    }));
                 }
+                Ok(())
             },
         }
     }

@@ -12,7 +12,7 @@ pub fn from_stream_with_str<T: HeaderConvertible>(s: &str) -> Option<T> {
 
 pub fn to_stream_into_str<T: HeaderConvertible>(v: &T) -> ~str {
     let mut writer = MemWriter::new();
-    v.to_stream(&mut writer);
+    v.to_stream(&mut writer).unwrap();
     str::from_utf8_owned(writer.get_ref().to_owned()).unwrap()
 }
 
