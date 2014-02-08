@@ -65,7 +65,7 @@ impl Server for RequestUriServer {
             parameters: ~[]
         });
 
-        w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>"));
+        w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>")).unwrap();
 
         match r.request_uri {
             Star | Authority(_) => {

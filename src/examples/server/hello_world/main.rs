@@ -30,7 +30,7 @@ impl Server for HelloWorldServer {
         });
         w.headers.server = Some(~"Example");
 
-        w.write(bytes!("Hello, World!\n"));
+        w.write(bytes!("Hello, World!\n")).unwrap();
     }
 }
 
