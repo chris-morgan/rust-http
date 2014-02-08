@@ -872,7 +872,7 @@ macro_rules! headers_mod {
 
             use std::io::IoResult;
             use extra;
-            use extra::treemap::{TreeMap, Entries};
+            use collections::treemap::{TreeMap, Entries};
             use headers;
             use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
 

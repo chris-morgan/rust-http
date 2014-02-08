@@ -12,6 +12,7 @@
 #[macro_escape];
 
 extern mod extra;
+extern mod collections;
 
 pub mod buffer;
 pub mod client;
