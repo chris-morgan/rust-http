@@ -2,7 +2,7 @@
 
 #[feature(macro_rules)];
 
-use std::io::{File, Truncate, Write, fs};
+use std::io::{File, Truncate, Write};
 use std::os;
 
 pub mod branchify;
