@@ -2,7 +2,7 @@
 
 #[feature(macro_rules)];
 
-use std::io::{File, Truncate, Write, fs};
+use std::io::{File, Truncate, Write};
 use std::os;
 
 pub mod branchify;
@@ -14,14 +14,10 @@ fn main() {
     match args.len() {
         0 => {
             println!("usage: codegen [read_method|status].rs <output-dir>");
-            os::set_exit_status(1); 
+            os::set_exit_status(1);
         },
         3 => {
             let output_dir = Path::new(args[2].as_slice());
-            // TODO: maybe not 0777?
-            if !output_dir.exists() {
-                fs::mkdir(&output_dir, 0b111_111_111).unwrap();
-            }
 
             match args[1] {
                 ~"read_method.rs" => read_method::generate(&output_dir).unwrap(),
@@ -33,7 +29,7 @@ fn main() {
             }
         },
         _ => {
-            println!("usage: {} [read_method|status].rs", args[0]);
+            println!("usage: {} [read_method|status].rs <output-dir>", args[0]);
             os::set_exit_status(1);
         }
     }

@@ -38,7 +38,10 @@ build/codegen: $(codegen_files)
 	mkdir -p build/
 	$(RUSTC) src/codegen/main.rs --out-dir=build
 
-src/http/generated/%.rs: build/codegen
+src/http/generated:
+	mkdir -p src/http/generated
+
+src/http/generated/%.rs: build/codegen src/http/generated
 	build/codegen $(patsubst src/http/generated/%,%,$@) src/http/generated/
 
 build/%:: src/%/main.rs $(libhttp_so)
