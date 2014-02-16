@@ -1,6 +1,6 @@
 #[crate_id = "client"];
 
-extern mod http;
+extern crate http;
 use http::client::RequestWriter;
 use http::method::Get;
 use http::headers::HeaderEnum;

@@ -5,14 +5,16 @@
 #[crate_type = "dylib"];
 #[crate_type = "rlib"];
 
+#[doc(html_root_url = "http://www.rust-ci.org/chris-morgan/rust-http/doc/")];
+
 #[deny(non_camel_case_types)];
 //#[deny(missing_doc)];
 
 #[feature(macro_rules)];
 #[macro_escape];
 
-extern mod extra;
-extern mod collections;
+extern crate extra;
+extern crate collections;
 
 pub mod buffer;
 pub mod client;

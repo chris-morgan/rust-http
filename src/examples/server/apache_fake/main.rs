@@ -4,8 +4,8 @@
 
 #[crate_id = "apache_fake"];
 
-extern mod extra;
-extern mod http;
+extern crate extra;
+extern crate http;
 
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;
