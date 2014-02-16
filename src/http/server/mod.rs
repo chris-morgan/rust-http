@@ -1,4 +1,4 @@
-extern mod extra;
+extern crate extra;
 
 use std::comm::Chan;
 use std::io::{Listener, Acceptor};

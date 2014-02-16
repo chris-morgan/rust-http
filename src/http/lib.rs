@@ -11,8 +11,8 @@
 #[feature(macro_rules)];
 #[macro_escape];
 
-extern mod extra;
-extern mod collections;
+extern crate extra;
+extern crate collections;
 
 pub mod buffer;
 pub mod client;

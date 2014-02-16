@@ -39,7 +39,7 @@ probably be a wrapper about a ``Reader``.
 The initial API will be very simple, with ``Request::new(Method, Url)`` and the
 use of string typing for headers::
 
-   extern mod http;
+   extern crate http;
    use http::client::Request;
    use http::method::Get;
    use extra::url::Url;
