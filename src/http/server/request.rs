@@ -4,6 +4,7 @@ use status;
 use std::io::{Stream, IoResult};
 use std::io::net::ip::SocketAddr;
 use std::io::net::tcp::TcpStream;
+use std::str;
 use rfc2616::{CR, LF, SP};
 use headers;
 use buffer::BufferedStream;
@@ -145,6 +146,12 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
                 Ok(header)
             }
         }
+    }
+}
+
+impl<'a, S: Stream> Reader for RequestBuffer<'a, S> {
+    fn read(&mut self, buf: &mut [u8]) -> IoResult<uint> {
+        self.stream.read(buf)
     }
 }
 
@@ -347,6 +354,20 @@ impl Request {
                 }
             },
             None => (),
+        }
+
+        // Read body if its length is specified
+        match request.headers.content_length {
+            Some(length) => {
+                match buffer.read_bytes(length) {
+                    Ok(body) => match str::from_utf8(body) {
+                        Some(body_str) => request.body = body_str.to_owned(),
+                        None => return (request, Err(status::BadRequest))
+                    },
+                    Err(_) => return (request, Err(status::BadRequest))
+                }
+            },
+            None => ()
         }
 
         (request, Ok(()))
