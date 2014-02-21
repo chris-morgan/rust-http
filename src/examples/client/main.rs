@@ -22,35 +22,38 @@ fn main() {
     };
 }
 
+fn  bold(text: &str) -> ~str { "[1m"    + text + "[0m" }
+fn green(text: &str) -> ~str { "[33;1m" + text + "[0m" }
+
 fn make_and_print_request(url: ~str) {
     let request = RequestWriter::<TcpStream>::new(Get, from_str(url).expect("Invalid URL :-("))
                                .unwrap();
 
-    println!("[33;1mRequest[0m");
-    println!("[33;1m=======[0m");
+    println!("{}", green("Request"));
+    println!("{}", green("======="));
     println!("");
-    println!("[1mURL:[0m {}", request.url.to_str());
-    println!("[1mRemote address:[0m {:?}", request.remote_addr);
-    println!("[1mMethod:[0m {}", request.method);
-    println!("[1mHeaders:[0m");
+    println!("{} {}",   bold("URL:"),            request.url.to_str());
+    println!("{} {:?}", bold("Remote address:"), request.remote_addr);
+    println!("{} {}",   bold("Method:"),         request.method);
+    println!("{}",      bold("Headers:"));
     for header in request.headers.iter() {
         println!(" - {}: {}", header.header_name(), header.header_value());
     }
 
     println!("");
-    println!("[33;1mResponse[0m");
-    println!("[33;1m========[0m");
+    println!("{}", green("Response"));
+    println!("{}", green("========"));
     println!("");
     let mut response = match request.read_response() {
         Ok(response) => response,
         Err(_request) => fail!("This example can progress no further with no response :-("),
     };
-    println!("[1mStatus:[0m {}", response.status);
-    println!("[1mHeaders:[0m");
+    println!("{} {}", bold("Status:"), response.status);
+    println!("{}", bold("Headers:"));
     for header in response.headers.iter() {
         println!(" - {}: {}", header.header_name(), header.header_value());
     }
-    println!("[1mBody:[0m");
+    println!("{}", bold("Body:"));
     let body = response.read_to_end().unwrap();
     println(str::from_utf8(body).expect("Uh oh, response wasn't UTF-8"));
 }
