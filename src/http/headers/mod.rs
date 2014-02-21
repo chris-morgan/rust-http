@@ -576,9 +576,9 @@ impl<T: CommaListHeaderConvertible> HeaderConvertible for ~[T] {
     fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
         for (i, item) in self.iter().enumerate() {
             if i != 0 {
-                if_ok!(writer.write(bytes!(", ")))
+                try!(writer.write(bytes!(", ")))
             }
-            if_ok!(item.to_stream(writer))
+            try!(item.to_stream(writer))
         }
         Ok(())
     }
@@ -915,7 +915,7 @@ macro_rules! headers_mod {
                 /// signal end of headers.
                 pub fn write_all<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
                     for header in self.iter() {
-                        if_ok!(header.write_header(&mut *writer));
+                        try!(header.write_header(&mut *writer));
                     }
                     writer.write(bytes!("\r\n"))
                 }
@@ -975,13 +975,13 @@ macro_rules! headers_mod {
                         _ => (),
                     }
 
-                    if_ok!(write!(&mut *writer as &mut Writer, "{}: ", match *self {
+                    try!(write!(&mut *writer as &mut Writer, "{}: ", match *self {
                         $($caps_ident(_) => $output_name,)*
                         ExtensionHeader(..) => unreachable!(),  // Already returned
                     }));
 
                     // FIXME: all the `h` cases satisfy HeaderConvertible, can it be simplified?
-                    if_ok!(match *self {
+                    try!(match *self {
                         $($caps_ident(ref h) => h.to_stream(writer),)*
                         ExtensionHeader(..) => unreachable!(),  // Already returned
                     });

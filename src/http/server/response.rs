@@ -45,7 +45,7 @@ impl<'a> ResponseWriter<'a> {
         self.headers.content_type = Some(content_type);
         let cbytes = content.as_bytes();
         self.headers.content_length = Some(cbytes.len());
-        if_ok!(self.write_headers());
+        try!(self.write_headers());
         self.write(cbytes)
     }
 
@@ -76,7 +76,7 @@ impl<'a> ResponseWriter<'a> {
         // XXX: Rust's current lack of statement-duration lifetime handling prevents this from being
         // one statement ("error: borrowed value does not live long enough")
         let s = format!("HTTP/1.1 {}\r\n", self.status.to_str());
-        if_ok!(self.writer.write(s.as_bytes()));
+        try!(self.writer.write(s.as_bytes()));
 
         // FIXME: this is not an impressive way of handling it, but so long as chunked is the only
         // transfer-coding we want to deal with it's tolerable. However, it is *meant* to be an
@@ -88,20 +88,20 @@ impl<'a> ResponseWriter<'a> {
         } else {
             self.headers.transfer_encoding = None;
         }
-        if_ok!(self.headers.write_all(&mut *self.writer));
+        try!(self.headers.write_all(&mut *self.writer));
         self.headers_written = true;
         if self.headers.content_length == None {
             // Flush so that the chunked body stuff can start working correctly. TODO: don't
             // actually flush it entirely, or else it'll send the headers in a separate TCP packet,
             // which is bad for performance.
-            if_ok!(self.writer.flush());
+            try!(self.writer.flush());
             self.writer.writing_chunked_body = true;
         }
         Ok(())
     }
 
     pub fn finish_response(&mut self) -> IoResult<()> {
-        if_ok!(self.writer.finish_response());
+        try!(self.writer.finish_response());
         // Ensure that we switch away from chunked in case another request comes on the same socket
         self.writer.writing_chunked_body = false;
         Ok(())
@@ -112,7 +112,7 @@ impl<'a> Writer for ResponseWriter<'a> {
 
     fn write(&mut self, buf: &[u8]) -> IoResult<()> {
         if !self.headers_written {
-            if_ok!(self.write_headers());
+            try!(self.write_headers());
         }
         self.writer.write(buf)
     }

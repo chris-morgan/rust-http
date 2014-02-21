@@ -59,9 +59,9 @@ impl super::HeaderConvertible for MediaType {
     }
 
     fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
-        if_ok!(writer.write_token(self.type_));
-        if_ok!(writer.write(['/' as u8]));
-        if_ok!(writer.write_token(self.subtype));
+        try!(writer.write_token(self.type_));
+        try!(writer.write(['/' as u8]));
+        try!(writer.write_token(self.subtype));
         writer.write_parameters(self.parameters)
     }
 

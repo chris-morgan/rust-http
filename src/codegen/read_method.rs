@@ -4,7 +4,7 @@ use std::io::IoResult;
 
 pub fn generate(output_dir: &Path) -> IoResult<()> {
     let mut writer = get_writer(output_dir, "read_method.rs");
-    if_ok!(writer.write(bytes!("\
+    try!(writer.write(bytes!("\
 // This automatically generated file is included in request.rs.
 {
     use method::{Connect, Delete, Get, Head, Options, Patch, Post, Put, Trace, ExtensionMethod};
@@ -13,7 +13,7 @@ pub fn generate(output_dir: &Path) -> IoResult<()> {
 
 ")));
 
-    if_ok!(generate_branchified_method(
+    try!(generate_branchified_method(
         writer,
         branchify!(case sensitive,
             "CONNECT" => Connect,

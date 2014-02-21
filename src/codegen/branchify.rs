@@ -92,14 +92,14 @@ pub fn generate_branchified_method(
         let indentstr = " ".repeat(indent * 4);
         macro_rules! w (
             ($s:expr) => {
-                if_ok!(write!(writer, "{}{}\n", indentstr, $s))
+                try!(write!(writer, "{}{}\n", indentstr, $s))
             }
         )
         for &c in branch.matches.iter() {
             let next_prefix = format!("{}{}", prefix, c as char);
             w!(format!("Ok(b) if b == '{}' as u8 => match {} \\{", c as char, read_call));
             for b in branch.children.iter() {
-                if_ok!(r(writer, b, next_prefix, indent + 1, read_call, end, max_len, valid, unknown));
+                try!(r(writer, b, next_prefix, indent + 1, read_call, end, max_len, valid, unknown));
             }
             match branch.result {
                 Some(ref result) =>
@@ -117,13 +117,13 @@ pub fn generate_branchified_method(
     let indentstr = " ".repeat(indent * 4);
     macro_rules! w (
         ($s:expr) => {
-            if_ok!(write!(writer, "{}{}\n", indentstr, $s))
+            try!(write!(writer, "{}{}\n", indentstr, $s))
         }
     )
 
     w!(format!("let (s, next_byte) = match {} \\{", read_call));
     for b in branches.iter() {
-        if_ok!(r(writer, b, "", indent + 1, read_call, end, max_len, valid, unknown));
+        try!(r(writer, b, "", indent + 1, read_call, end, max_len, valid, unknown));
     }
     w!(format!("    Ok(b) if {} => (\"\", b),", valid));
     w!(       ("    Ok(_) => return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"bad value\", detail: None }),"));

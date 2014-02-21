@@ -110,12 +110,12 @@ impl<S: Reader + Writer> RequestWriter<S> {
             },
         };
 
-        let remote_addr = if_ok!(url_to_socket_addr(&url));
+        let remote_addr = try!(url_to_socket_addr(&url));
         info!("using ip address {} for {}", remote_addr.to_str(), url.host);
 
         fn url_to_socket_addr(url: &Url) -> IoResult<SocketAddr> {
             // Just grab the first IPv4 address
-            let addrs = if_ok!(get_host_addresses(url.host));
+            let addrs = try!(get_host_addresses(url.host));
             let addr = addrs.move_iter().find(|&a| {
                 match a {
                     Ipv4Addr(..) => true,
@@ -170,7 +170,7 @@ impl<S: Connecter + Reader + Writer> RequestWriter<S> {
 
         self.stream = match self.remote_addr {
             Some(addr) => {
-                let stream = if_ok!(Connecter::connect(addr));
+                let stream = try!(Connecter::connect(addr));
                 Some(BufferedStream::new(stream))
             },
             None => fail!("connect() called before remote_addr was set"),
@@ -196,19 +196,19 @@ impl<S: Connecter + Reader + Writer> RequestWriter<S> {
             fail!("RequestWriter.write_headers() called, but headers already written");
         }
         if self.stream.is_none() {
-            if_ok!(self.connect());
+            try!(self.connect());
         }
 
         // Write the Request-Line (RFC2616 §5.1)
         // TODO: get to the point where we can say HTTP/1.1 with good conscience
-        if_ok!(write!(self.stream.get_mut_ref() as &mut Writer,
+        try!(write!(self.stream.get_mut_ref() as &mut Writer,
             "{} {}{}{} HTTP/1.0\r\n",
             self.method.to_str(),
             if self.url.path.len()  > 0 { self.url.path.as_slice() } else { "/" },
             if self.url.query.len() > 0 { "?" } else { "" },
             url::query_to_str(&self.url.query)));
 
-        if_ok!(self.headers.write_all(self.stream.get_mut_ref()));
+        try!(self.headers.write_all(self.stream.get_mut_ref()));
         self.headers_written = true;
         Ok(())
     }
@@ -239,7 +239,7 @@ impl<S: Connecter + Reader + Writer> RequestWriter<S> {
 impl<S: Reader + Writer + Connecter> Writer for RequestWriter<S> {
     fn write(&mut self, buf: &[u8]) -> IoResult<()> {
         if !self.headers_written {
-            if_ok!(self.write_headers());
+            try!(self.write_headers());
         }
         // TODO: decide whether using get_mut_ref() is sound
         // (it will cause failure if None)

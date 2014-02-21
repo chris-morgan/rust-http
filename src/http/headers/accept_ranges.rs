@@ -45,7 +45,7 @@ impl super::HeaderConvertible for AcceptableRanges {
             NoAcceptableRanges => writer.write(bytes!("none")),
             RangeUnits(ref range_units) => {
                 for ru in range_units.iter() {
-                    if_ok!(writer.write(match *ru {
+                    try!(writer.write(match *ru {
                         Bytes => BYTES,
                         OtherRangeUnit(ref ru) => ru.as_bytes(),
                     }));

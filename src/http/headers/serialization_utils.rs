@@ -64,26 +64,26 @@ pub trait WriterUtil: Writer {
     }
 
     fn write_quoted_string(&mut self, s: &str) -> IoResult<()> {
-        if_ok!(self.write(['"' as u8]));
+        try!(self.write(['"' as u8]));
         for b in s.bytes() {
             if b == '\\' as u8 || b == '"' as u8 {
-                if_ok!(self.write(['\\' as u8]));
+                try!(self.write(['\\' as u8]));
             }
-            if_ok!(self.write([b]));
+            try!(self.write([b]));
         }
         self.write(['"' as u8])
     }
 
     fn write_parameter(&mut self, k: &str, v: &str) -> IoResult<()> {
-        if_ok!(self.write(k.as_bytes()));
-        if_ok!(self.write(['=' as u8]));
+        try!(self.write(k.as_bytes()));
+        try!(self.write(['=' as u8]));
         self.write_maybe_quoted_string(v)
     }
 
     fn write_parameters<K: Str, V: Str>(&mut self, parameters: &[(K, V)]) -> IoResult<()> {
         for &(ref k, ref v) in parameters.iter() {
-            if_ok!(self.write([';' as u8]));
-            if_ok!(self.write_parameter(k.as_slice(), v.as_slice()));
+            try!(self.write([';' as u8]));
+            try!(self.write_parameter(k.as_slice(), v.as_slice()));
         }
         Ok(())
     }

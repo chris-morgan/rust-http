@@ -149,11 +149,11 @@ pub fn read_http_version<R: Reader>
     // filled, so I must read it byte by byte to guarantee correctness.
     // (Sure, no sane person/library would send the first packet with "HTT"
     // and leave the "P/1.1" to the next packet, but it's *possible*.)
-    let b0 = if_ok!(reader.read_byte());
-    let b1 = if_ok!(reader.read_byte());
-    let b2 = if_ok!(reader.read_byte());
-    let b3 = if_ok!(reader.read_byte());
-    let b4 = if_ok!(reader.read_byte());
+    let b0 = try!(reader.read_byte());
+    let b1 = try!(reader.read_byte());
+    let b2 = try!(reader.read_byte());
+    let b3 = try!(reader.read_byte());
+    let b4 = try!(reader.read_byte());
     if (b0 != 'h' as u8 && b0 != 'H' as u8) ||
        (b1 != 't' as u8 && b1 != 'T' as u8) ||
        (b2 != 't' as u8 && b2 != 'T' as u8) ||
@@ -162,8 +162,8 @@ pub fn read_http_version<R: Reader>
         return Err(bad_input());
     }
 
-    let major = if_ok!(read_decimal(reader, |b| b == '.' as u8));
-    let minor = if_ok!(read_decimal(reader, expected_end));
+    let major = try!(read_decimal(reader, |b| b == '.' as u8));
+    let minor = try!(read_decimal(reader, expected_end));
     Ok((major, minor))
 }
 

@@ -41,7 +41,7 @@ impl super::HeaderConvertible for TransferCoding {
         match *self {
             Chunked => writer.write(bytes!("chunked")),
             TransferExtension(ref token, ref parameters) => {
-                if_ok!(writer.write_token(*token));
+                try!(writer.write_token(*token));
                 writer.write_parameters(*parameters)
             }
         }

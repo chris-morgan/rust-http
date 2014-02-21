@@ -76,7 +76,7 @@ impl<T: Reader> BufferedStream<T> {
     pub fn read_byte(&mut self) -> IoResult<u8> {
         if self.read_pos == self.read_max {
             // Fill the buffer, giving up if we've run out of buffered content
-            if_ok!(self.fill_buffer());
+            try!(self.fill_buffer());
         }
         self.read_pos += 1;
         Ok(self.read_buffer[self.read_pos - 1])
@@ -90,9 +90,9 @@ impl<T: Writer> BufferedStream<T> {
     /// At the time of calling this, headers MUST have been written, including the
     /// ending CRLF, or else an invalid HTTP response may be written.
     pub fn finish_response(&mut self) -> IoResult<()> {
-        if_ok!(self.flush());
+        try!(self.flush());
         if self.writing_chunked_body {
-            if_ok!(self.wrapped.write(bytes!("0\r\n\r\n")));
+            try!(self.wrapped.write(bytes!("0\r\n\r\n")));
         }
         Ok(())
     }
@@ -106,7 +106,7 @@ impl<T: Reader> Reader for BufferedStream<T> {
     fn read(&mut self, buf: &mut [u8]) -> IoResult<uint> {
         if self.read_pos == self.read_max {
             // Fill the buffer, giving up if we've run out of buffered content
-            if_ok!(self.fill_buffer());
+            try!(self.fill_buffer());
         }
         let size = min(self.read_max - self.read_pos, buf.len());
         vec::bytes::copy_memory(buf, self.read_buffer.slice_from(self.read_pos).slice_to(size));
@@ -122,16 +122,16 @@ impl<T: Writer> Writer for BufferedStream<T> {
             // warranted. Maybe deal with that later.
             if self.writing_chunked_body {
                 let s = format!("{}\r\n", (self.write_len + buf.len()).to_str_radix(16));
-                if_ok!(self.wrapped.write(s.as_bytes()));
+                try!(self.wrapped.write(s.as_bytes()));
             }
             if self.write_len > 0 {
-                if_ok!(self.wrapped.write(self.write_buffer.slice_to(self.write_len)));
+                try!(self.wrapped.write(self.write_buffer.slice_to(self.write_len)));
                 self.write_len = 0;
             }
-            if_ok!(self.wrapped.write(buf));
+            try!(self.wrapped.write(buf));
             self.write_len = 0;
             if self.writing_chunked_body {
-                if_ok!(self.wrapped.write(bytes!("\r\n")));
+                try!(self.wrapped.write(bytes!("\r\n")));
             }
         } else {
             unsafe { self.write_buffer.mut_slice_from(self.write_len).copy_memory(buf); }
@@ -140,11 +140,11 @@ impl<T: Writer> Writer for BufferedStream<T> {
             if self.write_len == self.write_buffer.len() {
                 if self.writing_chunked_body {
                     let s = format!("{}\r\n", self.write_len.to_str_radix(16));
-                    if_ok!(self.wrapped.write(s.as_bytes()));
-                    if_ok!(self.wrapped.write(self.write_buffer));
-                    if_ok!(self.wrapped.write(bytes!("\r\n")));
+                    try!(self.wrapped.write(s.as_bytes()));
+                    try!(self.wrapped.write(self.write_buffer));
+                    try!(self.wrapped.write(bytes!("\r\n")));
                 } else {
-                    if_ok!(self.wrapped.write(self.write_buffer));
+                    try!(self.wrapped.write(self.write_buffer));
                 }
                 self.write_len = 0;
             }
@@ -156,11 +156,11 @@ impl<T: Writer> Writer for BufferedStream<T> {
         if self.write_len > 0 {
             if self.writing_chunked_body {
                 let s = format!("{}\r\n", self.write_len.to_str_radix(16));
-                if_ok!(self.wrapped.write(s.as_bytes()));
+                try!(self.wrapped.write(s.as_bytes()));
             }
-            if_ok!(self.wrapped.write(self.write_buffer.slice_to(self.write_len)));
+            try!(self.wrapped.write(self.write_buffer.slice_to(self.write_len)));
             if self.writing_chunked_body {
-                if_ok!(self.wrapped.write(bytes!("\r\n")));
+                try!(self.wrapped.write(bytes!("\r\n")));
             }
             self.write_len = 0;
         }
