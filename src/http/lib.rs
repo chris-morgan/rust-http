@@ -14,6 +14,7 @@
 #[macro_escape];
 
 extern crate extra;
+extern crate time;
 extern crate collections;
 
 pub mod buffer;
