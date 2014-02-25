@@ -235,14 +235,6 @@ impl Status {
     }
 }
 
-impl ToStr for Status {
-    /// Produce the HTTP status message incorporating both code and message,
-    /// e.g. `ImATeapot.to_str() == \"418 I'm a teapot\"`
-	fn to_str(&self) -> ~str {
-		format!(\"{} {}\", self.code().to_str(), self.reason())
-	}
-}
-
 impl fmt::Show for Status {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f.buf, \"{} {}\", self.code(), self.reason())

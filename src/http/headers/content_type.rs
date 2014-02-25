@@ -1,6 +1,7 @@
 //! The Content-Type entity header, defined in RFC 2616, Section 14.17.
 use headers::serialization_utils::{push_parameters, WriterUtil};
 use std::io::IoResult;
+use std::fmt;
 
 #[deriving(Clone, Eq)]
 pub struct MediaType {
@@ -17,8 +18,8 @@ pub fn MediaType(type_: ~str, subtype: ~str, parameters: ~[(~str, ~str)]) -> Med
     }
 }
 
-impl ToStr for MediaType {
-    fn to_str(&self) -> ~str {
+impl fmt::Show for MediaType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // Idea:
         //let s = ~"";
         //s.push_token(self.type_);
@@ -27,7 +28,7 @@ impl ToStr for MediaType {
         //s.push_parameters(self.parameters);
         //s
         let s = format!("{}/{}", self.type_, self.subtype);
-        push_parameters(s, self.parameters)
+        f.buf.write(push_parameters(s, self.parameters).as_bytes())
     }
 }
 

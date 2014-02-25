@@ -141,6 +141,8 @@ pub fn is_separator(o: u8) -> bool {
 // see https://www.iana.org/assignments/http-parameters/http-parameters.xml
 
 mod content_coding {
+    use std::fmt;
+
     /// Content-coding value tokens
     pub enum ValueToken {
         // An encoding format produced by the file compression program "gzip" (GNU zip) as described
@@ -171,14 +173,14 @@ mod content_coding {
         // - "exi": W3C Efficient XML Interchange
         // - "pack200-gzip" (Network Transfer Format for Java Archives)
     }
-    impl ToStr for ValueToken {
-        fn to_str(&self) -> ~str {
-            match *self {
-                Gzip => ~"gzip",
-                Compress => ~"compress",
-                Deflate => ~"deflate",
-                Identity => ~"identity",
-            }
+    impl fmt::Show for ValueToken {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.buf.write(match *self {
+                Gzip => "gzip".as_bytes(),
+                Compress => "compress".as_bytes(),
+                Deflate => "deflate".as_bytes(),
+                Identity => "identity".as_bytes(),
+            })
         }
     }
     impl FromStr for ValueToken {
@@ -196,6 +198,8 @@ mod content_coding {
 }
 
 mod transfer_coding {
+    use std::fmt;
+    
     /// Transfer-coding value tokens
     // Identity is in RFC 2616 but is withdrawn in RFC 2616 errata ID 408
     // http://www.rfc-editor.org/errata_search.php?rfc=2616&eid=408
@@ -205,14 +209,14 @@ mod transfer_coding {
         Compress,  // See above
         Deflate,   // See above
     }
-    impl ToStr for ValueToken {
-        fn to_str(&self) -> ~str {
-            match *self {
-                Chunked => ~"chunked",
-                Gzip => ~"gzip",
-                Compress => ~"compress",
-                Deflate => ~"deflate",
-            }
+    impl fmt::Show for ValueToken {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            f.buf.write(match *self {
+                Chunked => "chunked".as_bytes(),
+                Gzip => "gzip".as_bytes(),
+                Compress => "compress".as_bytes(),
+                Deflate => "deflate".as_bytes(),
+            })
         }
     }
 }
