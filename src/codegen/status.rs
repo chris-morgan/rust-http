@@ -7,8 +7,8 @@
 // No, I don't mind.
 // That was easy. :-)
 
+use collections::hashmap::HashSet;
 use std::ascii::StrAsciiExt;
-use std::hashmap::HashSet;
 use std::vec;
 use std::io::IoResult;
 use super::get_writer;
@@ -233,14 +233,6 @@ impl Status {
             (_, _) => UnregisteredStatus(status, reason),
         }
     }
-}
-
-impl ToStr for Status {
-    /// Produce the HTTP status message incorporating both code and message,
-    /// e.g. `ImATeapot.to_str() == \"418 I'm a teapot\"`
-	fn to_str(&self) -> ~str {
-		format!(\"{} {}\", self.code().to_str(), self.reason())
-	}
 }
 
 impl fmt::Show for Status {

@@ -5,7 +5,7 @@
 //! unknown headers are stored in a map in the traditional way.
 
 use std::io::IoResult;
-use extra::time::{Tm, strptime};
+use time::{Tm, strptime};
 use extra::url::Url;
 use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON};
 use method::Method;
@@ -732,7 +732,7 @@ impl HeaderConvertible for Tm {
 
 #[cfg(test)]
 mod test {
-    use extra::time::Tm;
+    use time::Tm;
     use headers::test_utils::{from_stream_with_str, to_stream_into_str};
     use super::HeaderConvertible;
 
@@ -870,8 +870,10 @@ macro_rules! headers_mod {
             //$($attrs;)*
             $attr;
 
+            #[allow(unused_imports)];
             use std::io::IoResult;
             use extra;
+            use time;
             use collections::treemap::{TreeMap, Entries};
             use headers;
             use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
@@ -1012,7 +1014,7 @@ headers_mod! {
     // RFC 2616, Section 4.5: General Header Fields
      0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     ~str;
      1, "Connection",        "Connection",        Connection,       connection,        ~[headers::connection::Connection];
-     2, "Date",              "Date",              Date,             date,              extra::time::Tm;
+     2, "Date",              "Date",              Date,             date,              time::Tm;
      3, "Pragma",            "Pragma",            Pragma,           pragma,            ~str;
      4, "Trailer",           "Trailer",           Trailer,          trailer,           ~str;
      5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, ~[headers::transfer_encoding::TransferCoding];
@@ -1030,10 +1032,10 @@ headers_mod! {
     15, "From",                "From",                From,               from,                ~str;
     16, "Host",                "Host",                Host,               host,                headers::host::Host;
     17, "If-Match",            "If-Match",            IfMatch,            if_match,            ~str;
-    18, "If-Modified-Since",   "If-Modified-Since",   IfModifiedSince,    if_modified_since,   extra::time::Tm;
+    18, "If-Modified-Since",   "If-Modified-Since",   IfModifiedSince,    if_modified_since,   time::Tm;
     19, "If-None-Match",       "If-None-Match",       IfNoneMatch,        if_none_match,       ~str;
     20, "If-Range",            "If-Range",            IfRange,            if_range,            ~str;
-    21, "If-Unmodified-Since", "If-Unmodified-Since", IfUnmodifiedSince,  if_unmodified_since, extra::time::Tm;
+    21, "If-Unmodified-Since", "If-Unmodified-Since", IfUnmodifiedSince,  if_unmodified_since, time::Tm;
     22, "Max-Forwards",        "Max-Forwards",        MaxForwards,        max_forwards,        uint;
     23, "Proxy-Authorization", "Proxy-Authorization", ProxyAuthorization, proxy_authorization, ~str;
     24, "Range",               "Range",               Range,              range,               ~str;
@@ -1050,8 +1052,8 @@ headers_mod! {
     33, "Content-MD5",      "Content-Md5",      ContentMd5,      content_md5,      ~str;
     34, "Content-Range",    "Content-Range",    ContentRange,    content_range,    ~str;
     35, "Content-Type",     "Content-Type",     ContentType,     content_type,     headers::content_type::MediaType;
-    36, "Expires",          "Expires",          Expires,         expires,          extra::time::Tm;
-    37, "Last-Modified",    "Last-Modified",    LastModified,    last_modified,    extra::time::Tm;
+    36, "Expires",          "Expires",          Expires,         expires,          time::Tm;
+    37, "Last-Modified",    "Last-Modified",    LastModified,    last_modified,    time::Tm;
 }
 
 headers_mod! {
@@ -1063,7 +1065,7 @@ headers_mod! {
     // RFC 2616, Section 4.5: General Header Fields
      0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     ~str;
      1, "Connection",        "Connection",        Connection,       connection,        ~[headers::connection::Connection];
-     2, "Date",              "Date",              Date,             date,              extra::time::Tm;
+     2, "Date",              "Date",              Date,             date,              time::Tm;
      3, "Pragma",            "Pragma",            Pragma,           pragma,            ~str;
      4, "Trailer",           "Trailer",           Trailer,          trailer,           ~str;
      5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, ~[headers::transfer_encoding::TransferCoding];
@@ -1093,5 +1095,5 @@ headers_mod! {
     25, "Content-Range",    "Content-Range",    ContentRange,    content_range,    ~str;
     26, "Content-Type",     "Content-Type",     ContentType,     content_type,     headers::content_type::MediaType;
     27, "Expires",          "Expires",          Expires,         expires,          ~str; // TODO: Should be Tm
-    28, "Last-Modified",    "Last-Modified",    LastModified,    last_modified,    extra::time::Tm;
+    28, "Last-Modified",    "Last-Modified",    LastModified,    last_modified,    time::Tm;
 }

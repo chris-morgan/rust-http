@@ -3,7 +3,7 @@ extern crate extra;
 use std::comm::Chan;
 use std::io::{Listener, Acceptor};
 use std::io::net::ip::SocketAddr;
-use extra::time::precise_time_ns;
+use time::precise_time_ns;
 
 use std::io::net::tcp::TcpListener;
 

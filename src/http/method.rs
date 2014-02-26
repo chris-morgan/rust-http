@@ -17,24 +17,6 @@ pub enum Method {
     ExtensionMethod(~str),
 }
 
-impl ToStr for Method {
-    /// Get the proper name of a method, e.g. `Get.to_str() == ~"GET"`
-    fn to_str(&self) -> ~str {
-        match *self {
-            Options                => ~"OPTIONS",
-            Get                    => ~"GET",
-            Head                   => ~"HEAD",
-            Post                   => ~"POST",
-            Put                    => ~"PUT",
-            Delete                 => ~"DELETE",
-            Trace                  => ~"TRACE",
-            Connect                => ~"CONNECT",
-            Patch                  => ~"PATCH",
-            ExtensionMethod(ref s) => (*s).clone(),
-        }
-    }
-}
-
 impl FromStr for Method {
     /**
      * Get a *known* `Method` from an *ASCII* string, regardless of case.

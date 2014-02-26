@@ -4,11 +4,11 @@
 #[crate_id = "info"];
 
 extern crate extra;
+extern crate time;
 extern crate http;
 
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;
-use extra::time;
 
 use http::server::{Config, Server, Request, ResponseWriter};
 use http::headers::HeaderEnum;

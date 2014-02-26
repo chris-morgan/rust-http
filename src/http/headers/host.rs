@@ -1,6 +1,7 @@
 //! The Host request header, defined in RFC 2616, Section 14.23.
 
 use std::io::Reader;
+use std::fmt;
 
 /// A simple little thing for the host of a request
 #[deriving(Clone, Eq)]
@@ -14,11 +15,12 @@ pub struct Host {
     /// include the scheme.
     port: Option<u16>,
 }
-impl ToStr for Host {
-    fn to_str(&self) -> ~str {
+
+impl fmt::Show for Host {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.port {
-            Some(port) => format!("{}:{}", self.name, port.to_str()),
-            None => self.name.clone(),
+            Some(port) => write!(f.buf, "{}:{}", self.name, port.to_str()),
+            None => f.buf.write(self.name.as_bytes()),
         }
     }
 }

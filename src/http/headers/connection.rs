@@ -4,6 +4,7 @@
 // whether they should be interpreted (I recall its being a header name thing for legacy code,
 // perhaps I should normalise header case or some such thing?)
 
+use std::fmt;
 use std::io::IoResult;
 use headers::serialization_utils::normalise_header_name;
 
@@ -14,12 +15,13 @@ pub enum Connection {
     Token(~str),
     Close,
 }
-impl ToStr for Connection {
-    fn to_str(&self) -> ~str {
-        match *self {
-            Token(ref s) => s.clone(),
-            Close => ~"close",
-        }
+
+impl fmt::Show for Connection {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.buf.write(match *self {
+            Token(ref s) => s.as_bytes(),
+            Close => "close".as_bytes(),
+        })
     }
 }
 
