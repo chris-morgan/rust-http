@@ -1,6 +1,7 @@
 use extra::url::Url;
 use method::{Method, Options};
 use status;
+use std::from_str::FromStr;
 use std::io::{Stream, IoResult};
 use std::io::net::ip::SocketAddr;
 use std::io::net::tcp::TcpStream;

@@ -142,6 +142,7 @@ pub fn is_separator(o: u8) -> bool {
 
 mod content_coding {
     use std::fmt;
+    use std::from_str::FromStr;
 
     /// Content-coding value tokens
     pub enum ValueToken {

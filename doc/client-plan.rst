@@ -44,7 +44,7 @@ use of string typing for headers::
    use http::method::Get;
    use extra::url::Url;
 
-   let mut request = Request::new(Get, FromStr::from_str("http://rust-lang.org"));
+   let mut request = Request::new(Get, from_str("http://rust-lang.org"));
    request.headers.insert(~"Connection", ~"close");
    request.headers.insert(~"Referer", ~"https://google.com/");
    let mut response = request.send();
