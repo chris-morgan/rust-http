@@ -3,6 +3,7 @@
 use std::io::{IoResult, Stream};
 use std::cmp::min;
 use std::vec;
+use std::num::ToStrRadix;
 
 // 64KB chunks (moderately arbitrary)
 static READ_BUF_SIZE: uint = 0x10000;
