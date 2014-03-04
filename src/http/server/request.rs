@@ -6,6 +6,7 @@ use std::io::{Stream, IoResult};
 use std::io::net::ip::SocketAddr;
 use std::io::net::tcp::TcpStream;
 use std::str;
+use std::fmt;
 use rfc2616::{CR, LF, SP};
 use headers;
 use buffer::BufferedStream;
@@ -278,6 +279,17 @@ impl FromStr for RequestUri {
         } else {
             // TODO: parse authority with extra::net::url
             Some(Authority(request_uri.to_owned()))
+        }
+    }
+}
+
+impl fmt::Show for RequestUri {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Star => f.buf.write("*".as_bytes()),
+            AbsoluteUri(ref url) => write!(f.buf, "{}", url),
+            AbsolutePath(ref str) => f.buf.write(str.as_bytes()),
+            Authority(ref str) => f.buf.write(str.as_bytes()),
         }
     }
 }
