@@ -105,7 +105,7 @@ mod test {
         assert_eq!(reader.tell(),         Ok(5));
         assert_eq!(buf,                   ~[1, 2, 3, 4]);
         assert_eq!(reader.read(buf),      Ok(3));
-        assert_eq!(buf.slice(0, 3),       [5, 6, 7]);
+        assert_eq!(buf.slice(0, 3),       &[5, 6, 7]);
         assert_eq!(reader.read(buf).ok(), None);
     }
 }
