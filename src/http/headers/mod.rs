@@ -151,7 +151,7 @@ pub struct HeaderValueByteIterator<'a, R> {
     next_byte: Option<u8>,
 
     at_start: bool,
-    state: HeaderValueByteIteratorState,
+    priv state: HeaderValueByteIteratorState,
 }
 
 impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
