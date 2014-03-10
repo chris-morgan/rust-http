@@ -10,7 +10,7 @@ use headers::serialization_utils::normalise_header_name;
 
 /// A value for the Connection header. Note that should it be a ``Token``, the string is in
 /// normalised header case (e.g. "Keep-Alive").
-#[deriving(Clone, DeepClone, Eq)]
+#[deriving(Clone, Eq)]
 pub enum Connection {
     Token(~str),
     Close,

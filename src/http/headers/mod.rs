@@ -62,7 +62,7 @@ pub mod transfer_encoding;
 
 pub type DeltaSeconds = u64;
 
-#[deriving(Clone, DeepClone, Eq)]
+#[deriving(Clone, Eq)]
 pub enum ConsumeCommaLWSResult {
     CommaConsumed,
     EndOfValue,
