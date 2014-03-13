@@ -21,9 +21,9 @@ fn main() {
         3 => {
             let output_dir = Path::new(args[2].as_slice());
 
-            match args[1] {
-                ~"read_method.rs" => read_method::generate(&output_dir).unwrap(),
-                ~"status.rs" => status::generate(&output_dir).unwrap(),
+            match args[1].as_slice() {
+                "read_method.rs" => read_method::generate(&output_dir).unwrap(),
+                "status.rs" => status::generate(&output_dir).unwrap(),
                 s => {
                     println!("unknown thing-to-generate '{}'", s);
                     os::set_exit_status(1);
