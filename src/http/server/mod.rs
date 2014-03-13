@@ -1,6 +1,5 @@
 extern crate extra;
 
-use std::comm::Chan;
 use std::io::{Listener, Acceptor};
 use std::io::net::ip::SocketAddr;
 use time::precise_time_ns;
@@ -37,9 +36,9 @@ pub trait Server: Send + Clone {
             Ok(acceptor) => acceptor,
         };
         debug!("listening");
-        let (perf_po, perf_ch) = Chan::new();
+        let (perf_sender, perf_receiver) = channel();
         spawn(proc() {
-            perf_dumper(perf_po);
+            perf_dumper(perf_receiver);
         });
         loop {
             let time_start = precise_time_ns();
@@ -55,7 +54,7 @@ pub trait Server: Send + Clone {
                 },
                 Ok(socket) => socket,
             };
-            let child_perf_ch = perf_ch.clone();
+            let child_perf_sender = perf_sender.clone();
             let child_self = self.clone();
             spawn(proc() {
                 let mut time_start = time_start;
@@ -103,7 +102,7 @@ pub trait Server: Send + Clone {
                         Ok(_) => (),
                     }
                     let time_finished = precise_time_ns();
-                    child_perf_ch.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
+                    child_perf_sender.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
 
                     // Subsequent requests on this connection have no spawn time
                     time_start = time_finished;
@@ -128,7 +127,7 @@ pub struct Config {
 static PERF_DUMP_FREQUENCY : u64 = 10_000;
 
 /// Simple function to dump out perf stats every `PERF_DUMP_FREQUENCY` requests
-fn perf_dumper(perf_po: Port<(u64, u64, u64, u64, u64)>) {
+fn perf_dumper(perf_receiver: Receiver<(u64, u64, u64, u64, u64)>) {
     // Total durations
     let mut td_spawn = 0u64;
     let mut td_request = 0u64;
@@ -137,7 +136,7 @@ fn perf_dumper(perf_po: Port<(u64, u64, u64, u64, u64)>) {
     let mut td_total = 0u64;
     let mut i = 0u64;
     loop {
-        let data = perf_po.recv();
+        let data = perf_receiver.recv();
         let (start, spawned, request_made, response_made, finished) = data;
         td_spawn += spawned - start;
         td_request += request_made - spawned;
