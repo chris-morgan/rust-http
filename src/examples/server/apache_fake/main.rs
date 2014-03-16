@@ -46,7 +46,7 @@ impl Server for ApacheFakeServer {
                                 weak: false,
                                 opaque_tag: ~"501b29-b1-4a285ed47404a" });
         w.headers.accept_ranges = Some(headers::accept_ranges::RangeUnits(
-                                            Vec::from_slice([headers::accept_ranges::Bytes])));
+                                            vec!(headers::accept_ranges::Bytes)));
         w.headers.content_length = Some(177);
         w.headers.vary = Some(~"Accept-Encoding");
         w.headers.content_type = Some(headers::content_type::MediaType {

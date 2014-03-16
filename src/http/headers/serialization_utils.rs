@@ -238,17 +238,17 @@ mod test {
     #[test]
     fn test_comma_split() {
         // Simple 0-element case
-        assert_eq!(comma_split(""), Vec::from_slice([~""]));
+        assert_eq!(comma_split(""), vec!(~""));
         // Simple 1-element case
-        assert_eq!(comma_split("foo"), Vec::from_slice([~"foo"]));
+        assert_eq!(comma_split("foo"), vec!(~"foo"));
         // Simple 2-element case
-        assert_eq!(comma_split("foo,bar"), Vec::from_slice([~"foo", ~"bar"]));
+        assert_eq!(comma_split("foo,bar"), vec!(~"foo", ~"bar"));
         // Simple >2-element case
-        assert_eq!(comma_split("foo,bar,baz,quux"), Vec::from_slice([~"foo", ~"bar", ~"baz", ~"quux"]));
+        assert_eq!(comma_split("foo,bar,baz,quux"), vec!(~"foo", ~"bar", ~"baz", ~"quux"));
         // Doesn't handle quoted-string intelligently
-        assert_eq!(comma_split("\"foo,bar\",baz"), Vec::from_slice([~"\"foo", ~"bar\"", ~"baz"]));
+        assert_eq!(comma_split("\"foo,bar\",baz"), vec!(~"\"foo", ~"bar\"", ~"baz"));
         // Doesn't do right trimming, but does left
-        assert_eq!(comma_split(" foo;q=0.8 , bar/* "), Vec::from_slice([~"foo;q=0.8 ", ~"bar/* "]));
+        assert_eq!(comma_split(" foo;q=0.8 , bar/* "), vec!(~"foo;q=0.8 ", ~"bar/* "));
     }
 
     #[test]

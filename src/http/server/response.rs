@@ -85,7 +85,7 @@ impl<'a> ResponseWriter<'a> {
         // apply. In such a case, chunked MUST come last. This way prevents it from being extensible
         // thus, which is suboptimal.
         if self.headers.content_length == None {
-            self.headers.transfer_encoding = Some(Vec::from_slice([Chunked]));
+            self.headers.transfer_encoding = Some(vec!(Chunked));
         } else {
             self.headers.transfer_encoding = None;
         }

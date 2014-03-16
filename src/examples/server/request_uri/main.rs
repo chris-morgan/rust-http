@@ -49,7 +49,7 @@ impl Server for RequestUriServer {
             (&Options, &Star) => {
                 // Querying server capabilities. That's nice and simple. I can handle these methods:
                 // (TODO: let user code override this, providing a default method.)
-                w.headers.allow = Some(Vec::from_slice([Get, Head, Post, Put, Delete, Trace, Options, Connect, Patch]));
+                w.headers.allow = Some(vec!(Get, Head, Post, Put, Delete, Trace, Options, Connect, Patch));
                 w.headers.content_length = Some(0);
                 return;
             },

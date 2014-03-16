@@ -28,7 +28,7 @@ impl Server for HelloWorldServer {
         w.headers.content_type = Some(MediaType {
             type_: ~"text",
             subtype: ~"plain",
-            parameters: Vec::from_slice([(~"charset", ~"UTF-8")])
+            parameters: vec!((~"charset", ~"UTF-8"))
         });
         w.headers.server = Some(~"Example");
 

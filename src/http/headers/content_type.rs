@@ -78,11 +78,11 @@ fn test_content_type() {
                               assert_invalid};
     assert_conversion_correct("type/subtype", MediaType(~"type", ~"subtype", Vec::new()));
     assert_conversion_correct("type/subtype;key=value",
-                              MediaType(~"type", ~"subtype", Vec::from_slice([(~"key", ~"value")])));
+                              MediaType(~"type", ~"subtype", vec!((~"key", ~"value"))));
     assert_conversion_correct("type/subtype;key=value;q=0.1",
-            MediaType(~"type", ~"subtype", Vec::from_slice([(~"key", ~"value"), (~"q", ~"0.1")])));
+            MediaType(~"type", ~"subtype", vec!((~"key", ~"value"), (~"q", ~"0.1"))));
     assert_interpretation_correct("type/subtype ; key = value ; q = 0.1",
-            MediaType(~"type", ~"subtype", Vec::from_slice([(~"key", ~"value"), (~"q", ~"0.1")])));
+            MediaType(~"type", ~"subtype", vec!((~"key", ~"value"), (~"q", ~"0.1"))));
 
     assert_invalid::<MediaType>("");
     assert_invalid::<MediaType>("/");
