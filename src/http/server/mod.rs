@@ -1,5 +1,3 @@
-extern crate extra;
-
 use std::io::{Listener, Acceptor};
 use std::io::net::ip::SocketAddr;
 use time::precise_time_ns;

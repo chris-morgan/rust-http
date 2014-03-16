@@ -6,7 +6,6 @@
 
 #[crate_id = "request_uri"];
 
-extern crate extra;
 extern crate time;
 extern crate http;
 

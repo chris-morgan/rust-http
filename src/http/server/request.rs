@@ -1,4 +1,4 @@
-use extra::url::Url;
+use url::Url;
 use method::{Method, Options};
 use status;
 use std::from_str::FromStr;
