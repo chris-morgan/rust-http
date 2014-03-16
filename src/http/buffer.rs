@@ -2,6 +2,7 @@
 
 use std::io::{IoResult, Stream};
 use std::cmp::min;
+use std::vec_ng::Vec;
 use std::vec;
 use std::num::ToStrRadix;
 
@@ -12,12 +13,12 @@ static WRITE_BUF_SIZE: uint = 0x10000;
 
 pub struct BufferedStream<T> {
     wrapped: T,
-    read_buffer: ~[u8],
+    read_buffer: Vec<u8>,
     // The current position in the buffer
     read_pos: uint,
     // The last valid position in the reader
     read_max: uint,
-    write_buffer: ~[u8],
+    write_buffer: Vec<u8>,
     write_len: uint,
 
     writing_chunked_body: bool,
@@ -25,9 +26,9 @@ pub struct BufferedStream<T> {
 
 impl<T: Stream> BufferedStream<T> {
     pub fn new(stream: T) -> BufferedStream<T> {
-        let mut read_buffer = vec::with_capacity(READ_BUF_SIZE);
+        let mut read_buffer = Vec::with_capacity(READ_BUF_SIZE);
         unsafe { read_buffer.set_len(READ_BUF_SIZE); }
-        let mut write_buffer = vec::with_capacity(WRITE_BUF_SIZE);
+        let mut write_buffer = Vec::with_capacity(WRITE_BUF_SIZE);
         unsafe { write_buffer.set_len(WRITE_BUF_SIZE); }
         BufferedStream {
             wrapped: stream,
@@ -52,14 +53,14 @@ impl<T: Reader> BufferedStream<T> {
             (0, _) => fail!("poke called when buffer is full"),
             (_, _) => self.read_pos -= 1,
         }
-        self.read_buffer[self.read_pos] = byte;
+        self.read_buffer.as_mut_slice()[self.read_pos] = byte;
     }
 
     #[inline]
     fn fill_buffer(&mut self) -> IoResult<()> {
         assert_eq!(self.read_pos, self.read_max);
         self.read_pos = 0;
-        match self.wrapped.read(self.read_buffer) {
+        match self.wrapped.read(self.read_buffer.as_mut_slice()) {
             Ok(i) => {
                 self.read_max = i;
                 Ok(())
@@ -80,7 +81,7 @@ impl<T: Reader> BufferedStream<T> {
             try!(self.fill_buffer());
         }
         self.read_pos += 1;
-        Ok(self.read_buffer[self.read_pos - 1])
+        Ok(self.read_buffer.as_slice()[self.read_pos - 1])
     }
 }
 
@@ -135,17 +136,20 @@ impl<T: Writer> Writer for BufferedStream<T> {
                 try!(self.wrapped.write(bytes!("\r\n")));
             }
         } else {
-            unsafe { self.write_buffer.mut_slice_from(self.write_len).copy_memory(buf); }
+            unsafe {
+                let len = self.write_buffer.len();
+                self.write_buffer.mut_slice(self.write_len, len).copy_memory(buf);
+            }
 
             self.write_len += buf.len();
             if self.write_len == self.write_buffer.len() {
                 if self.writing_chunked_body {
                     let s = format!("{}\r\n", self.write_len.to_str_radix(16));
                     try!(self.wrapped.write(s.as_bytes()));
-                    try!(self.wrapped.write(self.write_buffer));
+                    try!(self.wrapped.write(self.write_buffer.as_slice()));
                     try!(self.wrapped.write(bytes!("\r\n")));
                 } else {
-                    try!(self.wrapped.write(self.write_buffer));
+                    try!(self.wrapped.write(self.write_buffer.as_slice()));
                 }
                 self.write_len = 0;
             }
