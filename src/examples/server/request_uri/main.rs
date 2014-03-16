@@ -10,6 +10,8 @@ extern crate extra;
 extern crate time;
 extern crate http;
 
+use std::vec_ng::Vec;
+
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;
 
@@ -47,7 +49,7 @@ impl Server for RequestUriServer {
             (&Options, &Star) => {
                 // Querying server capabilities. That's nice and simple. I can handle these methods:
                 // (TODO: let user code override this, providing a default method.)
-                w.headers.allow = Some(~[Get, Head, Post, Put, Delete, Trace, Options, Connect, Patch]);
+                w.headers.allow = Some(Vec::from_slice([Get, Head, Post, Put, Delete, Trace, Options, Connect, Patch]));
                 w.headers.content_length = Some(0);
                 return;
             },
@@ -62,7 +64,7 @@ impl Server for RequestUriServer {
         w.headers.content_type = Some(MediaType {
             type_: ~"text",
             subtype: ~"html",
-            parameters: ~[]
+            parameters: Vec::new()
         });
 
         w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>")).unwrap();

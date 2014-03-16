@@ -6,6 +6,8 @@ extern crate extra;
 extern crate time;
 extern crate http;
 
+use std::vec_ng::Vec;
+
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;
 
@@ -26,7 +28,7 @@ impl Server for HelloWorldServer {
         w.headers.content_type = Some(MediaType {
             type_: ~"text",
             subtype: ~"plain",
-            parameters: ~[(~"charset", ~"UTF-8")]
+            parameters: Vec::from_slice([(~"charset", ~"UTF-8")])
         });
         w.headers.server = Some(~"Example");
 

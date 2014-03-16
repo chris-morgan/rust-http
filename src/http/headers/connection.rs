@@ -58,24 +58,25 @@ impl super::HeaderConvertible for Connection {
 
 #[test]
 fn test_connection() {
+    use std::vec_ng::Vec;
     use headers::test_utils::{assert_conversion_correct,
                               assert_interpretation_correct,
                               assert_invalid};
-    assert_conversion_correct("close", ~[Close]);
-    assert_conversion_correct("Foo", ~[Token(~"Foo")]);
-    assert_conversion_correct("Foo, Keep-Alive", ~[Token(~"Foo"), Token(~"Keep-Alive")]);
-    assert_conversion_correct("Foo, close", ~[Token(~"Foo"), Close]);
-    assert_conversion_correct("close, Bar", ~[Close, Token(~"Bar")]);
+    assert_conversion_correct("close", Vec::from_slice([Close]));
+    assert_conversion_correct("Foo", Vec::from_slice([Token(~"Foo")]));
+    assert_conversion_correct("Foo, Keep-Alive", Vec::from_slice([Token(~"Foo"), Token(~"Keep-Alive")]));
+    assert_conversion_correct("Foo, close", Vec::from_slice([Token(~"Foo"), Close]));
+    assert_conversion_correct("close, Bar", Vec::from_slice([Close, Token(~"Bar")]));
 
-    assert_interpretation_correct("close", ~[Close]);
-    assert_interpretation_correct("foo", ~[Token(~"Foo")]);
-    assert_interpretation_correct("close \r\n , keep-ALIVE", ~[Close, Token(~"Keep-Alive")]);
-    assert_interpretation_correct("foo,close", ~[Token(~"Foo"), Close]);
-    assert_interpretation_correct("close, bar", ~[Close, Token(~"Bar")]);
+    assert_interpretation_correct("close", Vec::from_slice([Close]));
+    assert_interpretation_correct("foo", Vec::from_slice([Token(~"Foo")]));
+    assert_interpretation_correct("close \r\n , keep-ALIVE", Vec::from_slice([Close, Token(~"Keep-Alive")]));
+    assert_interpretation_correct("foo,close", Vec::from_slice([Token(~"Foo"), Close]));
+    assert_interpretation_correct("close, bar", Vec::from_slice([Close, Token(~"Bar")]));
     assert_interpretation_correct("CLOSE", Close);
 
-    assert_invalid::<~[Connection]>("foo bar");
-    assert_invalid::<~[Connection]>("foo bar");
-    assert_invalid::<~[Connection]>("foo, bar baz");
-    assert_invalid::<~[Connection]>("foo, , baz");
+    assert_invalid::<Vec<Connection>>("foo bar");
+    assert_invalid::<Vec<Connection>>("foo bar");
+    assert_invalid::<Vec<Connection>>("foo, bar baz");
+    assert_invalid::<Vec<Connection>>("foo, , baz");
 }

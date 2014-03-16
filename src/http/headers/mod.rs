@@ -4,6 +4,7 @@
 //! known HTTP headers are type checked, rather than being dealt with as strings all the time. Only
 //! unknown headers are stored in a map in the traditional way.
 
+use std::vec_ng::Vec;
 use std::io::IoResult;
 use time::{Tm, strptime};
 use extra::url::Url;
@@ -332,8 +333,8 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     ///
     /// The return value ``None`` is reserved for syntax errors in parameters that exist; a mere
     /// absense of parameters will lead to returning an empty vector instead.
-    fn read_parameters(&mut self) -> Option<~[(~str, ~str)]> {
-        let mut result = ~[];
+    fn read_parameters(&mut self) -> Option<Vec<(~str, ~str)>> {
+        let mut result = Vec::new();
         loop {
             match self.next() {
                 //This catches the LWS after the last ';', and can probably be replaced with
@@ -556,9 +557,9 @@ pub trait HeaderConvertible: Eq + Clone {
 /// comma.
 pub trait CommaListHeaderConvertible: HeaderConvertible {}
 
-impl<T: CommaListHeaderConvertible> HeaderConvertible for ~[T] {
-    fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<~[T]> {
-        let mut result = ~[];
+impl<T: CommaListHeaderConvertible> HeaderConvertible for Vec<T> {
+    fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<Vec<T>> {
+        let mut result = Vec::new();
         loop {
             match HeaderConvertible::from_stream(reader) {
                 Some(h) => result.push(h),
@@ -871,6 +872,7 @@ macro_rules! headers_mod {
             $attr;
 
             #[allow(unused_imports)];
+            use std::vec_ng::Vec;
             use std::io::IoResult;
             use extra;
             use time;
@@ -1013,11 +1015,11 @@ headers_mod! {
 
     // RFC 2616, Section 4.5: General Header Fields
      0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     ~str;
-     1, "Connection",        "Connection",        Connection,       connection,        ~[headers::connection::Connection];
+     1, "Connection",        "Connection",        Connection,       connection,        Vec<headers::connection::Connection>;
      2, "Date",              "Date",              Date,             date,              time::Tm;
      3, "Pragma",            "Pragma",            Pragma,           pragma,            ~str;
      4, "Trailer",           "Trailer",           Trailer,          trailer,           ~str;
-     5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, ~[headers::transfer_encoding::TransferCoding];
+     5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, Vec<headers::transfer_encoding::TransferCoding>;
      6, "Upgrade",           "Upgrade",           Upgrade,          upgrade,           ~str;
      7, "Via",               "Via",               Via,              via,               ~str;
      8, "Warning",           "Warning",           Warning,          warning,           ~str;
@@ -1044,7 +1046,7 @@ headers_mod! {
     27, "User-Agent",          "User-Agent",          UserAgent,          user_agent,          ~str;
 
     // RFC 2616, Section 7.1: Entity Header Fields
-    28, "Allow",            "Allow",            Allow,           allow,            ~[::method::Method];
+    28, "Allow",            "Allow",            Allow,           allow,            Vec<::method::Method>;
     29, "Content-Encoding", "Content-Encoding", ContentEncoding, content_encoding, ~str;
     30, "Content-Language", "Content-Language", ContentLanguage, content_language, ~str;
     31, "Content-Length",   "Content-Length",   ContentLength,   content_length,   uint;
@@ -1064,11 +1066,11 @@ headers_mod! {
 
     // RFC 2616, Section 4.5: General Header Fields
      0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     ~str;
-     1, "Connection",        "Connection",        Connection,       connection,        ~[headers::connection::Connection];
+     1, "Connection",        "Connection",        Connection,       connection,        Vec<headers::connection::Connection>;
      2, "Date",              "Date",              Date,             date,              time::Tm;
      3, "Pragma",            "Pragma",            Pragma,           pragma,            ~str;
      4, "Trailer",           "Trailer",           Trailer,          trailer,           ~str;
-     5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, ~[headers::transfer_encoding::TransferCoding];
+     5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, Vec<headers::transfer_encoding::TransferCoding>;
      6, "Upgrade",           "Upgrade",           Upgrade,          upgrade,           ~str;
      7, "Via",               "Via",               Via,              via,               ~str;
      8, "Warning",           "Warning",           Warning,          warning,           ~str;
@@ -1086,7 +1088,7 @@ headers_mod! {
     18, "WWW-Authenticate",   "Www-Authenticate",   WwwAuthenticate,   www_authenticate,   ~str;
 
     // RFC 2616, Section 7.1: Entity Header Fields
-    19, "Allow",            "Allow",            Allow,           allow,            ~[::method::Method];
+    19, "Allow",            "Allow",            Allow,           allow,            Vec<::method::Method>;
     20, "Content-Encoding", "Content-Encoding", ContentEncoding, content_encoding, ~str;
     21, "Content-Language", "Content-Language", ContentLanguage, content_language, ~str;
     22, "Content-Length",   "Content-Length",   ContentLength,   content_length,   uint;
