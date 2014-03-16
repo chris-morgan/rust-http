@@ -62,17 +62,17 @@ fn test_connection() {
     use headers::test_utils::{assert_conversion_correct,
                               assert_interpretation_correct,
                               assert_invalid};
-    assert_conversion_correct("close", Vec::from_slice([Close]));
-    assert_conversion_correct("Foo", Vec::from_slice([Token(~"Foo")]));
-    assert_conversion_correct("Foo, Keep-Alive", Vec::from_slice([Token(~"Foo"), Token(~"Keep-Alive")]));
-    assert_conversion_correct("Foo, close", Vec::from_slice([Token(~"Foo"), Close]));
-    assert_conversion_correct("close, Bar", Vec::from_slice([Close, Token(~"Bar")]));
+    assert_conversion_correct("close", vec!(Close));
+    assert_conversion_correct("Foo", vec!(Token(~"Foo")));
+    assert_conversion_correct("Foo, Keep-Alive", vec!(Token(~"Foo"), Token(~"Keep-Alive")));
+    assert_conversion_correct("Foo, close", vec!(Token(~"Foo"), Close));
+    assert_conversion_correct("close, Bar", vec!(Close, Token(~"Bar")));
 
-    assert_interpretation_correct("close", Vec::from_slice([Close]));
-    assert_interpretation_correct("foo", Vec::from_slice([Token(~"Foo")]));
-    assert_interpretation_correct("close \r\n , keep-ALIVE", Vec::from_slice([Close, Token(~"Keep-Alive")]));
-    assert_interpretation_correct("foo,close", Vec::from_slice([Token(~"Foo"), Close]));
-    assert_interpretation_correct("close, bar", Vec::from_slice([Close, Token(~"Bar")]));
+    assert_interpretation_correct("close", vec!(Close));
+    assert_interpretation_correct("foo", vec!(Token(~"Foo")));
+    assert_interpretation_correct("close \r\n , keep-ALIVE", vec!(Close, Token(~"Keep-Alive")));
+    assert_interpretation_correct("foo,close", vec!(Token(~"Foo"), Close));
+    assert_interpretation_correct("close, bar", vec!(Close, Token(~"Bar")));
     assert_interpretation_correct("CLOSE", Close);
 
     assert_invalid::<Vec<Connection>>("foo bar");
