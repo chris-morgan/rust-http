@@ -1,3 +1,4 @@
+use std::vec_ng::Vec;
 use std::io::IoResult;
 use std::io::net::tcp::TcpStream;
 
@@ -84,7 +85,7 @@ impl<'a> ResponseWriter<'a> {
         // apply. In such a case, chunked MUST come last. This way prevents it from being extensible
         // thus, which is suboptimal.
         if self.headers.content_length == None {
-            self.headers.transfer_encoding = Some(~[Chunked]);
+            self.headers.transfer_encoding = Some(vec!(Chunked));
         } else {
             self.headers.transfer_encoding = None;
         }

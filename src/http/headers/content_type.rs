@@ -1,5 +1,6 @@
 //! The Content-Type entity header, defined in RFC 2616, Section 14.17.
 use headers::serialization_utils::{push_parameters, WriterUtil};
+use std::vec_ng::Vec;
 use std::io::IoResult;
 use std::fmt;
 
@@ -7,10 +8,10 @@ use std::fmt;
 pub struct MediaType {
     type_: ~str,
     subtype: ~str,
-    parameters: ~[(~str, ~str)],
+    parameters: Vec<(~str, ~str)>,
 }
 
-pub fn MediaType(type_: ~str, subtype: ~str, parameters: ~[(~str, ~str)]) -> MediaType {
+pub fn MediaType(type_: ~str, subtype: ~str, parameters: Vec<(~str, ~str)>) -> MediaType {
     MediaType {
         type_: type_,
         subtype: subtype,
@@ -28,7 +29,7 @@ impl fmt::Show for MediaType {
         //s.push_parameters(self.parameters);
         //s
         let s = format!("{}/{}", self.type_, self.subtype);
-        f.buf.write(push_parameters(s, self.parameters).as_bytes())
+        f.buf.write(push_parameters(s, self.parameters.as_slice()).as_bytes())
     }
 }
 
@@ -63,7 +64,7 @@ impl super::HeaderConvertible for MediaType {
         try!(writer.write_token(self.type_));
         try!(writer.write(['/' as u8]));
         try!(writer.write_token(self.subtype));
-        writer.write_parameters(self.parameters)
+        writer.write_parameters(self.parameters.as_slice())
     }
 
     fn http_value(&self) -> ~str {
@@ -75,13 +76,13 @@ impl super::HeaderConvertible for MediaType {
 fn test_content_type() {
     use headers::test_utils::{assert_conversion_correct, assert_interpretation_correct,
                               assert_invalid};
-    assert_conversion_correct("type/subtype", MediaType(~"type", ~"subtype", ~[]));
+    assert_conversion_correct("type/subtype", MediaType(~"type", ~"subtype", Vec::new()));
     assert_conversion_correct("type/subtype;key=value",
-                              MediaType(~"type", ~"subtype", ~[(~"key", ~"value")]));
+                              MediaType(~"type", ~"subtype", vec!((~"key", ~"value"))));
     assert_conversion_correct("type/subtype;key=value;q=0.1",
-            MediaType(~"type", ~"subtype", ~[(~"key", ~"value"), (~"q", ~"0.1")]));
+            MediaType(~"type", ~"subtype", vec!((~"key", ~"value"), (~"q", ~"0.1"))));
     assert_interpretation_correct("type/subtype ; key = value ; q = 0.1",
-            MediaType(~"type", ~"subtype", ~[(~"key", ~"value"), (~"q", ~"0.1")]));
+            MediaType(~"type", ~"subtype", vec!((~"key", ~"value"), (~"q", ~"0.1"))));
 
     assert_invalid::<MediaType>("");
     assert_invalid::<MediaType>("/");

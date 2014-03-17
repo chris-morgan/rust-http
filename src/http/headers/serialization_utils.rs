@@ -1,5 +1,6 @@
 //! Utility functions for assisting with conversion of headers from and to the HTTP text form.
 
+use std::vec_ng::Vec;
 use std::vec;
 use std::ascii::Ascii;
 use std::io::IoResult;
@@ -45,7 +46,7 @@ pub fn normalise_header_name(name: &str) -> ~str {
 /// ~~~ .{rust}
 /// assert_eq!(comma_split(" en;q=0.8, en_AU, text/html"), ["en;q=0.8", "en_AU", "text/html"])
 /// ~~~
-pub fn comma_split(value: &str) -> ~[~str] {
+pub fn comma_split(value: &str) -> Vec<~str> {
     value.split(',').map(|w| w.trim_left().to_owned()).collect()
 }
 
@@ -216,6 +217,7 @@ pub fn push_parameters<K: Str, V: Str>(mut s: ~str, parameters: &[(K, V)]) -> ~s
 
 #[cfg(test)]
 mod test {
+    use std::vec_ng::Vec;
     use super::{normalise_header_name, comma_split, comma_split_iter, comma_join,
                 push_quality, push_parameter, push_parameters,
                 push_maybe_quoted_string, push_quoted_string, maybe_quoted_string, quoted_string,
@@ -236,17 +238,17 @@ mod test {
     #[test]
     fn test_comma_split() {
         // Simple 0-element case
-        assert_eq!(comma_split(""), ~[~""]);
+        assert_eq!(comma_split(""), vec!(~""));
         // Simple 1-element case
-        assert_eq!(comma_split("foo"), ~[~"foo"]);
+        assert_eq!(comma_split("foo"), vec!(~"foo"));
         // Simple 2-element case
-        assert_eq!(comma_split("foo,bar"), ~[~"foo", ~"bar"]);
+        assert_eq!(comma_split("foo,bar"), vec!(~"foo", ~"bar"));
         // Simple >2-element case
-        assert_eq!(comma_split("foo,bar,baz,quux"), ~[~"foo", ~"bar", ~"baz", ~"quux"]);
+        assert_eq!(comma_split("foo,bar,baz,quux"), vec!(~"foo", ~"bar", ~"baz", ~"quux"));
         // Doesn't handle quoted-string intelligently
-        assert_eq!(comma_split("\"foo,bar\",baz"), ~[~"\"foo", ~"bar\"", ~"baz"]);
+        assert_eq!(comma_split("\"foo,bar\",baz"), vec!(~"\"foo", ~"bar\"", ~"baz"));
         // Doesn't do right trimming, but does left
-        assert_eq!(comma_split(" foo;q=0.8 , bar/* "), ~[~"foo;q=0.8 ", ~"bar/* "]);
+        assert_eq!(comma_split(" foo;q=0.8 , bar/* "), vec!(~"foo;q=0.8 ", ~"bar/* "));
     }
 
     #[test]
