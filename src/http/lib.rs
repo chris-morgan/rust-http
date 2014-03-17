@@ -11,8 +11,10 @@
 //#[deny(missing_doc)];
 
 #[feature(macro_rules)];
+#[feature(phase)];
 #[macro_escape];
 
+#[phase(syntax, link)] extern crate log;
 extern crate extra;
 extern crate time;
 extern crate collections;
