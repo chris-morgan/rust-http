@@ -2,7 +2,6 @@
 
 #[crate_id = "hello_world"];
 
-extern crate extra;
 extern crate time;
 extern crate http;
 

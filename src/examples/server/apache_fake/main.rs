@@ -4,7 +4,6 @@
 
 #[crate_id = "apache_fake"];
 
-extern crate extra;
 extern crate time;
 extern crate http;
 

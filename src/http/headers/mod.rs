@@ -4,9 +4,9 @@
 //! known HTTP headers are type checked, rather than being dealt with as strings all the time. Only
 //! unknown headers are stored in a map in the traditional way.
 
+use url::Url;
 use std::io::IoResult;
 use time::{Tm, strptime};
-use extra::url::Url;
 use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON};
 use method::Method;
 
@@ -872,7 +872,6 @@ macro_rules! headers_mod {
 
             #[allow(unused_imports)];
             use std::io::IoResult;
-            use extra;
             use time;
             use collections::treemap::{TreeMap, Entries};
             use headers;
@@ -1078,7 +1077,7 @@ headers_mod! {
     10, "Accept-Ranges",      "Accept-Ranges",      AcceptRanges,      accept_ranges,      headers::accept_ranges::AcceptableRanges;
     11, "Age",                "Age",                Age,               age,                ~str;
     12, "ETag",               "Etag",               ETag,              etag,               headers::etag::EntityTag;
-    13, "Location",           "Location",           Location,          location,           extra::url::Url;
+    13, "Location",           "Location",           Location,          location,           ::url::Url;
     14, "Proxy-Authenticate", "Proxy-Authenticate", ProxyAuthenticate, proxy_authenticate, ~str;
     15, "Retry-After",        "Retry-After",        RetryAfter,        retry_after,        ~str;
     16, "Server",             "Server",             Server,            server,             ~str;

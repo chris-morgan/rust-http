@@ -3,7 +3,6 @@
 
 #[crate_id = "info"];
 
-extern crate extra;
 extern crate time;
 extern crate http;
 
