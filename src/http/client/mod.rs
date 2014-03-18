@@ -17,6 +17,8 @@ possible, but it's not elegant convenient yet. (Most notably, no transfer-encodi
 
 pub use self::request::RequestWriter;
 pub use self::response::ResponseReader;
+pub use self::sslclients::NetworkStream;
 
 pub mod request;
 pub mod response;
+mod sslclients;

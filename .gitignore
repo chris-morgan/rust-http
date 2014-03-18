@@ -9,3 +9,4 @@ doc/http/
 doc/src/http/
 lib/
 .rust/
+Makefile

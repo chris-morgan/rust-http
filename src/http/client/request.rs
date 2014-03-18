@@ -35,6 +35,7 @@ let response = match request.read_response() {
 ```
 
 */
+
 use url;
 use url::Url;
 use method::Method;
@@ -65,8 +66,9 @@ use client::response::ResponseReader;
     }
 }*/
 
-pub struct RequestWriter<S> {
-    // The place to write to (typically a TCP stream, io::net::tcp::TcpStream)
+pub struct RequestWriter<S = super::NetworkStream> {
+    // The place to write to (typically a network stream, which is
+    // io::net::tcp::TcpStream or an SSL wrapper around that)
     priv stream: Option<BufferedStream<S>>,
     priv headers_written: bool,
 
@@ -86,6 +88,9 @@ pub struct RequestWriter<S> {
 
     /// The URL being requested.
     url: Url,
+
+    /// Should we use SSL?
+    use_ssl: bool,
 }
 
 /// Low-level HTTP request writing support
@@ -94,9 +99,13 @@ pub struct RequestWriter<S> {
 /// take place until writing is completed.
 ///
 /// At present, this only supports making one request per connection.
-impl<S: Reader + Writer> RequestWriter<S> {
+impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
     /// Create a `RequestWriter` writing to the specified location
     pub fn new(method: Method, url: Url) -> IoResult<RequestWriter<S>> {
+        RequestWriter::new_request(method, url, false, true)
+    }
+    
+    pub fn new_request(method: Method, url: Url, use_ssl: bool, auto_detect_ssl: bool) -> IoResult<RequestWriter<S>> {
         let host = match url.port {
             None => Host {
                 name: url.host.to_owned(),
@@ -125,10 +134,12 @@ impl<S: Reader + Writer> RequestWriter<S> {
             // TODO: Error handling
             let addr = addr.unwrap();
 
-            let port = url.port.clone().unwrap_or(~"80");
-            let port = from_str(port);
-            // TODO: Error handling
-            let port = port.unwrap();
+            // Default to 80, using the port specified or 443 if the protocol is HTTPS.
+            let port = match url.port {
+                Some(ref p) => from_str(*p).expect("You didn’t aught to give a bad port!"),
+                // FIXME: case insensitivity?
+                None => if url.scheme.as_slice() == "https" { 443 } else { 80 },
+            };
 
             Ok(SocketAddr {
                 ip: addr,
@@ -143,13 +154,20 @@ impl<S: Reader + Writer> RequestWriter<S> {
             headers: ~HeaderCollection::new(),
             method: method,
             url: url,
+            use_ssl: use_ssl,
         };
+
+        if auto_detect_ssl {
+            // FIXME: case insensitivity?
+            request.use_ssl = request.url.scheme.as_slice() == "https";
+        }
+
         request.headers.host = Some(host);
         Ok(request)
     }
 }
 
-impl<S: Connecter + Reader + Writer> RequestWriter<S> {
+impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
 
     /// Connect to the remote host if not already connected.
     pub fn try_connect(&mut self) -> IoResult<()> {
@@ -169,7 +187,7 @@ impl<S: Connecter + Reader + Writer> RequestWriter<S> {
 
         self.stream = match self.remote_addr {
             Some(addr) => {
-                let stream = try!(Connecter::connect(addr));
+                let stream = try!(Connecter::connect(addr, self.url.host, self.use_ssl));
                 Some(BufferedStream::new(stream))
             },
             None => fail!("connect() called before remote_addr was set"),
@@ -235,7 +253,7 @@ impl<S: Connecter + Reader + Writer> RequestWriter<S> {
 }
 
 /// Write the request body. Note that any calls to `write()` will cause the headers to be sent.
-impl<S: Reader + Writer + Connecter> Writer for RequestWriter<S> {
+impl<S: Reader + Writer + Connecter = super::NetworkStream> Writer for RequestWriter<S> {
     fn write(&mut self, buf: &[u8]) -> IoResult<()> {
         if !self.headers_written {
             try!(self.write_headers());
