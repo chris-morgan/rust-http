@@ -1,7 +1,7 @@
 //! Utility functions for assisting with conversion of headers from and to the HTTP text form.
 
-use std::vec_ng::Vec;
-use std::vec;
+use std::vec::Vec;
+use std::slice;
 use std::ascii::Ascii;
 use std::io::IoResult;
 use rfc2616::is_token;
@@ -23,7 +23,7 @@ use rfc2616::is_token;
 /// assert_eq!(normalise_header_name("FOO-BAR"), "Foo-Bar");
 /// ~~~
 pub fn normalise_header_name(name: &str) -> ~str {
-    let mut result: ~[Ascii] = vec::with_capacity(name.len());
+    let mut result: ~[Ascii] = slice::with_capacity(name.len());
     let mut capitalise = true;
     for c in name.chars() {
         let c = match capitalise {
@@ -217,7 +217,6 @@ pub fn push_parameters<K: Str, V: Str>(mut s: ~str, parameters: &[(K, V)]) -> ~s
 
 #[cfg(test)]
 mod test {
-    use std::vec_ng::Vec;
     use super::{normalise_header_name, comma_split, comma_split_iter, comma_join,
                 push_quality, push_parameter, push_parameters,
                 push_maybe_quoted_string, push_quoted_string, maybe_quoted_string, quoted_string,
