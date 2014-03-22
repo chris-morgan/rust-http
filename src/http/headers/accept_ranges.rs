@@ -1,6 +1,6 @@
 //! The Accept-Ranges request header, defined in RFC 2616, Section 14.5.
 
-use std::vec_ng::Vec;
+use std::vec::Vec;
 use std::io::IoResult;
 use std::ascii::StrAsciiExt;
 
