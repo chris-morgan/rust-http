@@ -5,7 +5,6 @@
 //! unknown headers are stored in a map in the traditional way.
 
 use url::Url;
-use std::vec::Vec;
 use std::io::IoResult;
 use time::{Tm, strptime};
 use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON};
@@ -872,7 +871,6 @@ macro_rules! headers_mod {
             #[$attr]
 
             #[allow(unused_imports)]
-            use std::vec::Vec;
             use std::io::IoResult;
             use time;
             use collections::treemap::{TreeMap, Entries};

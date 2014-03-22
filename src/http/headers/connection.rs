@@ -58,7 +58,6 @@ impl super::HeaderConvertible for Connection {
 
 #[test]
 fn test_connection() {
-    use std::vec::Vec;
     use headers::test_utils::{assert_conversion_correct,
                               assert_interpretation_correct,
                               assert_invalid};

@@ -1,6 +1,5 @@
 //! Utility functions for assisting with conversion of headers from and to the HTTP text form.
 
-use std::vec::Vec;
 use std::slice;
 use std::ascii::Ascii;
 use std::io::IoResult;

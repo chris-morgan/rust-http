@@ -1,6 +1,5 @@
 //! The Content-Type entity header, defined in RFC 2616, Section 14.17.
 use headers::serialization_utils::{push_parameters, WriterUtil};
-use std::vec::Vec;
 use std::io::IoResult;
 use std::fmt;
 
