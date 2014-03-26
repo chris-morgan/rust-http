@@ -1,4 +1,4 @@
-use std::vec_ng::Vec;
+use std::vec::Vec;
 use std::io::IoResult;
 use std::io::net::tcp::TcpStream;
 
