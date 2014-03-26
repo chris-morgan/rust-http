@@ -2,8 +2,9 @@
 
 use std::io::{IoResult, Stream};
 use std::cmp::min;
-use std::vec_ng::Vec;
+use std::vec::Vec;
 use std::vec;
+use std::slice;
 use std::num::ToStrRadix;
 
 // 64KB chunks (moderately arbitrary)
@@ -111,7 +112,7 @@ impl<T: Reader> Reader for BufferedStream<T> {
             try!(self.fill_buffer());
         }
         let size = min(self.read_max - self.read_pos, buf.len());
-        vec::bytes::copy_memory(buf, self.read_buffer.slice_from(self.read_pos).slice_to(size));
+        slice::bytes::copy_memory(buf, self.read_buffer.slice_from(self.read_pos).slice_to(size));
         self.read_pos += size;
         Ok(size)
     }
