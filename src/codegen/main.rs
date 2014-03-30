@@ -1,6 +1,6 @@
-#[crate_id = "codegen"];
+#![crate_id = "codegen"]
 
-#[feature(macro_rules)];
+#![feature(macro_rules)]
 
 extern crate collections;
 

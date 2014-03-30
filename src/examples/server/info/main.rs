@@ -1,12 +1,10 @@
 //! A not-quite-trivial HTTP server which responds to requests by showing the request and response
 //! headers and any other information it has.
 
-#[crate_id = "info"];
+#![crate_id = "info"]
 
 extern crate time;
 extern crate http;
-
-use std::vec_ng::Vec;
 
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;

@@ -1,18 +1,18 @@
-#[crate_id = "http#0.1-pre"];
+#![crate_id = "http#0.1-pre"]
 
-#[comment = "Rust HTTP server"];
-#[license = "MIT/ASL2"];
-#[crate_type = "dylib"];
-#[crate_type = "rlib"];
+#![comment = "Rust HTTP server"]
+#![license = "MIT/ASL2"]
+#![crate_type = "dylib"]
+#![crate_type = "rlib"]
 
-#[doc(html_root_url = "http://www.rust-ci.org/chris-morgan/rust-http/doc/")];
+#![doc(html_root_url = "http://www.rust-ci.org/chris-morgan/rust-http/doc/")]
 
-#[deny(non_camel_case_types)];
+#![deny(non_camel_case_types)]
 //#[deny(missing_doc)];
 
-#[feature(macro_rules)];
-#[feature(phase)];
-#[macro_escape];
+#![feature(macro_rules)]
+#![feature(phase)]
+#![macro_escape]
 
 #[phase(syntax, link)] extern crate log;
 extern crate url;

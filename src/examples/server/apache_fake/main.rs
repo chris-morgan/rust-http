@@ -2,12 +2,12 @@
 //! configuration. Potentially useful for a smidgeon of performance comparison, though naturally
 //! Apache is doing a lot more than this does.
 
-#[crate_id = "apache_fake"];
+#![crate_id = "apache_fake"]
 
 extern crate time;
 extern crate http;
 
-use std::vec_ng::Vec;
+use std::vec::Vec;
 
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;

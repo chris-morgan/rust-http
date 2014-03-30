@@ -5,7 +5,7 @@
 //! unknown headers are stored in a map in the traditional way.
 
 use url::Url;
-use std::vec_ng::Vec;
+use std::vec::Vec;
 use std::io::IoResult;
 use time::{Tm, strptime};
 use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON};
@@ -853,7 +853,7 @@ mod test {
 
 macro_rules! headers_mod {
     {
-        $attr:attr
+        #[$attr:meta]
         // Not using this because of a "local ambiguity" bug
         //$($attrs:attr)*
         pub mod $mod_name:ident;
@@ -869,10 +869,10 @@ macro_rules! headers_mod {
     } => {
         pub mod $mod_name {
             //$($attrs;)*
-            $attr;
+            #[$attr]
 
-            #[allow(unused_imports)];
-            use std::vec_ng::Vec;
+            #[allow(unused_imports)]
+            use std::vec::Vec;
             use std::io::IoResult;
             use time;
             use collections::treemap::{TreeMap, Entries};

@@ -1,11 +1,9 @@
 //! A very simple HTTP server which responds with the plain text "Hello, World!" to every request.
 
-#[crate_id = "hello_world"];
+#![crate_id = "hello_world"]
 
 extern crate time;
 extern crate http;
-
-use std::vec_ng::Vec;
 
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;

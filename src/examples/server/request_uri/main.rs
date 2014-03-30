@@ -4,12 +4,12 @@
 //! This demonstrates some handling of the RequestURI, which has several possibilities and for which
 //! the correct values depend on the method.
 
-#[crate_id = "request_uri"];
+#![crate_id = "request_uri"]
 
 extern crate time;
 extern crate http;
 
-use std::vec_ng::Vec;
+use std::vec::Vec;
 
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;
