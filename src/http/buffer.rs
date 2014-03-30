@@ -2,7 +2,6 @@
 
 use std::io::{IoResult, Stream};
 use std::cmp::min;
-use std::vec::Vec;
 use std::slice;
 use std::num::ToStrRadix;
 

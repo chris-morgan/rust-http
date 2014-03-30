@@ -9,8 +9,6 @@
 extern crate time;
 extern crate http;
 
-use std::vec::Vec;
-
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;
 
@@ -75,7 +73,7 @@ impl Server for RequestUriServer {
             },
             AbsoluteUri(ref url) => {
                 println!("absoluteURI, {}", url.to_str());
-                //path = 
+                //path =
             },
             AbsolutePath(ref url) => {
                 println!("absolute path, {}", url.to_owned());
