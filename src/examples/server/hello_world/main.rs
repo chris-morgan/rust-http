@@ -1,6 +1,6 @@
 //! A very simple HTTP server which responds with the plain text "Hello, World!" to every request.
 
-#[crate_id = "hello_world"];
+#![crate_id = "hello_world"]
 
 extern crate time;
 extern crate http;

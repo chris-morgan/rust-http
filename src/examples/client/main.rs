@@ -1,4 +1,4 @@
-#[crate_id = "client"];
+#![crate_id = "client"]
 
 extern crate http;
 use http::client::RequestWriter;

@@ -1,4 +1,4 @@
-#[macro_escape];
+#![macro_escape]
 
 use std::str::Chars;
 use std::io::IoResult;

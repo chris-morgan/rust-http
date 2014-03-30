@@ -853,7 +853,7 @@ mod test {
 
 macro_rules! headers_mod {
     {
-        $attr:attr
+        #[$attr:meta]
         // Not using this because of a "local ambiguity" bug
         //$($attrs:attr)*
         pub mod $mod_name:ident;
@@ -869,9 +869,9 @@ macro_rules! headers_mod {
     } => {
         pub mod $mod_name {
             //$($attrs;)*
-            $attr;
+            #[$attr]
 
-            #[allow(unused_imports)];
+            #[allow(unused_imports)]
             use std::vec::Vec;
             use std::io::IoResult;
             use time;
