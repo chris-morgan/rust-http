@@ -8,12 +8,12 @@ use std::fmt;
 pub struct Host {
 
     /// The name of the host that was requested
-    name: ~str,
+    pub name: ~str,
 
     /// If unspecified, assume the default port was used (80 for HTTP, 443 for HTTPS).
     /// In that case, you shouldn't need to worry about it in URLs that you build, provided you
     /// include the scheme.
-    port: Option<u16>,
+    pub port: Option<u16>,
 }
 
 impl fmt::Show for Host {

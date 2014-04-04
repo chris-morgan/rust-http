@@ -67,11 +67,11 @@ use client::response::ResponseReader;
 
 pub struct RequestWriter<S> {
     // The place to write to (typically a TCP stream, io::net::tcp::TcpStream)
-    priv stream: Option<BufferedStream<S>>,
-    priv headers_written: bool,
+    stream: Option<BufferedStream<S>>,
+    headers_written: bool,
 
     /// The originating IP address of the request.
-    remote_addr: Option<SocketAddr>,
+    pub remote_addr: Option<SocketAddr>,
 
     /// The host name and IP address that the request was sent to; this must always be specified for
     /// HTTP/1.1 requests (or the request will be rejected), but for HTTP/1.0 requests the Host
@@ -79,13 +79,13 @@ pub struct RequestWriter<S> {
     //host: Host,  // Now headers.host
 
     /// The headers sent with the request.
-    headers: ~HeaderCollection,
+    pub headers: ~HeaderCollection,
 
     /// The HTTP method for the request.
-    method: Method,
+    pub method: Method,
 
     /// The URL being requested.
-    url: Url,
+    pub url: Url,
 }
 
 /// Low-level HTTP request writing support

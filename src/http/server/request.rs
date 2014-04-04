@@ -23,7 +23,7 @@ pub static MAX_METHOD_LEN: uint = 64;
 
 pub struct RequestBuffer<'a, S> {
     /// The socket connection to read from
-    stream: &'a mut BufferedStream<S>,
+    pub stream: &'a mut BufferedStream<S>,
 }
 
 impl<'a, S: Stream> RequestBuffer<'a, S> {
@@ -203,7 +203,7 @@ fn test_read_request_line() {
 /// An HTTP request sent to the server.
 pub struct Request {
     /// The originating IP address of the request.
-    remote_addr: Option<SocketAddr>,
+    pub remote_addr: Option<SocketAddr>,
 
     /// The host name and IP address that the request was sent to; this must always be specified for
     /// HTTP/1.1 requests (or the request will be rejected), but for HTTP/1.0 requests the Host
@@ -211,24 +211,24 @@ pub struct Request {
     //host: Option<Host>,  // Now in headers.host
 
     /// The headers sent with the request.
-    headers: ~headers::request::HeaderCollection,
+    pub headers: ~headers::request::HeaderCollection,
 
     /// The body of the request; empty for such methods as GET.
-    body: ~str,
+    pub body: ~str,
 
     /// The HTTP method for the request.
-    method: Method,
+    pub method: Method,
 
     /// The URI that was requested, as found in the Request-URI of the Request-Line.
     /// You will almost never need to use this; you should prefer the `url` field instead.
-    request_uri: RequestUri,
+    pub request_uri: RequestUri,
 
     /// Whether to close the TCP connection when the request has been served.
     /// The alternative is keeping the connection open and waiting for another request.
-    close_connection: bool,
+    pub close_connection: bool,
 
     /// The HTTP version number; typically `(1, 1)` or, less commonly, `(1, 0)`.
-    version: (uint, uint)
+    pub version: (uint, uint)
 }
 
 /// The URI (Request-URI in RFC 2616) as specified in the Status-Line of an HTTP request

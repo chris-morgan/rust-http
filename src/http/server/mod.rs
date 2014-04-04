@@ -119,7 +119,7 @@ pub trait Server: Send + Clone {
 /// At present, only the IP address and port to bind to are needed, but it's possible that other
 /// options may turn up later.
 pub struct Config {
-	bind_address: SocketAddr,
+	pub bind_address: SocketAddr,
 }
 
 static PERF_DUMP_FREQUENCY : u64 = 10_000;
