@@ -11,16 +11,16 @@ static WRITE_BUF_SIZE: uint = 0x10000;
 // TODO: consider removing constants and giving a buffer size in the constructor
 
 pub struct BufferedStream<T> {
-    wrapped: T,
-    read_buffer: Vec<u8>,
+    pub wrapped: T,
+    pub read_buffer: Vec<u8>,
     // The current position in the buffer
-    read_pos: uint,
+    pub read_pos: uint,
     // The last valid position in the reader
-    read_max: uint,
-    write_buffer: Vec<u8>,
-    write_len: uint,
+    pub read_max: uint,
+    pub write_buffer: Vec<u8>,
+    pub write_len: uint,
 
-    writing_chunked_body: bool,
+    pub writing_chunked_body: bool,
 }
 
 impl<T: Stream> BufferedStream<T> {

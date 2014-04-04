@@ -4,8 +4,8 @@ use std::fmt;
 
 #[deriving(Clone, Eq)]
 pub struct EntityTag {
-    weak: bool,
-    opaque_tag: ~str,
+    pub weak: bool,
+    pub opaque_tag: ~str,
 }
 
 pub fn weak_etag<S: Str>(opaque_tag: S) -> EntityTag {

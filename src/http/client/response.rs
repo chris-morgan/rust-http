@@ -10,19 +10,19 @@ use server::request::{RequestBuffer};
 use headers::{EndOfFile, EndOfHeaders, MalformedHeaderSyntax, MalformedHeaderValue};
 
 pub struct ResponseReader<S> {
-    priv stream: BufferedStream<S>,
+    stream: BufferedStream<S>,
 
     /// The request which this is a response to
-    request: RequestWriter<S>,
+    pub request: RequestWriter<S>,
 
     /// The HTTP version number; typically `(1, 1)` or, less commonly, `(1, 0)`.
-    version: (uint, uint),
+    pub version: (uint, uint),
 
     /// The HTTP status indicated in the response.
-    status: Status,
+    pub status: Status,
 
     /// The headers received in the response.
-    headers: ~headers::response::HeaderCollection,
+    pub headers: ~headers::response::HeaderCollection,
 }
 
 fn bad_response_err() -> IoError {
