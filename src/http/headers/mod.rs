@@ -140,7 +140,7 @@ enum HeaderValueByteIteratorState {
 /// handled correctly so that nothing else needs to worry about it. Any linear whitespace (multiple
 /// spaces outside of a quoted-string) is compacted into a single SP.
 pub struct HeaderValueByteIterator<'a, R> {
-    reader: &'a mut R,
+    pub reader: &'a mut R,
 
     /// This field serves two purposes. *During* iteration, it will typically be ``None``, but
     /// certain cases will cause it to be a ``Some``, meaning that the next ``next()`` call will
@@ -148,10 +148,10 @@ pub struct HeaderValueByteIterator<'a, R> {
     /// ``next()`` has returned ``None``), it will be the extra byte which it has had to consume
     /// from the stream because of the possibility of linear white space of the form ``CR LF SP``.
     /// It is guaranteed that if ``self.state == Finished`` this will be a ``Some``.
-    next_byte: Option<u8>,
+    pub next_byte: Option<u8>,
 
-    at_start: bool,
-    priv state: HeaderValueByteIteratorState,
+    pub at_start: bool,
+    state: HeaderValueByteIteratorState,
 }
 
 impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
@@ -884,8 +884,8 @@ macro_rules! headers_mod {
 
             #[deriving(Clone)]
             pub struct HeaderCollection {
-                $($lower_ident: Option<$htype>,)*
-                extensions: TreeMap<~str, ~str>,
+                $(pub $lower_ident: Option<$htype>,)*
+                pub extensions: TreeMap<~str, ~str>,
             }
 
             impl HeaderCollection {
@@ -923,9 +923,9 @@ macro_rules! headers_mod {
             }
 
             pub struct HeaderCollectionIterator<'a> {
-                pos: uint,
-                coll: &'a HeaderCollection,
-                ext_iter: Option<Entries<'a, ~str, ~str>>
+                pub pos: uint,
+                pub coll: &'a HeaderCollection,
+                pub ext_iter: Option<Entries<'a, ~str, ~str>>
             }
 
             impl<'a> Iterator<Header> for HeaderCollectionIterator<'a> {
