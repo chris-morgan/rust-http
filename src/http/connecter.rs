@@ -2,7 +2,6 @@
 
 use std::io::IoResult;
 use std::io::net::ip::SocketAddr;
-use std::io::net::tcp::TcpStream;
 
 /// A trait for the concept of opening a stream connected to a IP socket address.
 ///

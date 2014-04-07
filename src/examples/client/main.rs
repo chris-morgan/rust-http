@@ -6,8 +6,7 @@ use http::method::Get;
 use http::headers::HeaderEnum;
 use std::os;
 use std::str;
-use std::io::{Reader, println};
-use std::io::net::tcp::TcpStream;
+use std::io::println;
 
 fn main() {
     format!("{}", Get);
