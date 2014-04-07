@@ -373,7 +373,7 @@ impl Request {
         match request.headers.content_length {
             Some(length) => {
                 match buffer.read_exact(length) {
-                    Ok(body) => match str::from_utf8(body) {
+                    Ok(body) => match str::from_utf8(body.as_slice()) {
                         Some(body_str) => request.body = body_str.to_owned(),
                         None => return (request, Err(status::BadRequest))
                     },

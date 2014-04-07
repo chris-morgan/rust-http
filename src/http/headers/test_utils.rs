@@ -4,7 +4,7 @@ use std::fmt;
 use headers::{HeaderConvertible, HeaderValueByteIterator};
 
 pub fn from_stream_with_str<T: HeaderConvertible>(s: &str) -> Option<T> {
-    let mut bytes = s.as_bytes().into_owned();
+    let mut bytes = s.bytes().collect::<Vec<_>>();
     bytes.push_all(bytes!("\r\n/"));
     let mut reader = MemReader::new(bytes);
     let mut iter = HeaderValueByteIterator::new(&mut reader);
