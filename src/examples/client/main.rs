@@ -23,8 +23,8 @@ fn main() {
 }
 
 fn make_and_print_request(url: ~str) {
-    let request = RequestWriter::<TcpStream>::new(Get, from_str(url).expect("Invalid URL :-("))
-                               .unwrap();
+    let request: RequestWriter = RequestWriter::new(Get, from_str(url).expect("Invalid URL :-("))
+                                              .unwrap();
 
     println!("[33;1mRequest[0m");
     println!("[33;1m=======[0m");
@@ -51,6 +51,9 @@ fn make_and_print_request(url: ~str) {
         println!(" - {}: {}", header.header_name(), header.header_value());
     }
     println!("[1mBody:[0m");
-    let body = response.read_to_end().unwrap();
+    let body = match response.read_to_end() {
+        Ok(body) => body,
+        Err(err) => fail!("Reading response failed: {}", err),
+    };
     println(str::from_utf8(body).expect("Uh oh, response wasn't UTF-8"));
 }

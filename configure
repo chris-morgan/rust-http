@@ -1,0 +1,53 @@
+#!/bin/bash
+
+if [ "$1" = --help ]; then
+	echo "Usage: ./configure"
+	echo
+	echo "Sorry, no command line arguments or anything; it's too hard."
+	echo
+	echo "You can, however, use environment variables:"
+	echo
+	echo "- WITH_OPENSSL=/path/to/rust-openssl"
+	echo "- WITH_NSS=/path/to/rust-nss"
+	echo "- WITHOUT_SSL=1"
+	echo
+	echo "If you specify nothing, it will try ../rust-openssl and ../rust-nss."
+	exit
+fi
+
+if [ -n "$DOING_RECONFIGURE" ]; then
+	echo configure: reapplying existing configuration
+	# Inherit variables
+elif [ -n "$WITH_OPENSSL" ]; then
+	echo configure: OpenSSL specified, using it.
+	SSL_LIB="$WITH_OPENSSL/build"
+	SSL_CFG="--cfg openssl"
+elif [ -n "$WITH_NSS" ]; then
+	echo configure: NSS specified, using it.
+	SSL_LIB="$WITH_NSS/build"
+	SSL_CFG="--cfg nss"
+elif [ -n "$WITHOUT_SSL" ]; then
+	echo configure: disabling SSL support
+	SSL_LIB=
+	SSL_CFG=
+elif [ -d ../rust-openssl ]; then
+	echo configure: no SSL library selected but OpenSSL found at ../rust-openssl, using it.
+	SSL_LIB=../rust-openssl/build
+	SSL_CFG="--cfg openssl"
+elif [ -d ../rust-nss ]; then
+	echo configure: no SSL library selected but NSS found at ../rust-nss, using it.
+	SSL_LIB=../rust-nss/build
+	SSL_CFG="--cfg nss"
+else
+	echo configure: no SSL library selected or found
+	echo configure: you will not be able to access HTTPS URLs
+	echo configure: check the README for instructions on enabling HTTPS
+	SSL_LIB=
+	SSL_CFG=
+fi
+
+echo configure: writing Makefile
+sed -e "s|%SSL_LIB%|$SSL_LIB|" \
+	-e "s|%SSL_CFG%|$SSL_CFG|" \
+	Makefile.in > Makefile
+echo configure: done!

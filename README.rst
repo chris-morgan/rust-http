@@ -68,6 +68,22 @@ At present, all of the example servers serve to http://127.0.0.1:8001/.
 Don't expect everything to work well. The server claims HTTP/1.1, but is not
 in any way compliant yet.
 
+SSL support
+-----------
+
+rust-http can be compiled with or without SSL support.
+
+To compile with SSL support, drop rust-openssl_ in a sibling directory of
+rust-http (i.e. ``../rust-openssl`` from this file) and run its ``configure``
+and ``make``. rust-http's ``configure`` will then automatically detect it and
+you will get SSL support enabled.
+
+To compile rust-http without SSL support, just don’t put rust-openssl_ where it
+can find it. You'll then get an ``IoError { kind: InvalidInput, .. }`` if you
+try to make an SSL request (e.g. HTTPS).
+
+.. _rust-openssl: https://github.com/sfackler/rust-openssl
+
 Roadmap
 -------
 
