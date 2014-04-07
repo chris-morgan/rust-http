@@ -1,7 +1,9 @@
+SSL_LIB ?= %SSL_LIB%
+SSL_CFG ?= %SSL_CFG%
 RUSTC ?= rustc
 RUSTDOC ?= rustdoc
 RUSTPKG ?= rustpkg
-RUSTFLAGS ?= -O
+RUSTFLAGS ?= -O -L $(SSL_LIB) $(SSL_CFG)
 RUST_REPOSITORY ?= ../rust
 RUST_CTAGS ?= $(RUST_REPOSITORY)/src/etc/ctags.rust
 VERSION=0.1-pre
@@ -12,7 +14,7 @@ codegen_files=\
 	        src/codegen/read_method.rs \
 	        src/codegen/status.rs \
 
-libhttp_so=build/libhttp-9296ff29-0.1-pre.so
+libhttp_so=build/.libhttp.timestamp
 http_files=\
 		      src/http/lib.rs \
 		      src/http/buffer.rs \
@@ -28,9 +30,20 @@ http_files=\
 
 http: $(libhttp_so)
 
-$(libhttp_so): $(http_files)
+Makefile: configure Makefile.in
+	@echo "configure or Makefile.in changed, regenerating Makefile"
+	@DOING_RECONFIGURE=1 SSL_LIB="$(SSL_LIB)" SSL_CFG="$(SSL_CFG)" ./configure
+	@echo
+	@echo ======================
+	@echo Please run make again!
+	@echo ======================
+	@echo
+	@exit 1
+
+$(libhttp_so): Makefile $(http_files)
 	mkdir -p build/
 	$(RUSTC) $(RUSTFLAGS) src/http/lib.rs --out-dir=build
+	@touch build/.libhttp.timestamp
 
 all: http examples docs
 

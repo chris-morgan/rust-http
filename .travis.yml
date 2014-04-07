@@ -6,8 +6,14 @@ before_install:
   - sudo apt-get update
 install:
   - sudo apt-get install rust-nightly
+  - git clone https://github.com/sfackler/rust-openssl.git
+  - cd rust-openssl
+  - ./configure
+  - make
+  - cd ..
+  - mv rust-openssl ../
 script:
-  - make check
-  - make docs
+  - ./configure
+  - make all check docs
 after_script:
   - curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh
