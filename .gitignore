@@ -7,6 +7,9 @@ build/
 TAGS
 doc/http/
 doc/src/http/
+doc/.lock
+doc/*.js
+doc/*.css
 lib/
 .rust/
 Makefile
