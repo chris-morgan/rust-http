@@ -16,17 +16,12 @@ codegen_files=\
 
 libhttp_so=build/.libhttp.timestamp
 http_files=\
-		      src/http/lib.rs \
-		      src/http/buffer.rs \
-		      src/http/common.rs \
+		      $(wildcard src/http/*.rs) \
 		      src/http/generated/read_method.rs \
 		      src/http/generated/status.rs \
 		      $(wildcard src/http/headers/*.rs) \
 		      $(wildcard src/http/client/*.rs) \
-		      $(wildcard src/http/server/*.rs) \
-		      src/http/memstream.rs \
-		      src/http/method.rs \
-		      src/http/rfc2616.rs
+		      $(wildcard src/http/server/*.rs)
 
 http: $(libhttp_so)
 
