@@ -82,11 +82,7 @@ To compile rust-http without SSL support, just don’t put rust-openssl_ where i
 can find it. You'll then get an ``IoError { kind: InvalidInput, .. }`` if you
 try to make an SSL request (e.g. HTTPS).
 
-rust-http can theoretically have rust-nss_ provide SSL, but it's obsolete and
-broken. Plus the ``configure`` path guessing is probably wrong.
-
 .. _rust-openssl: https://github.com/sfackler/rust-openssl
-.. _rust-nss: https://github.com/mletterle/rust-nss
 
 Roadmap
 -------
