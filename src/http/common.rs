@@ -172,7 +172,7 @@ macro_rules! test_reads {
     ($func:ident $($value:expr => $expected:expr),*) => {{
         $(
             assert_eq!(
-                concat_idents!(read_, $func)(&mut MemReader::new($value.as_bytes().into_owned()),
+                concat_idents!(read_, $func)(&mut MemReader::new($value.bytes().collect::<Vec<_>>()),
                                              |b| b == 0).ok(),
                 $expected);
         )*

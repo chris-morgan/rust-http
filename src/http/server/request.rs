@@ -167,7 +167,7 @@ fn test_read_request_line() {
         ($value:expr => $expected:expr) => {{
             let expected = $expected;
             let mut stream = BufferedStream::new(
-                MemReaderFakeStream::new($value.as_bytes().to_owned()));
+                MemReaderFakeStream::new($value.bytes().collect::<Vec<_>>()));
             assert_eq!(RequestBuffer::new(&mut stream).read_request_line(), expected);
         }}
     )
