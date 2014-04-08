@@ -144,6 +144,9 @@ class RustServerRunner(ServerRunner):
             '--opt-level=3', self.source,
             #'--out-dir', self.build_dir,
             '-L', '../build', # '../build/{}/http/'.format(RustServerRunner.HOST),
+            # Just in case it was built with openssl support. This should
+            # really be done better, based on the Makefile contents.
+            '-L', '../../rust-openssl/build',
             # Sorry, this main.rs business needs me to do this, or use rustpkg:
             '-o', os.path.join(self.build_dir, self.bin_name))).communicate()
 
