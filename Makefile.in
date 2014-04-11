@@ -1,9 +1,12 @@
 SSL_LIB ?= %SSL_LIB%
 SSL_CFG ?= %SSL_CFG%
+ifdef SSL_LIB
+	SSL_CFG += -L "$(SSL_LIB)"
+endif
 RUSTC ?= rustc
 RUSTDOC ?= rustdoc
 RUSTPKG ?= rustpkg
-RUSTFLAGS ?= -O -L $(SSL_LIB) $(SSL_CFG)
+RUSTFLAGS ?= -O $(SSL_CFG)
 RUST_REPOSITORY ?= ../rust
 RUST_CTAGS ?= $(RUST_REPOSITORY)/src/etc/ctags.rust
 VERSION=0.1-pre
