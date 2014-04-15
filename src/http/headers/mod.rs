@@ -9,6 +9,7 @@ use std::io::IoResult;
 use time::{Tm, strptime};
 use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON};
 use method::Method;
+use std::strbuf::StrBuf;
 
 use self::serialization_utils::{normalise_header_name};
 
@@ -96,7 +97,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
         -> (Result<E, HeaderLineErr>, Option<u8>) {
     enum State { Start, ReadingName, NameFinished, GotCR }
     let mut state = Start;
-    let mut header_name = ~"";
+    let mut header_name = StrBuf::new();
     loop {
         state = match (state, reader.read_byte()) {
             (Start, Ok(b)) | (ReadingName, Ok(b)) if is_token_item(b) => {
@@ -115,7 +116,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
         }
     }
     let mut iter = HeaderValueByteIterator::new(reader);
-    let header = HeaderEnum::value_from_stream(normalise_header_name(header_name), &mut iter);
+    let header = HeaderEnum::value_from_stream(normalise_header_name(header_name.as_slice()), &mut iter);
     // Ensure that the entire header line is consumed (don't want to mess up next header!)
     for _ in iter { }
     match header {
@@ -206,7 +207,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     // TODO: can we have collect() implemented for ~str? That would negate the need for this.
     fn collect_to_str(&mut self) -> ~str {
         // TODO: be more efficient (char cast is a little unnecessary)
-        let mut out = ~"";
+        let mut out = StrBuf::new();
         // No point in trying out.reserve(self.size_hint()); I *know* I can't offer a useful hint.
         loop {
             match self.next() {
@@ -218,7 +219,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
         for b in self {
             out.push_char(b as char);
         }*/
-        out
+        out.into_owned()
     }
 
     /**
@@ -288,7 +289,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
         enum State { Start, Normal, Escaping }
 
         let mut state = if already_opened { Normal } else { Start };
-        let mut output = ~"";
+        let mut output = StrBuf::new();
         loop {
             match self.next() {
                 None => return None,
@@ -303,7 +304,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
                 }
             }
         }
-        Some(output)
+        Some(output.into_owned())
     }
 
     fn read_parameter(&mut self, already_read_semicolon: bool) -> Option<(~str, ~str)> {
@@ -361,7 +362,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     /// If no token begins at the current point of the header, ``None`` will also be returned.
     pub fn read_token_or_quoted_string(&mut self) -> Option<~str> {
 
-        let mut output = ~"";
+        let mut output = StrBuf::new();
         match self.next() {
             Some(b) if b == '"' as u8 => {
                 // It is a quoted-string.
@@ -377,7 +378,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
                         }
                     }
                 }
-                return Some(output);
+                return Some(output.into_owned());
             },
             Some(b) => self.next_byte = Some(b),
             None => return None,
@@ -403,7 +404,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
         if output.len() == 0 {
             None
         } else {
-            Some(output)
+            Some(output.into_owned())
         }
     }
 
@@ -411,7 +412,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     ///
     /// If no token begins at the current point of the header, ``None`` will also be returned.
     pub fn read_token(&mut self) -> Option<~str> {
-        let mut output = ~"";
+        let mut output = StrBuf::new();
         loop {
             match self.next() {
                 None => break,
@@ -432,7 +433,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
         if output.len() == 0 {
             None
         } else {
-            Some(output)
+            Some(output.into_owned())
         }
     }
 }
@@ -584,14 +585,14 @@ impl<T: CommaListHeaderConvertible> HeaderConvertible for Vec<T> {
     }
 
     fn http_value(&self) -> ~str {
-        let mut out = ~"";
+        let mut out = StrBuf::new();
         for (i, item) in self.iter().enumerate() {
             if i != 0 {
                 out.push_str(", ");
             }
             out.push_str(item.http_value())
         }
-        out
+        out.into_owned()
     }
 }
 
