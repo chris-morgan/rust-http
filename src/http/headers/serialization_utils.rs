@@ -4,6 +4,8 @@ use std::slice;
 use std::ascii::Ascii;
 use std::io::IoResult;
 use rfc2616::is_token;
+use std::strbuf::StrBuf;
+use std::str::Str;
 
 /// Normalise an HTTP header name.
 ///
@@ -119,22 +121,24 @@ pub fn comma_join(values: &[&str]) -> ~str {
 
 pub fn push_quality(mut s: ~str, quality: Option<f64>) -> ~str {
     // TODO: remove second and third decimal places if zero, and use a better quality type anyway
+    let mut sb = StrBuf::from_owned_str(s);
     match quality {
         Some(qvalue) => {
-            s.push_str(format!(";q={:0.3f}", qvalue))
+            sb.push_str(format!(";q={:0.3f}", qvalue))
         },
         None => (),
     }
-    s
+    sb.into_owned()
 }
 
 /// Push a ( token | quoted-string ) onto a string and return it again
 pub fn push_maybe_quoted_string(mut s: ~str, t: &str) -> ~str {
+    let mut sb = StrBuf::from_owned_str(s);
     if is_token(t) {
-        s.push_str(t);
-        s
+        sb.push_str(t);
+        sb.into_owned()
     } else {
-        push_quoted_string(s, t)
+        push_quoted_string(sb.into_owned(), t)
     }
 }
 
@@ -150,16 +154,17 @@ pub fn maybe_quoted_string(s: ~str) -> ~str {
 /// Quote a string, to turn it into an RFC 2616 quoted-string
 pub fn push_quoted_string(mut s: ~str, t: &str) -> ~str {
     let i = s.len();
-    s.reserve(i + t.len() + 2);
-    s.push_char('"');
+    let mut sb = StrBuf::from_owned_str(s);
+    sb.reserve(i + t.len() + 2);
+    sb.push_char('"');
     for c in t.chars() {
         if c == '\\' || c == '"' {
-            s.push_char('\\');
+            sb.push_char('\\');
         }
-        s.push_char(c);
+        sb.push_char(c);
     }
-    s.push_char('"');
-    s
+    sb.push_char('"');
+    sb.into_owned()
 }
 
 /// Quote a string, to turn it into an RFC 2616 quoted-string
@@ -172,7 +177,7 @@ pub fn unquote_string(s: &str) -> Option<~str> {
     enum State { Start, Normal, Escaping, End }
 
     let mut state = Start;
-    let mut output = ~"";
+    let mut output = StrBuf::new();
     // Strings with escapes cause overallocation, but it's not worth a second pass to avoid this!
     output.reserve(s.len() - 2);
     let mut iter = s.chars();
@@ -184,7 +189,7 @@ pub fn unquote_string(s: &str) -> Option<~str> {
             (Normal, Some(c)) if c == '"' => End,
             (Normal, Some(c)) | (Escaping, Some(c)) => { output.push_char(c); Normal },
             (End, Some(_)) => return None,
-            (End, None) => return Some(output),
+            (End, None) => return Some(output.into_owned()),
             (_, None) => return None,
         }
     }
@@ -201,15 +206,17 @@ pub fn maybe_unquote_string(s: &str) -> Option<~str> {
 
 // Takes and emits the ~str instead of the &mut str for a simpler, fluid interface
 pub fn push_parameter(mut s: ~str, k: &str, v: &str) -> ~str {
-    s.push_str(k);
-    s.push_char('=');
-    push_maybe_quoted_string(s, v)
+    let mut sb = StrBuf::from_owned_str(s);
+    sb.push_str(k);
+    sb.push_char('=');
+    push_maybe_quoted_string(sb.into_owned(), v)
 }
 
 pub fn push_parameters<K: Str, V: Str>(mut s: ~str, parameters: &[(K, V)]) -> ~str {
     for &(ref k, ref v) in parameters.iter() {
-        s.push_char(';');
-        s = push_parameter(s, k.as_slice(), v.as_slice());
+        let mut sb = StrBuf::from_owned_str(s);
+        sb.push_char(';');
+        s = push_parameter(sb.into_owned(), k.as_slice(), v.as_slice());
     }
     s
 }

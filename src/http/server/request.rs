@@ -7,6 +7,7 @@ use std::io::net::ip::SocketAddr;
 use std::io::net::tcp::TcpStream;
 use std::str;
 use std::fmt;
+use std::strbuf::StrBuf;
 use rfc2616::{CR, LF, SP};
 use headers;
 use buffer::BufferedStream;
@@ -60,7 +61,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
 
         // Good, we're now into the Request-URI. Bear in mind that as well as
         // ending in SP, it can for HTTP/0.9 end in CR LF or LF.
-        let mut raw_request_uri = ~"";
+        let mut raw_request_uri = StrBuf::new();
         loop {
             if next_byte == CR {
                 // For CR, we must have an LF immediately afterwards.
@@ -87,7 +88,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
         }
 
         // Now parse it into a RequestUri.
-        let request_uri = match from_str(raw_request_uri) {
+        let request_uri = match from_str(raw_request_uri.as_slice()) {
             Some(r) => r,
             None => return Err(status::BadRequest),
         };

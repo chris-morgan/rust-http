@@ -2,6 +2,7 @@
 
 use std::io::IoResult;
 use std::ascii::StrAsciiExt;
+use std::strbuf::StrBuf;
 
 #[deriving(Clone,Eq)]
 // RFC 2616: range-unit = bytes-unit | other-range-unit
@@ -59,14 +60,14 @@ impl super::HeaderConvertible for AcceptableRanges {
         match *self {
             NoAcceptableRanges => ~"none",
             RangeUnits(ref range_units) => {
-                let mut result = ~"";
+                let mut result = StrBuf::new();
                 for ru in range_units.iter() {
                     match ru {
                         &Bytes => result.push_str("bytes"),
                         &OtherRangeUnit(ref ru) => result.push_str(*ru),
                     }
                 }
-                result
+                result.into_owned()
             },
         }
     }
