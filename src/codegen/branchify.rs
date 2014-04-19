@@ -5,7 +5,7 @@ use std::io::IoResult;
 
 pub struct ParseBranch {
     matches: ~[u8],
-    result: Option<~str>,
+    result: Option<StrBuf>,
     children: ~[ParseBranch],
 }
 
@@ -45,7 +45,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> ~[ParseBranc
             },
             None => {
                 assert!(branch.result.is_none());
-                branch.result = Some(result.to_owned());
+                branch.result = Some(StrBuf::from_str(result));
             },
         }
     };
@@ -75,7 +75,7 @@ macro_rules! branchify(
 /// :param max_len: the maximum length a value may be before giving up and returning ``None``
 /// :param valid: the function call to if a byte ``b`` is valid
 /// :param unknown: the expression to call for an unknown value; in this string, ``{}`` will be
-///         replaced with an expression (literal or non-literal) evaluating to a ``~str`` (it is
+///         replaced with an expression (literal or non-literal) evaluating to a ``StrBuf`` (it is
 ///         ``{}`` only, not arbitrary format strings)
 pub fn generate_branchified_method(
         writer: &mut Writer,
@@ -105,7 +105,7 @@ pub fn generate_branchified_method(
                 Some(ref result) =>
                     w!(format!("    Ok(b) if b == SP => return Ok({}),", *result)),
                 None => w!(format!("    Ok(b) if b == SP => return Ok({}),",
-                                  unknown.replace("{}", format!("~\"{}\"", next_prefix)))),
+                                  unknown.replace("{}", format!("\"{}\"", next_prefix)))),
             }
             w!(format!("    Ok(b) if {} => (\"{}\", b),", valid, next_prefix));
             w!("    Ok(_) => return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"bad value\", detail: None }),");
@@ -130,11 +130,11 @@ pub fn generate_branchified_method(
     w!(       ("    Err(err) => return Err(err),"));
     w!(       ("};"));
     w!(       ("// OK, that didn't pan out. Let's read the rest and see what we get."));
-    w!(       ("let mut s = s.to_owned();"));
+    w!(       ("let mut s = StrBuf::from_str(s);"));
     w!(       ("s.push_char(next_byte as char);"));
     w!(       ("loop {"));
     w!(format!("    match {} \\{", read_call));
-    w!(format!("        Ok(b) if b == {} => return Ok({}),", end, unknown.replace("{}", "s")));
+    w!(format!("        Ok(b) if b == {} => return Ok({}),", end, unknown.replace("{}", "s.into_owned()")));
     w!(format!("        Ok(b) if {} => \\{", valid));
     w!(format!("            if s.len() == {} \\{", max_len));
     w!(       ("                // Too long; bad request"));

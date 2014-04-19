@@ -6,6 +6,7 @@ use std::io::{Stream, IoResult};
 use std::io::net::ip::SocketAddr;
 use std::io::net::tcp::TcpStream;
 use std::str;
+use std::strbuf::StrBuf;
 use std::fmt;
 use rfc2616::{CR, LF, SP};
 use headers;
@@ -60,7 +61,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
 
         // Good, we're now into the Request-URI. Bear in mind that as well as
         // ending in SP, it can for HTTP/0.9 end in CR LF or LF.
-        let mut raw_request_uri = ~"";
+        let mut raw_request_uri = StrBuf::new();
         loop {
             if next_byte == CR {
                 // For CR, we must have an LF immediately afterwards.
@@ -87,7 +88,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
         }
 
         // Now parse it into a RequestUri.
-        let request_uri = match from_str(raw_request_uri) {
+        let request_uri = match RequestUri::from_strbuf(raw_request_uri) {
             Some(r) => r,
             None => return Err(status::BadRequest),
         };
@@ -172,17 +173,17 @@ fn test_read_request_line() {
         }}
     )
 
-    tt!("GET / HTTP/1.1\n" => Ok((Get, AbsolutePath(~"/"), (1, 1))));
-    tt!("GET / HTTP/1.1\r\n" => Ok((Get, AbsolutePath(~"/"), (1, 1))));
-    tt!("OPTIONS /foo/bar HTTP/1.1\r\n" => Ok((Options, AbsolutePath(~"/foo/bar"), (1, 1))));
+    tt!("GET / HTTP/1.1\n" => Ok((Get, AbsolutePath(StrBuf::from_str("/")), (1, 1))));
+    tt!("GET / HTTP/1.1\r\n" => Ok((Get, AbsolutePath(StrBuf::from_str("/")), (1, 1))));
+    tt!("OPTIONS /foo/bar HTTP/1.1\r\n" => Ok((Options, AbsolutePath(StrBuf::from_str("/foo/bar")), (1, 1))));
     tt!("OPTIONS * HTTP/1.1\r\n" => Ok((Options, Star, (1, 1))));
     tt!("CONNECT example.com HTTP/1.1\r\n" => Ok((Connect,
-                                                Authority(~"example.com"),
+                                                Authority(StrBuf::from_str("example.com")),
                                                 (1, 1))));
-    tt!("FOO /\r\n" => Ok((ExtensionMethod(~"FOO"), AbsolutePath(~"/"), (0, 9))));
-    tt!("FOO /\n" => Ok((ExtensionMethod(~"FOO"), AbsolutePath(~"/"), (0, 9))));
+    tt!("FOO /\r\n" => Ok((ExtensionMethod(StrBuf::from_str("FOO")), AbsolutePath(StrBuf::from_str("/")), (0, 9))));
+    tt!("FOO /\n" => Ok((ExtensionMethod(StrBuf::from_str("FOO")), AbsolutePath(StrBuf::from_str("/")), (0, 9))));
     tt!("get    http://example.com/ HTTP/42.17\r\n"
-            => Ok((ExtensionMethod(~"get"),
+            => Ok((ExtensionMethod(StrBuf::from_str("get")),
                     AbsoluteUri(from_str("http://example.com/").unwrap()),
                     (42, 17))));
 
@@ -214,7 +215,7 @@ pub struct Request {
     pub headers: ~headers::request::HeaderCollection,
 
     /// The body of the request; empty for such methods as GET.
-    pub body: ~str,
+    pub body: StrBuf,
 
     /// The HTTP method for the request.
     pub method: Method,
@@ -254,31 +255,31 @@ pub enum RequestUri {
     ///
     /// TODO: this shouldn't be a string; it should be further parsed. `extra::net::url` has some
     /// stuff which might help, but isn't public.
-    AbsolutePath(~str),
+    AbsolutePath(StrBuf),
 
     /// 'The authority form is only used by the CONNECT method (CONNECT).'
     ///
     /// TODO: this shouldn't be a string; it should be further parsed. `extra::net::url` has some
     /// stuff which might help, but isn't public.
-    Authority(~str),
+    Authority(StrBuf),
 }
 
-impl FromStr for RequestUri {
+impl RequestUri {
     /// Interpret a RFC2616 Request-URI
-    fn from_str(request_uri: &str) -> Option<RequestUri> {
-        if request_uri == "*" {
+    fn from_strbuf(request_uri: StrBuf) -> Option<RequestUri> {
+        if request_uri == StrBuf::from_str("*") {
             Some(Star)
-        } else if request_uri.starts_with("/") {
-            Some(AbsolutePath(request_uri.to_owned()))
-        } else if request_uri.contains("/") {
+        } else if request_uri.as_slice()[0] as char == '/' {
+            Some(AbsolutePath(request_uri))
+        } else if request_uri.as_slice().contains("/") {
             // An authority can't have a slash in it
-            match from_str(request_uri) {
+            match from_str(request_uri.as_slice()) {
                 Some(url) => Some(AbsoluteUri(url)),
                 None => None,
             }
         } else {
             // TODO: parse authority with extra::net::url
-            Some(Authority(request_uri.to_owned()))
+            Some(Authority(request_uri))
         }
     }
 }
@@ -304,7 +305,7 @@ impl Request {
         let mut request = ~Request {
             remote_addr: buffer.stream.wrapped.peer_name().ok(),
             headers: ~headers::request::HeaderCollection::new(),
-            body: ~"",
+            body: StrBuf::new(),
             method: Options,
             request_uri: Star,
             close_connection: true,
@@ -373,8 +374,8 @@ impl Request {
         match request.headers.content_length {
             Some(length) => {
                 match buffer.read_exact(length) {
-                    Ok(body) => match str::from_utf8(body.as_slice()) {
-                        Some(body_str) => request.body = body_str.to_owned(),
+                    Ok(body) => match StrBuf::from_utf8(body) {
+                        Some(body_str) => request.body = body_str,
                         None => return (request, Err(status::BadRequest))
                     },
                     Err(_) => return (request, Err(status::BadRequest))

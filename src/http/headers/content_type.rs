@@ -5,12 +5,12 @@ use std::fmt;
 
 #[deriving(Clone, Eq)]
 pub struct MediaType {
-    pub type_: ~str,
-    pub subtype: ~str,
-    pub parameters: Vec<(~str, ~str)>,
+    pub type_: StrBuf,
+    pub subtype: StrBuf,
+    pub parameters: Vec<(StrBuf, StrBuf)>,
 }
 
-pub fn MediaType(type_: ~str, subtype: ~str, parameters: Vec<(~str, ~str)>) -> MediaType {
+pub fn MediaType(type_: StrBuf, subtype: StrBuf, parameters: Vec<(StrBuf, StrBuf)>) -> MediaType {
     MediaType {
         type_: type_,
         subtype: subtype,
@@ -21,14 +21,14 @@ pub fn MediaType(type_: ~str, subtype: ~str, parameters: Vec<(~str, ~str)>) -> M
 impl fmt::Show for MediaType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // Idea:
-        //let s = ~"";
+        //let s = StrBuf::new();
         //s.push_token(self.type_);
         //s.push_char('/');
         //s.push_token(self.subtype);
         //s.push_parameters(self.parameters);
         //s
         let s = format!("{}/{}", self.type_, self.subtype);
-        f.buf.write(push_parameters(s, self.parameters.as_slice()).as_bytes())
+        f.buf.write(push_parameters(StrBuf::from_str(s), self.parameters.as_slice()).as_bytes())
     }
 }
 
@@ -60,14 +60,14 @@ impl super::HeaderConvertible for MediaType {
     }
 
     fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
-        try!(writer.write_token(self.type_));
+        try!(writer.write_token(&self.type_));
         try!(writer.write(['/' as u8]));
-        try!(writer.write_token(self.subtype));
+        try!(writer.write_token(&self.subtype));
         writer.write_parameters(self.parameters.as_slice())
     }
 
-    fn http_value(&self) -> ~str {
-        self.to_str()
+    fn http_value(&self) -> StrBuf {
+        StrBuf::from_str(format!("{}", self))
     }
 }
 
@@ -75,13 +75,13 @@ impl super::HeaderConvertible for MediaType {
 fn test_content_type() {
     use headers::test_utils::{assert_conversion_correct, assert_interpretation_correct,
                               assert_invalid};
-    assert_conversion_correct("type/subtype", MediaType(~"type", ~"subtype", Vec::new()));
+    assert_conversion_correct("type/subtype", MediaType(StrBuf::from_str("type"), StrBuf::from_str("subtype"), Vec::new()));
     assert_conversion_correct("type/subtype;key=value",
-                              MediaType(~"type", ~"subtype", vec!((~"key", ~"value"))));
+                              MediaType(StrBuf::from_str("type"), StrBuf::from_str("subtype"), vec!((StrBuf::from_str("key"), StrBuf::from_str("value")))));
     assert_conversion_correct("type/subtype;key=value;q=0.1",
-            MediaType(~"type", ~"subtype", vec!((~"key", ~"value"), (~"q", ~"0.1"))));
+            MediaType(StrBuf::from_str("type"), StrBuf::from_str("subtype"), vec!((StrBuf::from_str("key"), StrBuf::from_str("value")), (StrBuf::from_str("q"), StrBuf::from_str("0.1")))));
     assert_interpretation_correct("type/subtype ; key = value ; q = 0.1",
-            MediaType(~"type", ~"subtype", vec!((~"key", ~"value"), (~"q", ~"0.1"))));
+            MediaType(StrBuf::from_str("type"), StrBuf::from_str("subtype"), vec!((StrBuf::from_str("key"), StrBuf::from_str("value")), (StrBuf::from_str("q"), StrBuf::from_str("0.1")))));
 
     assert_invalid::<MediaType>("");
     assert_invalid::<MediaType>("/");
