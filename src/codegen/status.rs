@@ -9,7 +9,7 @@
 
 use collections::hashmap::HashSet;
 use std::ascii::StrAsciiExt;
-use std::slice;
+use std::vec::Vec;
 use std::io::IoResult;
 use std::strbuf::StrBuf;
 use super::get_writer;
@@ -55,7 +55,7 @@ impl Status {
 /// "ImATeaPot"
 fn camel_case(msg: &str) -> StrBuf {
     let msg = msg.replace("-", " ").replace("'", "");
-    let mut result: ~[Ascii] = slice::with_capacity(msg.len());
+    let mut result: Vec<Ascii> = Vec::with_capacity(msg.len());
     let mut capitalise = true;
     for c in msg.chars() {
         let c = match capitalise {
