@@ -1,5 +1,4 @@
 use std::io::{MemReader, MemWriter};
-use std::str;
 use std::strbuf::StrBuf;
 use std::fmt;
 use std::vec::Vec;

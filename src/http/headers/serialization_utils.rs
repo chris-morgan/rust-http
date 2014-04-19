@@ -1,7 +1,5 @@
 //! Utility functions for assisting with conversion of headers from and to the HTTP text form.
 
-use std::slice;
-use std::ascii::Ascii;
 use std::io::IoResult;
 use std::strbuf::StrBuf;
 use rfc2616::is_token;
