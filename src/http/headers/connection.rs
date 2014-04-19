@@ -12,7 +12,7 @@ use headers::serialization_utils::normalise_header_name;
 /// normalised header case (e.g. "Keep-Alive").
 #[deriving(Clone, Eq)]
 pub enum Connection {
-    Token(~str),
+    Token(StrBuf),
     Close,
 }
 
@@ -31,7 +31,7 @@ impl super::HeaderConvertible for Connection {
     fn from_stream<R: Reader>(reader: &mut super::HeaderValueByteIterator<R>)
             -> Option<Connection> {
         let s = match reader.read_token() {
-            Some(s) => normalise_header_name(s),
+            Some(s) => normalise_header_name(&s),
             None => return None,
         };
         if s.as_slice() == "Close" {
@@ -48,10 +48,10 @@ impl super::HeaderConvertible for Connection {
         })
     }
 
-    fn http_value(&self) -> ~str {
+    fn http_value(&self) -> StrBuf {
         match *self {
-            Close => ~"close",
-            Token(ref s) => s.to_owned(),
+            Close => StrBuf::from_str("close"),
+            Token(ref s) => s.clone(),
         }
     }
 }
@@ -62,16 +62,16 @@ fn test_connection() {
                               assert_interpretation_correct,
                               assert_invalid};
     assert_conversion_correct("close", vec!(Close));
-    assert_conversion_correct("Foo", vec!(Token(~"Foo")));
-    assert_conversion_correct("Foo, Keep-Alive", vec!(Token(~"Foo"), Token(~"Keep-Alive")));
-    assert_conversion_correct("Foo, close", vec!(Token(~"Foo"), Close));
-    assert_conversion_correct("close, Bar", vec!(Close, Token(~"Bar")));
+    assert_conversion_correct("Foo", vec!(Token(StrBuf::from_str("Foo"))));
+    assert_conversion_correct("Foo, Keep-Alive", vec!(Token(StrBuf::from_str("Foo")), Token(StrBuf::from_str("Keep-Alive"))));
+    assert_conversion_correct("Foo, close", vec!(Token(StrBuf::from_str("Foo")), Close));
+    assert_conversion_correct("close, Bar", vec!(Close, Token(StrBuf::from_str("Bar"))));
 
     assert_interpretation_correct("close", vec!(Close));
-    assert_interpretation_correct("foo", vec!(Token(~"Foo")));
-    assert_interpretation_correct("close \r\n , keep-ALIVE", vec!(Close, Token(~"Keep-Alive")));
-    assert_interpretation_correct("foo,close", vec!(Token(~"Foo"), Close));
-    assert_interpretation_correct("close, bar", vec!(Close, Token(~"Bar")));
+    assert_interpretation_correct("foo", vec!(Token(StrBuf::from_str("Foo"))));
+    assert_interpretation_correct("close \r\n , keep-ALIVE", vec!(Close, Token(StrBuf::from_str("Keep-Alive"))));
+    assert_interpretation_correct("foo,close", vec!(Token(StrBuf::from_str("Foo")), Close));
+    assert_interpretation_correct("close, bar", vec!(Close, Token(StrBuf::from_str("Bar"))));
     assert_interpretation_correct("CLOSE", Close);
 
     assert_invalid::<Vec<Connection>>("foo bar");

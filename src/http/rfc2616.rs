@@ -97,8 +97,8 @@ pub fn is_token_item(o: u8) -> bool {
 }
 
 #[inline]
-pub fn is_token(s: &str) -> bool {
-    s.bytes().all(|b| is_token_item(b))
+pub fn is_token(s: &StrBuf) -> bool {
+    s.as_slice().bytes().all(|b| is_token_item(b))
 }
 
 
@@ -152,7 +152,7 @@ mod content_coding {
 
         // The encoding format produced by the common UNIX file compression program "compress". This
         // format is an adaptive Lempel-Ziv-Welch coding (LZW).
-        // 
+        //
         // Use of program names for the identification of encoding formats is not desirable and is
         // discouraged for future encodings. Their use here is representative of historical
         // practice, not good design. For compatibility with previous implementations of HTTP,
@@ -200,7 +200,7 @@ mod content_coding {
 
 mod transfer_coding {
     use std::fmt;
-    
+
     /// Transfer-coding value tokens
     // Identity is in RFC 2616 but is withdrawn in RFC 2616 errata ID 408
     // http://www.rfc-editor.org/errata_search.php?rfc=2616&eid=408

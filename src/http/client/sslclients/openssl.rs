@@ -12,8 +12,8 @@ use connecter::Connecter;
 ///
 /// This build was made with **OpenSSL** providing SSL support.
 pub enum NetworkStream {
-    priv NormalStream(TcpStream),
-    priv SslProtectedStream(SslStream<TcpStream>),
+    NormalStream(TcpStream),
+    SslProtectedStream(SslStream<TcpStream>),
 }
 
 impl Connecter for NetworkStream {

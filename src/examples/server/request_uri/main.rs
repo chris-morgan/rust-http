@@ -28,7 +28,7 @@ impl Server for RequestUriServer {
 
     fn handle_request(&self, r: &Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
-        w.headers.server = Some(~"Rust Thingummy/0.1-pre");
+        w.headers.server = Some(StrBuf::from_str("Rust Thingummy/0.1-pre"));
 
         match (&r.method, &r.request_uri) {
             (&Connect, _) => {
@@ -59,8 +59,8 @@ impl Server for RequestUriServer {
         }
 
         w.headers.content_type = Some(MediaType {
-            type_: ~"text",
-            subtype: ~"html",
+            type_: StrBuf::from_str("text"),
+            subtype: StrBuf::from_str("html"),
             parameters: Vec::new()
         });
 
@@ -72,11 +72,11 @@ impl Server for RequestUriServer {
                 // Actually, valid for the CONNECT method.
             },
             AbsoluteUri(ref url) => {
-                println!("absoluteURI, {}", url.to_str());
+                println!("absoluteURI, {}", url);
                 //path =
             },
             AbsolutePath(ref url) => {
-                println!("absolute path, {}", url.to_owned());
+                println!("absolute path, {}", url);
                 //w.status = a
             },
         }

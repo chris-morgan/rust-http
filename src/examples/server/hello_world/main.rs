@@ -23,11 +23,11 @@ impl Server for HelloWorldServer {
         w.headers.date = Some(time::now_utc());
         w.headers.content_length = Some(14);
         w.headers.content_type = Some(MediaType {
-            type_: ~"text",
-            subtype: ~"plain",
-            parameters: vec!((~"charset", ~"UTF-8"))
+            type_: StrBuf::from_str("text"),
+            subtype: StrBuf::from_str("plain"),
+            parameters: vec!((StrBuf::from_str("charset"), StrBuf::from_str("UTF-8")))
         });
-        w.headers.server = Some(~"Example");
+        w.headers.server = Some(StrBuf::from_str("Example"));
 
         w.write(bytes!("Hello, World!\n")).unwrap();
     }

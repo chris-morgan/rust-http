@@ -13,7 +13,7 @@ use headers::serialization_utils::{WriterUtil, push_parameters};
 #[deriving(Clone,Eq)]
 pub enum TransferCoding {
     Chunked,
-    TransferExtension(~str, Vec<(~str, ~str)>),
+    TransferExtension(StrBuf, Vec<(StrBuf, StrBuf)>),
 }
 
 impl super::CommaListHeaderConvertible for TransferCoding {}
@@ -23,7 +23,8 @@ impl super::HeaderConvertible for TransferCoding {
             -> Option<TransferCoding> {
         match reader.read_token() {
             Some(token) => {
-                let token = token.to_ascii_lower();
+                // XXX is this actually the best way to do this?
+                let token = StrBuf::from_str(token.as_slice().to_ascii_lower());
                 if token.as_slice() == "chunked" {
                     Some(Chunked)
                 } else {
@@ -41,18 +42,17 @@ impl super::HeaderConvertible for TransferCoding {
         match *self {
             Chunked => writer.write(bytes!("chunked")),
             TransferExtension(ref token, ref parameters) => {
-                try!(writer.write_token(*token));
+                try!(writer.write_token(token));
                 writer.write_parameters(parameters.as_slice())
             }
         }
     }
 
-    fn http_value(&self) -> ~str {
+    fn http_value(&self) -> StrBuf {
         match *self {
-            Chunked => ~"chunked",
+            Chunked => StrBuf::from_str("chunked"),
             TransferExtension(ref token, ref parameters) => {
-                let out = token.to_owned();
-                push_parameters(out, parameters.as_slice())
+                push_parameters(token.clone(), parameters.as_slice())
             }
         }
     }

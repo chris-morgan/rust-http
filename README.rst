@@ -158,7 +158,7 @@ In Rust, there is no base of code already following such a convention and so we
 are not tethered by this requirement. My own feeling on such matters is that
 for the static typing world having such things is not beneficial, anyway. Most
 web systems would have something along these lines, working with what is
-effectively a ``Map<~str, ~str>``::
+effectively a ``Map<StrBuf, StrBuf>``::
 
    response.headers["Date"] = format_http_time(now_utc())
 
@@ -170,7 +170,7 @@ thus?
    response.headers.date = now_utc()
 
 To be certain, there may be need for unknown headers; yet even there one
-probably does not wish a ``~str`` value, but a more suitable type implementing
+probably does not wish a ``StrBuf`` value, but a more suitable type implementing
 a trait to convert to and from an appropriate string.
 
 Note that with these examples the precise form is not determined.

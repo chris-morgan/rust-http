@@ -21,7 +21,7 @@ fn main() {
     };
 }
 
-fn make_and_print_request(url: ~str) {
+fn make_and_print_request(url: &str) {
     let request: RequestWriter = RequestWriter::new(Get, from_str(url).expect("Invalid URL :-("))
                                               .unwrap();
 

@@ -31,6 +31,6 @@ pub fn generate(output_dir: &Path) -> IoResult<()> {
         "SP",
         "MAX_METHOD_LEN",
         "is_token_item(b)",
-        "ExtensionMethod({})"));
+        "ExtensionMethod(StrBuf::from_str({}))"));
     writer.write(bytes!("}\n"))
 }
