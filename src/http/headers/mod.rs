@@ -798,19 +798,19 @@ mod test {
     /// Test `from_stream` with an RFC 822 time (updated by RFC 1123)
     #[test]
     fn test_from_stream_rfc822() {
-        assert_eq!(from_stream_with_str("Sun, 06 Nov 1994 08:49:37 GMT"), Some(sample_tm(~"UTC")));
+        assert_eq!(from_stream_with_str("Sun, 06 Nov 1994 08:49:37 GMT"), Some(sample_tm("UTC".to_owned())));
     }
 
     /// Test `from_stream` with an RFC 850 time (obsoleted by RFC 1036)
     #[test]
     fn test_from_stream_rfc850() {
-        assert_eq!(from_stream_with_str("Sunday, 06-Nov-94 08:49:37 GMT"), Some(sample_tm(~"UTC")));
+        assert_eq!(from_stream_with_str("Sunday, 06-Nov-94 08:49:37 GMT"), Some(sample_tm("UTC".to_owned())));
     }
 
     /// Test `from_stream` with the ANSI C's asctime() format
     #[test]
     fn test_from_stream_asctime() {
-        assert_eq!(from_stream_with_str("Sun Nov  6 08:49:37 1994"), Some(sample_tm(~"")));
+        assert_eq!(from_stream_with_str("Sun Nov  6 08:49:37 1994"), Some(sample_tm("".to_owned())));
     }
 
     /// Test `from_stream` with the ANSI C's asctime() format on a single digit
@@ -833,7 +833,7 @@ mod test {
     /// because a double-digit day doesn't have that padding space.
     #[test]
     fn test_from_stream_asctime_double_digit_date() {
-        let mut tm = sample_tm(~"");
+        let mut tm = sample_tm("".to_owned());
         tm.tm_mday = 13;
         assert_eq!(from_stream_with_str("Sun Nov 13 08:49:37 1994"), Some(tm));
     }
