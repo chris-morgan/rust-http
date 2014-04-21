@@ -9,7 +9,6 @@
 
 use collections::hashmap::HashSet;
 use std::ascii::StrAsciiExt;
-use std::slice;
 use std::io::IoResult;
 use super::get_writer;
 
@@ -35,12 +34,14 @@ fn StatusN(code: uint, reason: &'static str) -> HeadingOrStatus {
 }
 
 impl Status {
-    fn ident(&self) -> ~str {
+    fn ident(&self) -> StrBuf {
         camel_case(self.reason)
     }
 
-    fn padded_ident(&self) -> ~str {
-        self.ident() + " ".repeat(unsafe { longest_ident } - self.ident().len())
+    fn padded_ident(&self) -> StrBuf {
+        let mut result = self.ident();
+        result.push_str(self.reason_padding_spaces());
+        result
     }
 
     fn reason_padding_spaces(&self) -> ~str {
@@ -50,22 +51,22 @@ impl Status {
 
 /// >>> camel_case("I'm a Tea-pot")
 /// "ImATeaPot"
-fn camel_case(msg: &str) -> ~str {
+fn camel_case(msg: &str) -> StrBuf {
     let msg = msg.replace("-", " ").replace("'", "");
-    let mut result: ~[Ascii] = slice::with_capacity(msg.len());
+    let mut result = StrBuf::with_capacity(msg.len());
     let mut capitalise = true;
     for c in msg.chars() {
         let c = match capitalise {
-            true => c.to_ascii().to_upper(),
-            false => c.to_ascii().to_lower(),
+            true => c.to_ascii().to_upper().to_char(),
+            false => c.to_ascii().to_lower().to_char(),
         };
         // For a space, capitalise the next char
-        capitalise = c.to_byte() == (' ' as u8);
+        capitalise = c == ' ';
         if !capitalise {  // And also, for a space, don't keep it
-            result.push(c);
+            result.push_char(c);
         }
     }
-    result.into_str()
+    result
 }
 
 static mut longest_ident: uint = 0;
@@ -177,7 +178,7 @@ pub enum Status {
     }
 
     try!(out.write("
-    UnregisteredStatus(u16, ~str),
+    UnregisteredStatus(u16, StrBuf),
 }
 
 impl Status {
@@ -199,13 +200,13 @@ impl Status {
     }
 
     /// Get the reason phrase
-    pub fn reason(&self) -> ~str {
+    pub fn reason(&self) -> StrBuf {
         match *self {
 ".as_bytes()));
     for &entry in entries.iter() {
         match entry {
             Heading(heading) => try!(write!(out, "\n            // {}\n", heading)),
-            Status(status) => try!(write!(out, "            {} => ~\"{}\",\n",
+            Status(status) => try!(write!(out, "            {} => StrBuf::from_str(\"{}\"),\n",
                                                 status.padded_ident(), status.reason))
         }
     }
@@ -215,8 +216,8 @@ impl Status {
     }
 
     /// Get a status from the code and reason
-    pub fn from_code_and_reason(status: u16, reason: ~str) -> Status {
-        let reason_lower = reason.to_ascii_lower();
+    pub fn from_code_and_reason(status: u16, reason: StrBuf) -> Status {
+        let reason_lower = reason.as_slice().to_ascii_lower();
         match (status, reason_lower.as_slice()) {
 ".as_bytes()));
     for &entry in entries.iter() {

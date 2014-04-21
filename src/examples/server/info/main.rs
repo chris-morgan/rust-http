@@ -24,11 +24,11 @@ impl Server for InfoServer {
     fn handle_request(&self, r: &Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
         w.headers.content_type = Some(MediaType {
-            type_: ~"text",
-            subtype: ~"html",
-            parameters: vec!((~"charset", ~"UTF-8"))
+            type_: StrBuf::from_str("text"),
+            subtype: StrBuf::from_str("html"),
+            parameters: vec!((StrBuf::from_str("charset"), StrBuf::from_str("UTF-8")))
         });
-        w.headers.server = Some(~"Rust Thingummy/0.0-pre");
+        w.headers.server = Some(StrBuf::from_str("Rust Thingummy/0.0-pre"));
         w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>")).unwrap();
 
         w.write(bytes!("<h1>Request</h1>")).unwrap();

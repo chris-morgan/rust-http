@@ -104,17 +104,16 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
     pub fn new(method: Method, url: Url) -> IoResult<RequestWriter<S>> {
         RequestWriter::new_request(method, url, false, true)
     }
-    
+
     pub fn new_request(method: Method, url: Url, use_ssl: bool, auto_detect_ssl: bool) -> IoResult<RequestWriter<S>> {
         let host = match url.port {
             None => Host {
-                name: url.host.to_owned(),
+                name: StrBuf::from_str(url.host),
                 port: None,
             },
             Some(ref p) => Host {
-                name: url.host.to_owned(),
+                name: StrBuf::from_str(url.host),
                 port: Some(from_str(*p).expect("You didn’t aught to give a bad port!")),
-                // TODO: fix extra::url to use u16 rather than ~str
             },
         };
 

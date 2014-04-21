@@ -7,7 +7,7 @@ use std::ascii::StrAsciiExt;
 // RFC 2616: range-unit = bytes-unit | other-range-unit
 pub enum RangeUnit {
     Bytes,                 // bytes-unit       = "bytes"
-    OtherRangeUnit(~str),  // other-range-unit = token
+    OtherRangeUnit(StrBuf),  // other-range-unit = token
 }
 
 #[deriving(Clone,Eq)]
@@ -27,11 +27,11 @@ impl super::HeaderConvertible for AcceptableRanges {
         loop {
             match reader.read_token() {
                 Some(token) => {
-                    let token = token.to_ascii_lower();
+                    let token = token.as_slice().to_ascii_lower();
                     match token.as_slice() {
                         "bytes" => range_units.push(Bytes),
                         "none" if range_units.len() == 0 => return Some(NoAcceptableRanges),
-                        _ => range_units.push(OtherRangeUnit(token)),
+                        _ => range_units.push(OtherRangeUnit(StrBuf::from_str(token))),
                     }
                 },
                 None => break,
@@ -55,15 +55,15 @@ impl super::HeaderConvertible for AcceptableRanges {
         }
     }
 
-    fn http_value(&self) -> ~str {
+    fn http_value(&self) -> StrBuf {
         match *self {
-            NoAcceptableRanges => ~"none",
+            NoAcceptableRanges => StrBuf::from_str("none"),
             RangeUnits(ref range_units) => {
-                let mut result = ~"";
+                let mut result = StrBuf::new();
                 for ru in range_units.iter() {
                     match ru {
                         &Bytes => result.push_str("bytes"),
-                        &OtherRangeUnit(ref ru) => result.push_str(*ru),
+                        &OtherRangeUnit(ref ru) => result.push_str(ru.as_slice()),
                     }
                 }
                 result

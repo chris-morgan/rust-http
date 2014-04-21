@@ -12,7 +12,7 @@ use connecter::Connecter;
 ///
 /// (To build with SSL support, use ``--cfg openssl`` or ``--cfg nss``.)
 pub enum NetworkStream {
-    priv NormalStream(TcpStream),
+    NormalStream(TcpStream),
 }
 
 impl Connecter for NetworkStream {

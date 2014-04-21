@@ -1,8 +1,7 @@
 //! Utility functions for assisting with conversion of headers from and to the HTTP text form.
 
-use std::slice;
-use std::ascii::Ascii;
 use std::io::IoResult;
+use std::strbuf::StrBuf;
 use rfc2616::is_token;
 
 /// Normalise an HTTP header name.
@@ -18,22 +17,22 @@ use rfc2616::is_token;
 /// # Examples
 ///
 /// ~~~ .{rust}
-/// assert_eq!(normalise_header_name("foo-bar"), "Foo-Bar");
-/// assert_eq!(normalise_header_name("FOO-BAR"), "Foo-Bar");
+/// assert_eq!(normalise_header_name(StrBuf::from_str("foo-bar"), "Foo-Bar");
+/// assert_eq!(normalise_header_name(StrBuf::from_str("FOO-BAR"), "Foo-Bar");
 /// ~~~
-pub fn normalise_header_name(name: &str) -> ~str {
-    let mut result: ~[Ascii] = slice::with_capacity(name.len());
+pub fn normalise_header_name(name: &StrBuf) -> StrBuf {
+    let mut result: StrBuf = StrBuf::with_capacity(name.len());
     let mut capitalise = true;
-    for c in name.chars() {
+    for c in name.as_slice().chars() {
         let c = match capitalise {
             true => c.to_ascii().to_upper(),
             false => c.to_ascii().to_lower(),
         };
-        result.push(c);
+        result.push_char(c.to_char());
         // ASCII 45 is '-': in that case, capitalise the next char
         capitalise = c.to_byte() == 45;
     }
-    result.into_str()
+    result
 }
 
 /// Split a value on commas, as is common for HTTP headers.
@@ -45,8 +44,8 @@ pub fn normalise_header_name(name: &str) -> ~str {
 /// ~~~ .{rust}
 /// assert_eq!(comma_split(" en;q=0.8, en_AU, text/html"), ["en;q=0.8", "en_AU", "text/html"])
 /// ~~~
-pub fn comma_split(value: &str) -> Vec<~str> {
-    value.split(',').map(|w| w.trim_left().to_owned()).collect()
+pub fn comma_split(value: &str) -> Vec<StrBuf> {
+    value.split(',').map(|w| StrBuf::from_str(w.trim_left())).collect()
 }
 
 pub fn comma_split_iter<'a>(value: &'a str)
@@ -55,7 +54,7 @@ pub fn comma_split_iter<'a>(value: &'a str)
 }
 
 pub trait WriterUtil: Writer {
-    fn write_maybe_quoted_string(&mut self, s: &str) -> IoResult<()> {
+    fn write_maybe_quoted_string(&mut self, s: &StrBuf) -> IoResult<()> {
         if is_token(s) {
             self.write(s.as_bytes())
         } else {
@@ -63,27 +62,28 @@ pub trait WriterUtil: Writer {
         }
     }
 
-    fn write_quoted_string(&mut self, s: &str) -> IoResult<()> {
+    fn write_quoted_string(&mut self, s: &StrBuf) -> IoResult<()> {
         try!(self.write(['"' as u8]));
-        for b in s.bytes() {
-            if b == '\\' as u8 || b == '"' as u8 {
+        for b in s.as_bytes().iter() {
+            if *b == '\\' as u8 || *b == '"' as u8 {
                 try!(self.write(['\\' as u8]));
             }
-            try!(self.write([b]));
+            // XXX This doesn't seem right.
+            try!(self.write(&[*b]));
         }
         self.write(['"' as u8])
     }
 
-    fn write_parameter(&mut self, k: &str, v: &str) -> IoResult<()> {
+    fn write_parameter(&mut self, k: &str, v: &StrBuf) -> IoResult<()> {
         try!(self.write(k.as_bytes()));
         try!(self.write(['=' as u8]));
         self.write_maybe_quoted_string(v)
     }
 
-    fn write_parameters<K: Str, V: Str>(&mut self, parameters: &[(K, V)]) -> IoResult<()> {
+    fn write_parameters(&mut self, parameters: &[(StrBuf, StrBuf)]) -> IoResult<()> {
         for &(ref k, ref v) in parameters.iter() {
             try!(self.write([';' as u8]));
-            try!(self.write_parameter(k.as_slice(), v.as_slice()));
+            try!(self.write_parameter(k.as_slice(), v));
         }
         Ok(())
     }
@@ -97,7 +97,7 @@ pub trait WriterUtil: Writer {
     }
 
     #[inline]
-    fn write_token(&mut self, token: &str) -> IoResult<()> {
+    fn write_token(&mut self, token: &StrBuf) -> IoResult<()> {
         assert!(is_token(token));
         self.write(token.as_bytes())
     }
@@ -113,25 +113,25 @@ impl<W: Writer> WriterUtil for W { }
 /// assert_eq!(comma_split(["en;q=0.8", "en_AU", "text/html"]), "en;q=0.8, en_AU, text/html")
 /// ~~~
 #[inline]
-pub fn comma_join(values: &[&str]) -> ~str {
-    values.connect(", ")
-}
-
-pub fn push_quality(mut s: ~str, quality: Option<f64>) -> ~str {
-    // TODO: remove second and third decimal places if zero, and use a better quality type anyway
-    match quality {
-        Some(qvalue) => {
-            s.push_str(format!(";q={:0.3f}", qvalue))
-        },
-        None => (),
+pub fn comma_join(values: &[StrBuf]) -> StrBuf {
+    let mut out = StrBuf::new();
+    let mut iter = values.iter();
+    match iter.next() {
+        Some(s) => out.push_str(s.as_slice()),
+        None => return out
     }
-    s
+
+    for value in iter {
+        out.push_str(", ");
+        out.push_str(value.as_slice());
+    }
+    out
 }
 
 /// Push a ( token | quoted-string ) onto a string and return it again
-pub fn push_maybe_quoted_string(mut s: ~str, t: &str) -> ~str {
+pub fn push_maybe_quoted_string(mut s: StrBuf, t: &StrBuf) -> StrBuf {
     if is_token(t) {
-        s.push_str(t);
+        s.push_str(t.as_slice());
         s
     } else {
         push_quoted_string(s, t)
@@ -139,20 +139,20 @@ pub fn push_maybe_quoted_string(mut s: ~str, t: &str) -> ~str {
 }
 
 /// Make a string into a ( token | quoted-string ), preferring a token
-pub fn maybe_quoted_string(s: ~str) -> ~str {
+pub fn maybe_quoted_string(s: &StrBuf) -> StrBuf {
     if is_token(s) {
-        s
+        s.clone()
     } else {
         quoted_string(s)
     }
 }
 
 /// Quote a string, to turn it into an RFC 2616 quoted-string
-pub fn push_quoted_string(mut s: ~str, t: &str) -> ~str {
+pub fn push_quoted_string(mut s: StrBuf, t: &StrBuf) -> StrBuf {
     let i = s.len();
-    s.reserve(i + t.len() + 2);
+    s.reserve(t.len() + i + 2);
     s.push_char('"');
-    for c in t.chars() {
+    for c in t.as_slice().chars() {
         if c == '\\' || c == '"' {
             s.push_char('\\');
         }
@@ -163,19 +163,19 @@ pub fn push_quoted_string(mut s: ~str, t: &str) -> ~str {
 }
 
 /// Quote a string, to turn it into an RFC 2616 quoted-string
-pub fn quoted_string(s: &str) -> ~str {
-    push_quoted_string(~"", s)
+pub fn quoted_string(s: &StrBuf) -> StrBuf {
+    push_quoted_string(StrBuf::new(), s)
 }
 
 /// Parse a quoted-string. Returns ``None`` if the string is not a valid quoted-string.
-pub fn unquote_string(s: &str) -> Option<~str> {
+pub fn unquote_string(s: &StrBuf) -> Option<StrBuf> {
     enum State { Start, Normal, Escaping, End }
 
     let mut state = Start;
-    let mut output = ~"";
+    let mut output = StrBuf::new();
     // Strings with escapes cause overallocation, but it's not worth a second pass to avoid this!
     output.reserve(s.len() - 2);
-    let mut iter = s.chars();
+    let mut iter = s.as_slice().chars();
     loop {
         state = match (state, iter.next()) {
             (Start, Some(c)) if c == '"' => Normal,
@@ -191,25 +191,26 @@ pub fn unquote_string(s: &str) -> Option<~str> {
 }
 
 /// Parse a ( token | quoted-string ). Returns ``None`` if it is not valid.
-pub fn maybe_unquote_string(s: &str) -> Option<~str> {
+pub fn maybe_unquote_string(s: &StrBuf) -> Option<StrBuf> {
     if is_token(s) {
-        Some(s.to_owned())
+        Some(s.clone())
     } else {
         unquote_string(s)
     }
 }
 
-// Takes and emits the ~str instead of the &mut str for a simpler, fluid interface
-pub fn push_parameter(mut s: ~str, k: &str, v: &str) -> ~str {
-    s.push_str(k);
+// Takes and emits the StrBuf instead of the &mut str for a simpler, fluid interface
+pub fn push_parameter(mut s: StrBuf, k: &StrBuf, v: &StrBuf) -> StrBuf {
+    s.push_str(k.as_slice());
     s.push_char('=');
     push_maybe_quoted_string(s, v)
 }
 
-pub fn push_parameters<K: Str, V: Str>(mut s: ~str, parameters: &[(K, V)]) -> ~str {
+// pub fn push_parameters<K: Str, V: Str>(mut s: StrBuf, parameters: &[(K, V)]) -> StrBuf {
+pub fn push_parameters(mut s: StrBuf, parameters: &[(StrBuf, StrBuf)]) -> StrBuf {
     for &(ref k, ref v) in parameters.iter() {
         s.push_char(';');
-        s = push_parameter(s, k.as_slice(), v.as_slice());
+        s = push_parameter(s, k, v);
     }
     s
 }
@@ -217,36 +218,35 @@ pub fn push_parameters<K: Str, V: Str>(mut s: ~str, parameters: &[(K, V)]) -> ~s
 #[cfg(test)]
 mod test {
     use super::{normalise_header_name, comma_split, comma_split_iter, comma_join,
-                push_quality, push_parameter, push_parameters,
-                push_maybe_quoted_string, push_quoted_string, maybe_quoted_string, quoted_string,
-                unquote_string, maybe_unquote_string};
+                push_parameter, push_parameters, push_maybe_quoted_string, push_quoted_string,
+                maybe_quoted_string, quoted_string, unquote_string, maybe_unquote_string};
 
     #[test]
     #[should_fail]
     fn test_normalise_header_name_fail() {
-        normalise_header_name("foö-bar");
+        normalise_header_name(&StrBuf::from_str("foö-bar"));
     }
 
     #[test]
     fn test_normalise_header_name() {
-        assert_eq!(normalise_header_name("foo-bar"), ~"Foo-Bar");
-        assert_eq!(normalise_header_name("FOO-BAR"), ~"Foo-Bar");
+        assert_eq!(normalise_header_name(&StrBuf::from_str("foo-bar")), StrBuf::from_str("Foo-Bar"));
+        assert_eq!(normalise_header_name(&StrBuf::from_str("FOO-BAR")), StrBuf::from_str("Foo-Bar"));
     }
 
     #[test]
     fn test_comma_split() {
         // Simple 0-element case
-        assert_eq!(comma_split(""), vec!(~""));
+        assert_eq!(comma_split(""), vec!(StrBuf::new()));
         // Simple 1-element case
-        assert_eq!(comma_split("foo"), vec!(~"foo"));
+        assert_eq!(comma_split("foo"), vec!(StrBuf::from_str("foo")));
         // Simple 2-element case
-        assert_eq!(comma_split("foo,bar"), vec!(~"foo", ~"bar"));
+        assert_eq!(comma_split("foo,bar"), vec!(StrBuf::from_str("foo"), StrBuf::from_str("bar")));
         // Simple >2-element case
-        assert_eq!(comma_split("foo,bar,baz,quux"), vec!(~"foo", ~"bar", ~"baz", ~"quux"));
+        assert_eq!(comma_split("foo,bar,baz,quux"), vec!(StrBuf::from_str("foo"), StrBuf::from_str("bar"), StrBuf::from_str("baz"), StrBuf::from_str("quux")));
         // Doesn't handle quoted-string intelligently
-        assert_eq!(comma_split("\"foo,bar\",baz"), vec!(~"\"foo", ~"bar\"", ~"baz"));
+        assert_eq!(comma_split("\"foo,bar\",baz"), vec!(StrBuf::from_str("\"foo"), StrBuf::from_str("bar\""), StrBuf::from_str("baz")));
         // Doesn't do right trimming, but does left
-        assert_eq!(comma_split(" foo;q=0.8 , bar/* "), vec!(~"foo;q=0.8 ", ~"bar/* "));
+        assert_eq!(comma_split(" foo;q=0.8 , bar/* "), vec!(StrBuf::from_str("foo;q=0.8 "), StrBuf::from_str("bar/* ")));
     }
 
     #[test]
@@ -268,88 +268,79 @@ mod test {
 
     #[test]
     fn test_comma_join() {
-        assert_eq!(comma_join([""]), ~"");
-        assert_eq!(comma_join(["foo"]), ~"foo");
-        assert_eq!(comma_join(["foo", "bar"]), ~"foo, bar");
-        assert_eq!(comma_join(["foo", "bar", "baz", "quux"]), ~"foo, bar, baz, quux");
-        assert_eq!(comma_join(["\"foo,bar\"", "baz"]), ~"\"foo,bar\", baz");
-        assert_eq!(comma_join([" foo;q=0.8 ", "bar/* "]), ~" foo;q=0.8 , bar/* ");
-    }
-
-    #[test]
-    fn test_push_quality() {
-        assert_eq!(push_quality(~"foo", None), ~"foo");
-        assert_eq!(push_quality(~"foo", Some(0f64)), ~"foo;q=0.000");
-        assert_eq!(push_quality(~"foo", Some(0.1f64)), ~"foo;q=0.100");
-        assert_eq!(push_quality(~"foo", Some(0.123456789f64)), ~"foo;q=0.123");
-        assert_eq!(push_quality(~"foo", Some(1f64)), ~"foo;q=1.000");
+        assert_eq!(comma_join([StrBuf::new()]), StrBuf::new());
+        assert_eq!(comma_join([StrBuf::from_str("foo")]), StrBuf::from_str("foo"));
+        assert_eq!(comma_join([StrBuf::from_str("foo"), StrBuf::from_str("bar")]), StrBuf::from_str("foo, bar"));
+        assert_eq!(comma_join([StrBuf::from_str("foo"), StrBuf::from_str("bar"), StrBuf::from_str("baz"), StrBuf::from_str("quux")]), StrBuf::from_str("foo, bar, baz, quux"));
+        assert_eq!(comma_join([StrBuf::from_str("\"foo,bar\""), StrBuf::from_str("baz")]), StrBuf::from_str("\"foo,bar\", baz"));
+        assert_eq!(comma_join([StrBuf::from_str(" foo;q=0.8 "), StrBuf::from_str("bar/* ")]), StrBuf::from_str(" foo;q=0.8 , bar/* "));
     }
 
     #[test]
     fn test_push_maybe_quoted_string() {
-        assert_eq!(push_maybe_quoted_string(~"foo,", "bar"), ~"foo,bar");
-        assert_eq!(push_maybe_quoted_string(~"foo,", "bar/baz"), ~"foo,\"bar/baz\"");
+        assert_eq!(push_maybe_quoted_string(StrBuf::from_str("foo,"), &StrBuf::from_str("bar")), StrBuf::from_str("foo,bar"));
+        assert_eq!(push_maybe_quoted_string(StrBuf::from_str("foo,"), &StrBuf::from_str("bar/baz")), StrBuf::from_str("foo,\"bar/baz\""));
     }
 
     #[test]
     fn test_maybe_quoted_string() {
-        assert_eq!(maybe_quoted_string(~"bar"), ~"bar");
-        assert_eq!(maybe_quoted_string(~"bar/baz \"yay\""), ~"\"bar/baz \\\"yay\\\"\"");
+        assert_eq!(maybe_quoted_string(&StrBuf::from_str("bar")), StrBuf::from_str("bar"));
+        assert_eq!(maybe_quoted_string(&StrBuf::from_str("bar/baz \"yay\"")), StrBuf::from_str("\"bar/baz \\\"yay\\\"\""));
     }
 
     #[test]
     fn test_push_quoted_string() {
-        assert_eq!(push_quoted_string(~"foo,", "bar"), ~"foo,\"bar\"");
-        assert_eq!(push_quoted_string(~"foo,", "bar/baz \"yay\\\""),
-                   ~"foo,\"bar/baz \\\"yay\\\\\\\"\"");
+        assert_eq!(push_quoted_string(StrBuf::from_str("foo,"), &StrBuf::from_str("bar")), StrBuf::from_str("foo,\"bar\""));
+        assert_eq!(push_quoted_string(StrBuf::from_str("foo,"), &StrBuf::from_str("bar/baz \"yay\\\"")),
+                   StrBuf::from_str("foo,\"bar/baz \\\"yay\\\\\\\"\""));
     }
 
     #[test]
     fn test_quoted_string() {
-        assert_eq!(quoted_string("bar"), ~"\"bar\"");
-        assert_eq!(quoted_string("bar/baz \"yay\\\""), ~"\"bar/baz \\\"yay\\\\\\\"\"");
+        assert_eq!(quoted_string(&StrBuf::from_str("bar")), StrBuf::from_str("\"bar\""));
+        assert_eq!(quoted_string(&StrBuf::from_str("bar/baz \"yay\\\"")), StrBuf::from_str("\"bar/baz \\\"yay\\\\\\\"\""));
     }
 
     #[test]
     fn test_unquote_string() {
-        assert_eq!(unquote_string("bar"), None);
-        assert_eq!(unquote_string("\"bar\""), Some(~"bar"));
-        assert_eq!(unquote_string("\"bar/baz \\\"yay\\\\\\\"\""), Some(~"bar/baz \"yay\\\""));
-        assert_eq!(unquote_string("\"bar"), None);
-        assert_eq!(unquote_string(" \"bar\""), None);
-        assert_eq!(unquote_string("\"bar\" "), None);
-        assert_eq!(unquote_string("\"bar\" \"baz\""), None);
-        assert_eq!(unquote_string("\"bar/baz \\\"yay\\\\\"\""), None);
+        assert_eq!(unquote_string(&StrBuf::from_str("bar")), None);
+        assert_eq!(unquote_string(&StrBuf::from_str("\"bar\"")), Some(StrBuf::from_str("bar")));
+        assert_eq!(unquote_string(&StrBuf::from_str("\"bar/baz \\\"yay\\\\\\\"\"")), Some(StrBuf::from_str("bar/baz \"yay\\\"")));
+        assert_eq!(unquote_string(&StrBuf::from_str("\"bar")), None);
+        assert_eq!(unquote_string(&StrBuf::from_str(" \"bar\"")), None);
+        assert_eq!(unquote_string(&StrBuf::from_str("\"bar\" ")), None);
+        assert_eq!(unquote_string(&StrBuf::from_str("\"bar\" \"baz\"")), None);
+        assert_eq!(unquote_string(&StrBuf::from_str("\"bar/baz \\\"yay\\\\\"\"")), None);
     }
 
     #[test]
     fn test_maybe_unquote_string() {
-        assert_eq!(maybe_unquote_string("bar"), Some(~"bar"));
-        assert_eq!(maybe_unquote_string("\"bar\""), Some(~"bar"));
-        assert_eq!(maybe_unquote_string("\"bar/baz \\\"yay\\\\\\\"\""), Some(~"bar/baz \"yay\\\""));
-        assert_eq!(maybe_unquote_string("\"bar"), None);
-        assert_eq!(maybe_unquote_string(" \"bar\""), None);
-        assert_eq!(maybe_unquote_string("\"bar\" "), None);
-        assert_eq!(maybe_unquote_string("\"bar\" \"baz\""), None);
-        assert_eq!(maybe_unquote_string("\"bar/baz \\\"yay\\\\\"\""), None);
+        assert_eq!(maybe_unquote_string(&StrBuf::from_str("bar")), Some(StrBuf::from_str("bar")));
+        assert_eq!(maybe_unquote_string(&StrBuf::from_str("\"bar\"")), Some(StrBuf::from_str("bar")));
+        assert_eq!(maybe_unquote_string(&StrBuf::from_str("\"bar/baz \\\"yay\\\\\\\"\"")), Some(StrBuf::from_str("bar/baz \"yay\\\"")));
+        assert_eq!(maybe_unquote_string(&StrBuf::from_str("\"bar")), None);
+        assert_eq!(maybe_unquote_string(&StrBuf::from_str(" \"bar\"")), None);
+        assert_eq!(maybe_unquote_string(&StrBuf::from_str("\"bar\" ")), None);
+        assert_eq!(maybe_unquote_string(&StrBuf::from_str("\"bar\" \"baz\"")), None);
+        assert_eq!(maybe_unquote_string(&StrBuf::from_str("\"bar/baz \\\"yay\\\\\"\"")), None);
     }
 
     #[test]
     fn test_push_parameter() {
-        assert_eq!(push_parameter(~"foo", "bar", "baz"), ~"foobar=baz");
-        assert_eq!(push_parameter(~"foo", "bar", "baz/quux"), ~"foobar=\"baz/quux\"");
+        assert_eq!(push_parameter(StrBuf::from_str("foo"), &StrBuf::from_str("bar"), &StrBuf::from_str("baz")), StrBuf::from_str("foobar=baz"));
+        assert_eq!(push_parameter(StrBuf::from_str("foo"), &StrBuf::from_str("bar"), &StrBuf::from_str("baz/quux")), StrBuf::from_str("foobar=\"baz/quux\""));
     }
 
     #[test]
     fn test_push_parameters() {
-        assert_eq!(push_parameters::<&str, &str>(~"foo", []), ~"foo");
-        assert_eq!(push_parameters(~"foo", [("bar", "baz")]), ~"foo;bar=baz");
-        assert_eq!(push_parameters(~"foo", [("bar", "baz/quux")]), ~"foo;bar=\"baz/quux\"");
-        assert_eq!(push_parameters(~"foo", [("bar", "baz"), ("quux", "fuzz")]),
-                   ~"foo;bar=baz;quux=fuzz");
-        assert_eq!(push_parameters(~"foo", [("bar", "baz"), ("quux", "fuzz zee")]),
-                   ~"foo;bar=baz;quux=\"fuzz zee\"");
-        assert_eq!(push_parameters(~"foo", [("bar", "baz/quux"), ("fuzz", "zee")]),
-                   ~"foo;bar=\"baz/quux\";fuzz=zee");
+        assert_eq!(push_parameters(StrBuf::from_str("foo"), []), StrBuf::from_str("foo"));
+        assert_eq!(push_parameters(StrBuf::from_str("foo"), [(StrBuf::from_str("bar"), StrBuf::from_str("baz"))]), StrBuf::from_str("foo;bar=baz"));
+        assert_eq!(push_parameters(StrBuf::from_str("foo"), [(StrBuf::from_str("bar"), StrBuf::from_str("baz/quux"))]), StrBuf::from_str("foo;bar=\"baz/quux\""));
+        assert_eq!(push_parameters(StrBuf::from_str("foo"), [(StrBuf::from_str("bar"), StrBuf::from_str("baz")), (StrBuf::from_str("quux"), StrBuf::from_str("fuzz"))]),
+                   StrBuf::from_str("foo;bar=baz;quux=fuzz"));
+        assert_eq!(push_parameters(StrBuf::from_str("foo"), [(StrBuf::from_str("bar"), StrBuf::from_str("baz")), (StrBuf::from_str("quux"), StrBuf::from_str("fuzz zee"))]),
+                   StrBuf::from_str("foo;bar=baz;quux=\"fuzz zee\""));
+        assert_eq!(push_parameters(StrBuf::from_str("foo"), [(StrBuf::from_str("bar"), StrBuf::from_str("baz/quux")), (StrBuf::from_str("fuzz"), StrBuf::from_str("zee"))]),
+                   StrBuf::from_str("foo;bar=\"baz/quux\";fuzz=zee"));
     }
 }
