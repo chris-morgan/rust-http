@@ -21,7 +21,7 @@ impl ParseBranch {
     }
 }
 
-pub fn branchify(options: &mut Vec<(&str, &str)>, case_sensitive: bool) -> Vec<ParseBranch> {
+pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> Vec<ParseBranch> {
     let mut root = ParseBranch::new();
 
     fn go_down_moses(branch: &mut ParseBranch, mut chariter: Chars, result: &str, case_sensitive: bool) {
@@ -43,10 +43,8 @@ pub fn branchify(options: &mut Vec<(&str, &str)>, case_sensitive: bool) -> Vec<P
                     }
                 }
                 branch.children.push(subbranch);
-                for subbranch in branch.children.mut_iter().rev() {
-                    go_down_moses(subbranch, chariter, result, case_sensitive);
-                    return;
-                }
+                let i = branch.children.len() - 1;
+                go_down_moses(branch.children.get_mut(i), chariter, result, case_sensitive);
             },
             None => {
                 assert!(branch.result.is_none());
@@ -64,10 +62,10 @@ pub fn branchify(options: &mut Vec<(&str, &str)>, case_sensitive: bool) -> Vec<P
 
 macro_rules! branchify(
     (case sensitive, $($key:expr => $value:ident),*) => (
-        ::branchify::branchify(&mut vec!($(($key, stringify!($value))),*), true)
+        ::branchify::branchify([$(($key, stringify!($value))),*], true)
     );
     (case insensitive, $($key:expr => $value:ident),*) => (
-        branchify(vec!($(($key, stringify!($value))),*), false)
+        ::branchify::branchify([$(($key, stringify!($value))),*], false)
     );
 )
 
@@ -110,7 +108,7 @@ pub fn generate_branchified_method(
                 Some(ref result) =>
                     w!(format!("    Ok(b) if b == SP => return Ok({}),", *result)),
                 None => w!(format!("    Ok(b) if b == SP => return Ok({}),",
-                                  unknown.replace("{}", format!("\"{}\"", next_prefix)))),
+                                  unknown.replace("{}", format!("StrBuf::from_str(\"{}\")", next_prefix)))),
             }
             w!(format!("    Ok(b) if {} => (\"{}\", b),", valid, next_prefix));
             w!("    Ok(_) => return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"bad value\", detail: None }),");
@@ -139,7 +137,7 @@ pub fn generate_branchified_method(
     w!(       ("s.push_char(next_byte as char);"));
     w!(       ("loop {"));
     w!(format!("    match {} \\{", read_call));
-    w!(format!("        Ok(b) if b == {} => return Ok({}),", end, unknown.replace("{}", "s.into_owned()")));
+    w!(format!("        Ok(b) if b == {} => return Ok({}),", end, unknown.replace("{}", "s")));
     w!(format!("        Ok(b) if {} => \\{", valid));
     w!(format!("            if s.len() == {} \\{", max_len));
     w!(       ("                // Too long; bad request"));
