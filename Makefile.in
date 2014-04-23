@@ -87,7 +87,7 @@ clean:
 	rm -rf build/
 	rm -rf bin/ .rust/
 
-TAGS:
-	ctags -f TAGS --options=$(RUST_CTAGS) -R src
+TAGS: $(http_files)
+	ctags -f TAGS --options="$(RUST_CTAGS)" -R src/http
 
 .PHONY: all http examples docs clean check quickcheck
