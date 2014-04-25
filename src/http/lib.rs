@@ -32,6 +32,5 @@ pub mod rfc2616;
 #[path = "generated/status.rs"]
 pub mod status;  // Getting an error? It's generated; use ``make`` or see the ``Makefile``
 
-/// TODO: submit upstream
-#[cfg(test)]
+
 pub mod memstream;
