@@ -201,6 +201,7 @@ fn test_read_request_line() {
 /// An HTTP request sent to the server.
 pub struct Request {
     /// The originating IP address of the request.
+    pub remote_addr: Option<SocketAddr>,
 
     /// The host name and IP address that the request was sent to; this must always be specified for
     /// HTTP/1.1 requests (or the request will be rejected), but for HTTP/1.0 requests the Host
@@ -294,12 +295,13 @@ impl fmt::Show for RequestUri {
 impl Request {
 
     /// Get a response from an open socket.
-    pub fn load<T: Stream>(stream: &mut BufferedStream<T>) -> (Box<Request>, Result<(), status::Status>) {
+    pub fn load<T: Stream>(stream: &mut BufferedStream<T>, remote_addr: Option<SocketAddr>) -> (Box<Request>, Result<(), status::Status>) {
         let mut buffer = RequestBuffer::new(stream);
 
         // Start out with dummy values
         let mut request = box Request {
             headers: box headers::request::HeaderCollection::new(),
+            remote_addr: remote_addr,
             body: String::new(),
             method: Options,
             request_uri: Star,
