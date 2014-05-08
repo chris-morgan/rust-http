@@ -210,7 +210,7 @@ pub struct Request {
     //host: Option<Host>,  // Now in headers.host
 
     /// The headers sent with the request.
-    pub headers: ~headers::request::HeaderCollection,
+    pub headers: Box<headers::request::HeaderCollection>,
 
     /// The body of the request; empty for such methods as GET.
     pub body: StrBuf,
@@ -296,13 +296,13 @@ impl fmt::Show for RequestUri {
 impl Request {
 
     /// Get a response from an open socket.
-    pub fn load(stream: &mut BufferedStream<TcpStream>) -> (~Request, Result<(), status::Status>) {
+    pub fn load(stream: &mut BufferedStream<TcpStream>) -> (Box<Request>, Result<(), status::Status>) {
         let mut buffer = RequestBuffer::new(stream);
 
         // Start out with dummy values
-        let mut request = ~Request {
+        let mut request = box Request {
             remote_addr: buffer.stream.wrapped.peer_name().ok(),
-            headers: ~headers::request::HeaderCollection::new(),
+            headers: box headers::request::HeaderCollection::new(),
             body: StrBuf::new(),
             method: Options,
             request_uri: Star,

@@ -23,7 +23,7 @@ pub struct ResponseWriter<'a> {
     writer: &'a mut BufferedStream<TcpStream>,
     headers_written: bool,
     pub request: &'a Request,
-    pub headers: ~HeaderCollection,
+    pub headers: Box<HeaderCollection>,
     pub status: status::Status,
 }
 
@@ -34,7 +34,7 @@ impl<'a> ResponseWriter<'a> {
             writer: writer,
             headers_written: false,
             request: request,
-            headers: ~HeaderCollection::new(),
+            headers: box HeaderCollection::new(),
             status: status::Ok,
         }
     }

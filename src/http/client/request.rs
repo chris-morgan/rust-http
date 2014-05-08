@@ -23,7 +23,7 @@ If you wish to send a request body (e.g. POST requests), I'm sorry to have to te
 not *good* support for this yet. However, it can be done; here is an example:
 
 ```rust
-let data: ~[u8];
+let data: &[u8];
 let mut request: RequestWriter;
 
 request.headers.content_length = Some(data.len());
@@ -81,7 +81,7 @@ pub struct RequestWriter<S = super::NetworkStream> {
     //host: Host,  // Now headers.host
 
     /// The headers sent with the request.
-    pub headers: ~HeaderCollection,
+    pub headers: Box<HeaderCollection>,
 
     /// The HTTP method for the request.
     pub method: Method,
@@ -150,7 +150,7 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
             stream: None,
             headers_written: false,
             remote_addr: Some(remote_addr),
-            headers: ~HeaderCollection::new(),
+            headers: box HeaderCollection::new(),
             method: method,
             url: url,
             use_ssl: use_ssl,
