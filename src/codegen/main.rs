@@ -37,11 +37,11 @@ fn main() {
     }
 }
 
-pub fn get_writer(output_dir: &Path, filename: &str) -> ~Writer {
+pub fn get_writer(output_dir: &Path, filename: &str) -> Box<Writer> {
     let mut output_file = output_dir.clone();
     output_file.push(filename);
     match File::open_mode(&output_file, Truncate, Write) {
-        Ok(writer) => ~writer as ~Writer,
+        Ok(writer) => box writer as Box<Writer>,
         Err(e) => fail!("Unable to write file: {}", e.desc),
     }
 }
