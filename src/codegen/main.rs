@@ -19,9 +19,9 @@ fn main() {
             os::set_exit_status(1);
         },
         3 => {
-            let output_dir = Path::new(args[2].as_slice());
+            let output_dir = Path::new(args.get(2).as_slice());
 
-            match args[1].as_slice() {
+            match args.get(1).as_slice() {
                 "read_method.rs" => read_method::generate(&output_dir).unwrap(),
                 "status.rs" => status::generate(&output_dir).unwrap(),
                 s => {
@@ -31,7 +31,7 @@ fn main() {
             }
         },
         _ => {
-            println!("usage: {} [read_method|status].rs <output-dir>", args[0]);
+            println!("usage: {} [read_method|status].rs <output-dir>", args.get(0));
             os::set_exit_status(1);
         }
     }

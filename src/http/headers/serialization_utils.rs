@@ -253,17 +253,17 @@ mod test {
     fn test_comma_split_iter() {
         // These are the same cases as in test_comma_split above.
         let s = "";
-        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~[""]);
+        assert_eq!(comma_split_iter(s).collect::< Vec<&'static str> >(), vec![""]);
         let s = "foo";
-        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~["foo"]);
+        assert_eq!(comma_split_iter(s).collect::< Vec<&'static str> >(), vec!["foo"]);
         let s = "foo,bar";
-        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~["foo", "bar"]);
+        assert_eq!(comma_split_iter(s).collect::< Vec<&'static str> >(), vec!["foo", "bar"]);
         let s = "foo,bar,baz,quux";
-        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~["foo", "bar", "baz", "quux"]);
+        assert_eq!(comma_split_iter(s).collect::< Vec<&'static str> >(), vec!["foo", "bar", "baz", "quux"]);
         let s = "\"foo,bar\",baz";
-        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~["\"foo", "bar\"", "baz"]);
+        assert_eq!(comma_split_iter(s).collect::< Vec<&'static str> >(), vec!["\"foo", "bar\"", "baz"]);
         let s = " foo;q=0.8 , bar/* ";
-        assert_eq!(comma_split_iter(s).collect::<~[&'static str]>(), ~["foo;q=0.8 ", "bar/* "]);
+        assert_eq!(comma_split_iter(s).collect::< Vec<&'static str> >(), vec!["foo;q=0.8 ", "bar/* "]);
     }
 
     #[test]
