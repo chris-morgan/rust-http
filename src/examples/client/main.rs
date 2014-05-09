@@ -13,9 +13,9 @@ fn main() {
     let args = os::args();
     match args.len() {
         0 => unreachable!(),
-        2 => make_and_print_request(args[1]),
+        2 => make_and_print_request(*args.get(1)),
         _ => {
-            println!("Usage: {} URL", args[0]);
+            println!("Usage: {} URL", args.get(0));
             return;
         },
     };
