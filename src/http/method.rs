@@ -1,5 +1,6 @@
 use std::fmt;
 use std::from_str::FromStr;
+use std::ascii::StrAsciiExt;
 
 /// HTTP methods, as defined in RFC 2616, §5.1.1.
 ///
@@ -27,20 +28,9 @@ impl FromStr for Method {
      * (If the string isn't ASCII, this will at present fail: TODO fix that.)
      */
     fn from_str(method: &str) -> Option<Method> {
-        if !method.is_ascii() {
-            return None;
-        }
-        match method {
-            "OPTIONS" => Some(Options),
-            "GET"     => Some(Get),
-            "HEAD"    => Some(Head),
-            "POST"    => Some(Post),
-            "PUT"     => Some(Put),
-            "DELETE"  => Some(Delete),
-            "TRACE"   => Some(Trace),
-            "CONNECT" => Some(Connect),
-            "PATCH"   => Some(Patch),
-            _         => None
+        match Method::from_str_or_new(method) {
+            Some(ExtensionMethod(_)) => None,
+            method_or_none => method_or_none
         }
     }
 }
@@ -69,18 +59,37 @@ impl Method {
      * (If the string isn't ASCII, this will at present fail.)
      */
     pub fn from_str_or_new(method: &str) -> Option<Method> {
-        assert!(method.is_ascii());
-        Some(match method {
-            "OPTIONS" => Options,
-            "GET"     => Get,
-            "HEAD"    => Head,
-            "POST"    => Post,
-            "PUT"     => Put,
-            "DELETE"  => Delete,
-            "TRACE"   => Trace,
-            "CONNECT" => Connect,
-            "PATCH"   => Patch,
-            _         => ExtensionMethod(StrBuf::from_str(method)),
-        })
+        if !method.is_ascii() {
+            return None;
+        }
+        match method.to_ascii_upper().as_slice() {
+            "OPTIONS" => Some(Options),
+            "GET"     => Some(Get),
+            "HEAD"    => Some(Head),
+            "POST"    => Some(Post),
+            "PUT"     => Some(Put),
+            "DELETE"  => Some(Delete),
+            "TRACE"   => Some(Trace),
+            "CONNECT" => Some(Connect),
+            "PATCH"   => Some(Patch),
+            _         => {         
+                        let is_token = method.as_bytes().iter().all(|&x| {
+                            // http://tools.ietf.org/html/rfc2616#section-2.2
+                            match x {
+                                0..31 | 127 => false, // CTLs
+                                40 | 41 | 60 | 62 | 64 |
+                                44 | 59 | 58 | 92 | 34 |
+                                47 | 91 | 93 | 63 | 61 |
+                                123 | 125 | 32  => false, // separators
+                                _ => true
+                            }
+                        });
+                        if is_token {
+                            Some(ExtensionMethod(StrBuf::from_str(method)) )
+                        } else {
+                            None
+                        }
+                    }
+        }
     }
 }
