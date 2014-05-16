@@ -26,7 +26,7 @@ pub trait Server: Send + Clone {
     fn serve_forever(self) {
         let config = self.get_config();
         debug!("About to bind to {:?}", config.bind_address);
-        let mut acceptor = match TcpListener::bind(config.bind_address).listen() {
+        let mut acceptor = match TcpListener::bind(config.bind_address.ip.to_str(), config.bind_address.port).listen() {
             Err(err) => {
                 error!("bind or listen failed :-(: {}", err);
                 return;

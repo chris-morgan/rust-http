@@ -186,7 +186,7 @@ impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
 
         self.stream = match self.remote_addr {
             Some(addr) => {
-                let stream = try!(Connecter::connect(addr, self.url.host, self.use_ssl));
+                let stream = try!(Connecter::connect(addr, self.url.host.as_slice(), self.use_ssl));
                 Some(BufferedStream::new(stream))
             },
             None => fail!("connect() called before remote_addr was set"),
