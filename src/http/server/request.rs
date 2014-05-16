@@ -285,10 +285,10 @@ impl RequestUri {
 impl fmt::Show for RequestUri {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Star => f.buf.write("*".as_bytes()),
-            AbsoluteUri(ref url) => write!(f.buf, "{}", url),
-            AbsolutePath(ref str) => f.buf.write(str.as_bytes()),
-            Authority(ref str) => f.buf.write(str.as_bytes()),
+            Star => f.write("*".as_bytes()),
+            AbsoluteUri(ref url) => url.fmt(f),
+            AbsolutePath(ref str) => f.write(str.as_bytes()),
+            Authority(ref str) => f.write(str.as_bytes()),
         }
     }
 }
@@ -373,8 +373,8 @@ impl Request {
             Some(length) => {
                 match buffer.read_exact(length) {
                     Ok(body) => match StrBuf::from_utf8(body) {
-                        Some(body_str) => request.body = body_str,
-                        None => return (request, Err(status::BadRequest))
+                        Ok(body_str) => request.body = body_str,
+                        Err(_) => return (request, Err(status::BadRequest))
                     },
                     Err(_) => return (request, Err(status::BadRequest))
                 }

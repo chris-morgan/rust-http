@@ -19,8 +19,8 @@ pub struct Host {
 impl fmt::Show for Host {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.port {
-            Some(port) => write!(f.buf, "{}:{}", self.name, port.to_str()),
-            None => f.buf.write(self.name.as_bytes()),
+            Some(port) => write!(f, "{}:{}", self.name, port.to_str()),
+            None => f.write(self.name.as_bytes()),
         }
     }
 }
