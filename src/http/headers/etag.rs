@@ -25,9 +25,9 @@ pub fn strong_etag(opaque_tag: StrBuf) -> EntityTag {
 impl fmt::Show for EntityTag {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.weak {
-            f.buf.write(push_quoted_string(StrBuf::from_str("W/"), &self.opaque_tag).as_bytes())
+            f.write(push_quoted_string(StrBuf::from_str("W/"), &self.opaque_tag).as_bytes())
         } else {
-            f.buf.write(quoted_string(&self.opaque_tag).as_bytes())
+            f.write(quoted_string(&self.opaque_tag).as_bytes())
         }
     }
 }

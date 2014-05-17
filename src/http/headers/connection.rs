@@ -18,7 +18,7 @@ pub enum Connection {
 
 impl fmt::Show for Connection {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.buf.write(match *self {
+        f.write(match *self {
             Token(ref s) => s.as_bytes(),
             Close => "close".as_bytes(),
         })

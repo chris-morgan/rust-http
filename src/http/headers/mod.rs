@@ -727,7 +727,7 @@ impl HeaderConvertible for Tm {
     }
 
     fn http_value(&self) -> StrBuf {
-        StrBuf::from_str(self.to_utc().strftime("%a, %d %b %Y %T GMT"))
+        self.to_utc().strftime("%a, %d %b %Y %T GMT")
     }
 }
 

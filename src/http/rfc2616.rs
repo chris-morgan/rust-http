@@ -176,7 +176,7 @@ mod content_coding {
     }
     impl fmt::Show for ValueToken {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.buf.write(match *self {
+            f.write(match *self {
                 Gzip => "gzip".as_bytes(),
                 Compress => "compress".as_bytes(),
                 Deflate => "deflate".as_bytes(),
@@ -212,7 +212,7 @@ mod transfer_coding {
     }
     impl fmt::Show for ValueToken {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.buf.write(match *self {
+            f.write(match *self {
                 Chunked => "chunked".as_bytes(),
                 Gzip => "gzip".as_bytes(),
                 Compress => "compress".as_bytes(),

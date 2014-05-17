@@ -108,21 +108,21 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
     pub fn new_request(method: Method, url: Url, use_ssl: bool, auto_detect_ssl: bool) -> IoResult<RequestWriter<S>> {
         let host = match url.port {
             None => Host {
-                name: StrBuf::from_str(url.host),
+                name: url.host.clone(),
                 port: None,
             },
             Some(ref p) => Host {
-                name: StrBuf::from_str(url.host),
-                port: Some(from_str(*p).expect("You didn’t aught to give a bad port!")),
+                name: url.host.clone(),
+                port: Some(from_str(p.as_slice()).expect("You didn’t aught to give a bad port!")),
             },
         };
 
         let remote_addr = try!(url_to_socket_addr(&url));
-        info!("using ip address {} for {}", remote_addr.to_str(), url.host);
+        info!("using ip address {} for {}", remote_addr.to_str(), url.host.as_slice());
 
         fn url_to_socket_addr(url: &Url) -> IoResult<SocketAddr> {
             // Just grab the first IPv4 address
-            let addrs = try!(get_host_addresses(url.host));
+            let addrs = try!(get_host_addresses(url.host.as_slice()));
             let addr = addrs.move_iter().find(|&a| {
                 match a {
                     Ipv4Addr(..) => true,
@@ -135,7 +135,7 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
 
             // Default to 80, using the port specified or 443 if the protocol is HTTPS.
             let port = match url.port {
-                Some(ref p) => from_str(*p).expect("You didn’t aught to give a bad port!"),
+                Some(ref p) => from_str(p.as_slice()).expect("You didn’t aught to give a bad port!"),
                 // FIXME: case insensitivity?
                 None => if url.scheme.as_slice() == "https" { 443 } else { 80 },
             };
@@ -186,7 +186,7 @@ impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
 
         self.stream = match self.remote_addr {
             Some(addr) => {
-                let stream = try!(Connecter::connect(addr, self.url.host, self.use_ssl));
+                let stream = try!(Connecter::connect(addr, self.url.host.as_slice(), self.use_ssl));
                 Some(BufferedStream::new(stream))
             },
             None => fail!("connect() called before remote_addr was set"),
