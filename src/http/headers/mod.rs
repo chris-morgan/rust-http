@@ -872,7 +872,7 @@ macro_rules! headers_mod {
             #[$attr]
 
             #[allow(unused_imports)]
-            use std::io::IoResult;
+            use std::io::{BufReader, IoResult};
             use time;
             use collections::treemap::{TreeMap, Entries};
             use headers;
@@ -902,6 +902,21 @@ macro_rules! headers_mod {
                     match header {
                         $($caps_ident(value) => self.$lower_ident = Some(value),)*
                         ExtensionHeader(key, value) => { self.extensions.insert(key, value); },
+                    }
+                }
+
+                /// Insert a raw header into the collection.
+                /// This will return an error if the value is not valid UTF-8 or if the name is that
+                /// of a strongly-typed header and the value is not a valid value for that header.
+                pub fn insert_raw(&mut self, name: StrBuf, value: &[u8]) -> Result<(), ()> {
+                    let mut reader = BufReader::new(value);
+                    let mut value_iter = HeaderValueByteIterator::new(&mut reader);
+                    match HeaderEnum::value_from_stream(name, &mut value_iter) {
+                        Some(h) => {
+                            self.insert(h);
+                            Ok(())
+                        },
+                        None => Err(())
                     }
                 }
 
