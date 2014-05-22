@@ -905,16 +905,19 @@ macro_rules! headers_mod {
                     }
                 }
 
-                /// Inserts a raw header into the collection. Will return an error if the value is not valid utf8
-                pub fn insert_raw(&mut self, name: StrBuf, value: &[u8]) -> Result<(),()>{
-                    let reader = BufReader::new(value);
-                    let maybe_header = self::Header::value_from_stream(name, HeaderValueByteIterator::new(&mut reader));
-                    match maybe_header {
+                /// Insert a raw header into the collection.
+                /// This will return an error if the value is not valid UTF-8 or if the name is that
+                /// of a strongly-typed header and the value is not a valid value for that header.
+                pub fn insert_raw(&mut self, name: StrBuf, value: &[u8]) -> Result<(), ()> {
+                    let mut reader = BufReader::new(value);
+                    let mut value_iter = HeaderValueByteIterator::new(&mut reader);
+                    match HeaderEnum::value_from_stream(name, &mut value_iter) {
                         Some(h) => {
                             self.insert(h);
                             Ok(())
                         },
-                        None => Err(())                    }
+                        None => Err(())
+                    }
                 }
 
                 pub fn iter<'a>(&'a self) -> HeaderCollectionIterator<'a> {
