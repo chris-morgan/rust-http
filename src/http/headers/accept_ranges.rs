@@ -31,7 +31,7 @@ impl super::HeaderConvertible for AcceptableRanges {
                     match token.as_slice() {
                         "bytes" => range_units.push(Bytes),
                         "none" if range_units.len() == 0 => return Some(NoAcceptableRanges),
-                        _ => range_units.push(OtherRangeUnit(StrBuf::from_str(token))),
+                        _ => range_units.push(OtherRangeUnit(token)),
                     }
                 },
                 None => break,

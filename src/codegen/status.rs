@@ -39,12 +39,10 @@ impl Status {
     }
 
     fn padded_ident(&self) -> StrBuf {
-        let mut result = self.ident();
-        result.push_str(self.reason_padding_spaces());
-        result
+        self.ident().append(self.reason_padding_spaces().as_slice())
     }
 
-    fn reason_padding_spaces(&self) -> ~str {
+    fn reason_padding_spaces(&self) -> StrBuf {
         " ".repeat(unsafe { longest_reason } - self.reason.len())
     }
 }
@@ -55,7 +53,7 @@ fn camel_case(msg: &str) -> StrBuf {
     let msg = msg.replace("-", " ").replace("'", "");
     let mut result = StrBuf::with_capacity(msg.len());
     let mut capitalise = true;
-    for c in msg.chars() {
+    for c in msg.as_slice().chars() {
         let c = match capitalise {
             true => c.to_ascii().to_upper().to_char(),
             false => c.to_ascii().to_lower().to_char(),

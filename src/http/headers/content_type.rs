@@ -28,7 +28,7 @@ impl fmt::Show for MediaType {
         //s.push_parameters(self.parameters);
         //s
         let s = format!("{}/{}", self.type_, self.subtype);
-        f.write(push_parameters(StrBuf::from_str(s), self.parameters.as_slice()).as_bytes())
+        f.write(push_parameters(s, self.parameters.as_slice()).as_bytes())
     }
 }
 
@@ -67,7 +67,7 @@ impl super::HeaderConvertible for MediaType {
     }
 
     fn http_value(&self) -> StrBuf {
-        StrBuf::from_str(format!("{}", self))
+        self.to_str()
     }
 }
 

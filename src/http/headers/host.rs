@@ -41,6 +41,6 @@ impl super::HeaderConvertible for Host {
     }
 
     fn http_value(&self) -> StrBuf {
-        StrBuf::from_str(format!("{}", self))
+        self.to_str()
     }
 }

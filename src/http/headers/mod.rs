@@ -618,7 +618,7 @@ impl HeaderConvertible for uint {
     }
 
     fn http_value(&self) -> StrBuf {
-        StrBuf::from_str(format!("{}", self))
+        self.to_str()
     }
 }
 
@@ -628,7 +628,7 @@ impl HeaderConvertible for Url {
     }
 
     fn http_value(&self) -> StrBuf {
-        StrBuf::from_str(format!("{}", self))
+        self.to_str()
     }
 }
 
@@ -643,7 +643,7 @@ impl HeaderConvertible for Method {
     }
 
     fn http_value(&self) -> StrBuf {
-        StrBuf::from_str(format!("{}", self))
+        self.to_str()
     }
 }
 
@@ -778,7 +778,7 @@ mod test {
         assert_eq!(to_stream_into_str(&123456789u), StrBuf::from_str("123456789"));
     }
 
-    fn sample_tm(zone: ~str) -> Tm {
+    fn sample_tm() -> Tm {
         Tm {
             tm_sec: 37,
             tm_min: 49,
@@ -790,7 +790,6 @@ mod test {
             tm_yday: 0,
             tm_isdst: 0,
             tm_gmtoff: 0,
-            tm_zone: zone,
             tm_nsec: 0
         }
     }
@@ -798,19 +797,19 @@ mod test {
     /// Test `from_stream` with an RFC 822 time (updated by RFC 1123)
     #[test]
     fn test_from_stream_rfc822() {
-        assert_eq!(from_stream_with_str("Sun, 06 Nov 1994 08:49:37 GMT"), Some(sample_tm("UTC".to_owned())));
+        assert_eq!(from_stream_with_str("Sun, 06 Nov 1994 08:49:37 GMT"), Some(sample_tm()));
     }
 
     /// Test `from_stream` with an RFC 850 time (obsoleted by RFC 1036)
     #[test]
     fn test_from_stream_rfc850() {
-        assert_eq!(from_stream_with_str("Sunday, 06-Nov-94 08:49:37 GMT"), Some(sample_tm("UTC".to_owned())));
+        assert_eq!(from_stream_with_str("Sunday, 06-Nov-94 08:49:37 GMT"), Some(sample_tm()));
     }
 
     /// Test `from_stream` with the ANSI C's asctime() format
     #[test]
     fn test_from_stream_asctime() {
-        assert_eq!(from_stream_with_str("Sun Nov  6 08:49:37 1994"), Some(sample_tm("".to_owned())));
+        assert_eq!(from_stream_with_str("Sun Nov  6 08:49:37 1994"), Some(sample_tm()));
     }
 
     /// Test `from_stream` with the ANSI C's asctime() format on a single digit
@@ -833,7 +832,7 @@ mod test {
     /// because a double-digit day doesn't have that padding space.
     #[test]
     fn test_from_stream_asctime_double_digit_date() {
-        let mut tm = sample_tm("".to_owned());
+        let mut tm = sample_tm();
         tm.tm_mday = 13;
         assert_eq!(from_stream_with_str("Sun Nov 13 08:49:37 1994"), Some(tm));
     }
@@ -841,13 +840,13 @@ mod test {
     /// Test `http_value`, which outputs an RFC 1123 time
     #[test]
     fn test_http_value() {
-        assert_eq!(sample_tm("UTC".to_owned()).http_value(), StrBuf::from_str("Sun, 06 Nov 1994 08:49:37 GMT"));
+        assert_eq!(sample_tm().http_value(), StrBuf::from_str("Sun, 06 Nov 1994 08:49:37 GMT"));
     }
 
     /// Test `to_stream`, which outputs an RFC 1123 time
     #[test]
     fn test_to_stream() {
-        assert_eq!(to_stream_into_str(&sample_tm("UTC".to_owned())), StrBuf::from_str("Sun, 06 Nov 1994 08:49:37 GMT"));
+        assert_eq!(to_stream_into_str(&sample_tm()), StrBuf::from_str("Sun, 06 Nov 1994 08:49:37 GMT"));
     }
 }
 

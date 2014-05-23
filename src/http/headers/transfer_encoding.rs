@@ -24,7 +24,7 @@ impl super::HeaderConvertible for TransferCoding {
         match reader.read_token() {
             Some(token) => {
                 // XXX is this actually the best way to do this?
-                let token = StrBuf::from_str(token.as_slice().to_ascii_lower());
+                let token = token.as_slice().to_ascii_lower();
                 if token.as_slice() == "chunked" {
                     Some(Chunked)
                 } else {

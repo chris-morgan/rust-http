@@ -66,7 +66,7 @@ impl super::HeaderConvertible for EntityTag {
     }
 
     fn http_value(&self) -> StrBuf {
-        StrBuf::from_str(format!("{}", self))
+        self.to_str()
     }
 }
 
