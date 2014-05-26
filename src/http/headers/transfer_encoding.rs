@@ -13,7 +13,7 @@ use headers::serialization_utils::{WriterUtil, push_parameters};
 #[deriving(Clone,Eq)]
 pub enum TransferCoding {
     Chunked,
-    TransferExtension(StrBuf, Vec<(StrBuf, StrBuf)>),
+    TransferExtension(String, Vec<(String, String)>),
 }
 
 impl super::CommaListHeaderConvertible for TransferCoding {}
@@ -48,9 +48,9 @@ impl super::HeaderConvertible for TransferCoding {
         }
     }
 
-    fn http_value(&self) -> StrBuf {
+    fn http_value(&self) -> String {
         match *self {
-            Chunked => StrBuf::from_str("chunked"),
+            Chunked => String::from_str("chunked"),
             TransferExtension(ref token, ref parameters) => {
                 push_parameters(token.clone(), parameters.as_slice())
             }

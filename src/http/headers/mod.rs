@@ -6,7 +6,6 @@
 
 use url::Url;
 use std::io::IoResult;
-use std::strbuf::StrBuf;
 use time::{Tm, strptime};
 use rfc2616::{is_token_item, is_separator, CR, LF, SP, HT, COLON};
 use method::Method;
@@ -71,8 +70,8 @@ pub enum ConsumeCommaLWSResult {
 }
 
 pub trait HeaderEnum {
-    fn header_name(&self) -> StrBuf;
-    fn header_value(&self) -> StrBuf;
+    fn header_name(&self) -> String;
+    fn header_value(&self) -> String;
     fn write_header<W: Writer>(&self, writer: &mut W) -> IoResult<()>;
 
     // FIXME: this method combination is temporary, to be merged with an efficient parser like that
@@ -88,7 +87,7 @@ pub trait HeaderEnum {
     //REMOVED BECAUSE OF ICE:
     //fn from_stream<T: Reader>(reader: &mut T) -> (Result<Self, HeaderLineErr>, Option<u8>) { ... }
 
-    fn value_from_stream<R: Reader>(name: StrBuf, input: &mut HeaderValueByteIterator<R>)
+    fn value_from_stream<R: Reader>(name: String, input: &mut HeaderValueByteIterator<R>)
         -> Option<Self>;
 }
 
@@ -97,7 +96,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
         -> (Result<E, HeaderLineErr>, Option<u8>) {
     enum State { Start, ReadingName, NameFinished, GotCR }
     let mut state = Start;
-    let mut header_name = StrBuf::new();
+    let mut header_name = String::new();
     loop {
         state = match (state, reader.read_byte()) {
             (Start, Ok(b)) | (ReadingName, Ok(b)) if is_token_item(b) => {
@@ -204,10 +203,10 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
         }
     }
 
-    // TODO: can we have collect() implemented for StrBuf? That would negate the need for this.
-    fn collect_to_strbuf(&mut self) -> StrBuf {
+    // TODO: can we have collect() implemented for String? That would negate the need for this.
+    fn collect_to_string(&mut self) -> String {
         // TODO: be more efficient (char cast is a little unnecessary)
-        let mut out = StrBuf::new();
+        let mut out = String::new();
         // No point in trying out.reserve(self.size_hint()); I *know* I can't offer a useful hint.
         loop {
             match self.next() {
@@ -285,11 +284,11 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     /// If the quoted-string is not begun immediately or the header ends before it is completed,
     /// then None is returned; TODO: decide if I can return the bytes read (at present, escapes and
     /// double quote would be lost if I did that).
-    pub fn read_quoted_string(&mut self, already_opened: bool) -> Option<StrBuf> {
+    pub fn read_quoted_string(&mut self, already_opened: bool) -> Option<String> {
         enum State { Start, Normal, Escaping }
 
         let mut state = if already_opened { Normal } else { Start };
-        let mut output = StrBuf::new();
+        let mut output = String::new();
         loop {
             match self.next() {
                 None => return None,
@@ -307,7 +306,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
         Some(output)
     }
 
-    fn read_parameter(&mut self, already_read_semicolon: bool) -> Option<(StrBuf, StrBuf)> {
+    fn read_parameter(&mut self, already_read_semicolon: bool) -> Option<(String, String)> {
         if !already_read_semicolon && self.next() != Some(';' as u8) {
             return None;
         }
@@ -333,7 +332,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     ///
     /// The return value ``None`` is reserved for syntax errors in parameters that exist; a mere
     /// absense of parameters will lead to returning an empty vector instead.
-    fn read_parameters(&mut self) -> Option<Vec<(StrBuf, StrBuf)>> {
+    fn read_parameters(&mut self) -> Option<Vec<(String, String)>> {
         let mut result = Vec::new();
         loop {
             match self.next() {
@@ -360,9 +359,9 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     /// Read a token (RFC 2616 definition) from the header value.
     ///
     /// If no token begins at the current point of the header, ``None`` will also be returned.
-    pub fn read_token_or_quoted_string(&mut self) -> Option<StrBuf> {
+    pub fn read_token_or_quoted_string(&mut self) -> Option<String> {
 
-        let mut output = StrBuf::new();
+        let mut output = String::new();
         match self.next() {
             Some(b) if b == '"' as u8 => {
                 // It is a quoted-string.
@@ -411,8 +410,8 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     /// Read a token (RFC 2616 definition) from the header value.
     ///
     /// If no token begins at the current point of the header, ``None`` will also be returned.
-    pub fn read_token(&mut self) -> Option<StrBuf> {
-        let mut output = StrBuf::new();
+    pub fn read_token(&mut self) -> Option<String> {
+        let mut output = String::new();
         loop {
             match self.next() {
                 None => break,
@@ -547,9 +546,9 @@ pub trait HeaderConvertible: Eq + Clone {
     /**
      * The value of the header as it would be written for an HTTP header.
      *
-     * For types which implement ``Str``, a body of ``StrBuf::from_str(self)`` will often be sufficient.
+     * For types which implement ``Str``, a body of ``String::from_str(self)`` will often be sufficient.
      */
-    fn http_value(&self) -> StrBuf;
+    fn http_value(&self) -> String;
 }
 
 /// A header with multiple comma-separated values. Implement this and a HeaderConvertible
@@ -584,8 +583,8 @@ impl<T: CommaListHeaderConvertible> HeaderConvertible for Vec<T> {
         Ok(())
     }
 
-    fn http_value(&self) -> StrBuf {
-        let mut out = StrBuf::new();
+    fn http_value(&self) -> String {
+        let mut out = String::new();
         for (i, item) in self.iter().enumerate() {
             if i != 0 {
                 out.push_str(", ");
@@ -598,36 +597,36 @@ impl<T: CommaListHeaderConvertible> HeaderConvertible for Vec<T> {
 
 // Now let's have some common implementation types.
 // Some header types really are arbitrary strings. Let's cover that case here.
-impl HeaderConvertible for StrBuf {
-    fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<StrBuf> {
-        Some(reader.collect_to_strbuf())
+impl HeaderConvertible for String {
+    fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<String> {
+        Some(reader.collect_to_string())
     }
 
     fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
         writer.write(self.as_bytes())
     }
 
-    fn http_value(&self) -> StrBuf {
+    fn http_value(&self) -> String {
         self.clone()
     }
 }
 
 impl HeaderConvertible for uint {
     fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<uint> {
-        from_str(reader.collect_to_strbuf().as_slice())
+        from_str(reader.collect_to_string().as_slice())
     }
 
-    fn http_value(&self) -> StrBuf {
+    fn http_value(&self) -> String {
         self.to_str()
     }
 }
 
 impl HeaderConvertible for Url {
     fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<Url> {
-        from_str(reader.collect_to_strbuf().as_slice())
+        from_str(reader.collect_to_string().as_slice())
     }
 
-    fn http_value(&self) -> StrBuf {
+    fn http_value(&self) -> String {
         self.to_str()
     }
 }
@@ -642,7 +641,7 @@ impl HeaderConvertible for Method {
         }
     }
 
-    fn http_value(&self) -> StrBuf {
+    fn http_value(&self) -> String {
         self.to_str()
     }
 }
@@ -707,7 +706,7 @@ impl HeaderConvertible for Method {
  */
 impl HeaderConvertible for Tm {
     fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<Tm> {
-        let value = reader.collect_to_strbuf();
+        let value = reader.collect_to_string();
 
         // XXX: %Z actually ignores any timezone other than UTC. Probably not a good idea?
         match strptime(value.as_slice(), "%a, %d %b %Y %T %Z") {  // RFC 822, updated by RFC 1123
@@ -726,7 +725,7 @@ impl HeaderConvertible for Tm {
         }
     }
 
-    fn http_value(&self) -> StrBuf {
+    fn http_value(&self) -> String {
         self.to_utc().strftime("%a, %d %b %Y %T GMT")
     }
 }
@@ -739,23 +738,23 @@ mod test {
 
     #[test]
     fn test_from_stream_str() {
-        assert_eq!(from_stream_with_str(""), Some(StrBuf::new()));
+        assert_eq!(from_stream_with_str(""), Some(String::new()));
         assert_eq!(from_stream_with_str("foo \"bar baz\", yay"),
-                                  Some(StrBuf::from_str("foo \"bar baz\", yay")));
+                                  Some(String::from_str("foo \"bar baz\", yay")));
     }
 
     #[test]
     fn test_http_value_str() {
-        assert_eq!((StrBuf::new()).http_value(), StrBuf::new());
-        assert_eq!((StrBuf::from_str("foo \"bar baz\", yay")).http_value(), StrBuf::from_str("foo \"bar baz\", yay"));
+        assert_eq!((String::new()).http_value(), String::new());
+        assert_eq!((String::from_str("foo \"bar baz\", yay")).http_value(), String::from_str("foo \"bar baz\", yay"));
     }
 
     #[test]
     fn test_to_stream_str() {
-        let s = StrBuf::new();
-        assert_eq!(to_stream_into_str(&s), StrBuf::new());
-        let s = StrBuf::from_str("foo \"bar baz\", yay");
-        assert_eq!(to_stream_into_str(&s), StrBuf::from_str("foo \"bar baz\", yay"));
+        let s = String::new();
+        assert_eq!(to_stream_into_str(&s), String::new());
+        let s = String::from_str("foo \"bar baz\", yay");
+        assert_eq!(to_stream_into_str(&s), String::from_str("foo \"bar baz\", yay"));
     }
 
     #[test]
@@ -768,14 +767,14 @@ mod test {
 
     #[test]
     fn test_http_value_uint() {
-        assert_eq!(0u.http_value(), StrBuf::from_str("0"));
-        assert_eq!(123456789u.http_value(), StrBuf::from_str("123456789"));
+        assert_eq!(0u.http_value(), String::from_str("0"));
+        assert_eq!(123456789u.http_value(), String::from_str("123456789"));
     }
 
     #[test]
     fn test_to_stream_uint() {
-        assert_eq!(to_stream_into_str(&0u), StrBuf::from_str("0"));
-        assert_eq!(to_stream_into_str(&123456789u), StrBuf::from_str("123456789"));
+        assert_eq!(to_stream_into_str(&0u), String::from_str("0"));
+        assert_eq!(to_stream_into_str(&123456789u), String::from_str("123456789"));
     }
 
     fn sample_tm() -> Tm {
@@ -840,13 +839,13 @@ mod test {
     /// Test `http_value`, which outputs an RFC 1123 time
     #[test]
     fn test_http_value() {
-        assert_eq!(sample_tm().http_value(), StrBuf::from_str("Sun, 06 Nov 1994 08:49:37 GMT"));
+        assert_eq!(sample_tm().http_value(), String::from_str("Sun, 06 Nov 1994 08:49:37 GMT"));
     }
 
     /// Test `to_stream`, which outputs an RFC 1123 time
     #[test]
     fn test_to_stream() {
-        assert_eq!(to_stream_into_str(&sample_tm()), StrBuf::from_str("Sun, 06 Nov 1994 08:49:37 GMT"));
+        assert_eq!(to_stream_into_str(&sample_tm()), String::from_str("Sun, 06 Nov 1994 08:49:37 GMT"));
     }
 }
 
@@ -879,13 +878,13 @@ macro_rules! headers_mod {
 
             pub enum Header {
                 $($caps_ident($htype),)*
-                ExtensionHeader(StrBuf, StrBuf),
+                ExtensionHeader(String, String),
             }
 
             #[deriving(Clone)]
             pub struct HeaderCollection {
                 $(pub $lower_ident: Option<$htype>,)*
-                pub extensions: TreeMap<StrBuf, StrBuf>,
+                pub extensions: TreeMap<String, String>,
             }
 
             impl HeaderCollection {
@@ -907,7 +906,7 @@ macro_rules! headers_mod {
                 /// Insert a raw header into the collection.
                 /// This will return an error if the value is not valid UTF-8 or if the name is that
                 /// of a strongly-typed header and the value is not a valid value for that header.
-                pub fn insert_raw(&mut self, name: StrBuf, value: &[u8]) -> Result<(), ()> {
+                pub fn insert_raw(&mut self, name: String, value: &[u8]) -> Result<(), ()> {
                     let mut reader = BufReader::new(value);
                     let mut value_iter = HeaderValueByteIterator::new(&mut reader);
                     match HeaderEnum::value_from_stream(name, &mut value_iter) {
@@ -940,7 +939,7 @@ macro_rules! headers_mod {
             pub struct HeaderCollectionIterator<'a> {
                 pos: uint,
                 coll: &'a HeaderCollection,
-                ext_iter: Option<Entries<'a, StrBuf, StrBuf>>
+                ext_iter: Option<Entries<'a, String, String>>
             }
 
             impl<'a> Iterator<Header> for HeaderCollectionIterator<'a> {
@@ -967,14 +966,14 @@ macro_rules! headers_mod {
             }
 
             impl HeaderEnum for Header {
-                fn header_name(&self) -> StrBuf {
+                fn header_name(&self) -> String {
                     match *self {
-                        $($caps_ident(_) => StrBuf::from_str($output_name),)*
+                        $($caps_ident(_) => String::from_str($output_name),)*
                         ExtensionHeader(ref name, _) => name.clone(),
                     }
                 }
 
-                fn header_value(&self) -> StrBuf {
+                fn header_value(&self) -> String {
                     match *self {
                         $($caps_ident(ref h) => h.http_value(),)*
                         ExtensionHeader(_, ref value) => value.clone(),
@@ -1003,14 +1002,14 @@ macro_rules! headers_mod {
                     write!(&mut *writer as &mut Writer, "\r\n")
                 }
 
-                fn value_from_stream<R: Reader>(name: StrBuf, value: &mut HeaderValueByteIterator<R>)
+                fn value_from_stream<R: Reader>(name: String, value: &mut HeaderValueByteIterator<R>)
                         -> Option<Header> {
                     match name.as_slice() {
                         $($input_name => match HeaderConvertible::from_stream(value) {
                             Some(v) => Some($caps_ident(v)),
                             None => None,
                         },)*
-                        _ => Some(ExtensionHeader(name, value.collect_to_strbuf())),
+                        _ => Some(ExtensionHeader(name, value.collect_to_string())),
                     }
                 }
             }
@@ -1025,45 +1024,45 @@ headers_mod! {
     num_headers: 38;
 
     // RFC 2616, Section 4.5: General Header Fields
-     0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     StrBuf;
+     0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     String;
      1, "Connection",        "Connection",        Connection,       connection,        Vec<headers::connection::Connection>;
      2, "Date",              "Date",              Date,             date,              time::Tm;
-     3, "Pragma",            "Pragma",            Pragma,           pragma,            StrBuf;
-     4, "Trailer",           "Trailer",           Trailer,          trailer,           StrBuf;
+     3, "Pragma",            "Pragma",            Pragma,           pragma,            String;
+     4, "Trailer",           "Trailer",           Trailer,          trailer,           String;
      5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, Vec<headers::transfer_encoding::TransferCoding>;
-     6, "Upgrade",           "Upgrade",           Upgrade,          upgrade,           StrBuf;
-     7, "Via",               "Via",               Via,              via,               StrBuf;
-     8, "Warning",           "Warning",           Warning,          warning,           StrBuf;
+     6, "Upgrade",           "Upgrade",           Upgrade,          upgrade,           String;
+     7, "Via",               "Via",               Via,              via,               String;
+     8, "Warning",           "Warning",           Warning,          warning,           String;
 
     // RFC 2616, Section 5.3: Request Header Fields
-     9, "Accept",              "Accept",              Accept,             accept,              StrBuf;
-    10, "Accept-Charset",      "Accept-Charset",      AcceptCharset,      accept_charset,      StrBuf;
-    11, "Accept-Encoding",     "Accept-Encoding",     AcceptEncoding,     accept_encoding,     StrBuf;
-    12, "Accept-Language",     "Accept-Language",     AcceptLanguage,     accept_language,     StrBuf;
-    13, "Authorization",       "Authorization",       Authorization,      authorization,       StrBuf;
-    14, "Expect",              "Expect",              Expect,             expect,              StrBuf;
-    15, "From",                "From",                From,               from,                StrBuf;
+     9, "Accept",              "Accept",              Accept,             accept,              String;
+    10, "Accept-Charset",      "Accept-Charset",      AcceptCharset,      accept_charset,      String;
+    11, "Accept-Encoding",     "Accept-Encoding",     AcceptEncoding,     accept_encoding,     String;
+    12, "Accept-Language",     "Accept-Language",     AcceptLanguage,     accept_language,     String;
+    13, "Authorization",       "Authorization",       Authorization,      authorization,       String;
+    14, "Expect",              "Expect",              Expect,             expect,              String;
+    15, "From",                "From",                From,               from,                String;
     16, "Host",                "Host",                Host,               host,                headers::host::Host;
-    17, "If-Match",            "If-Match",            IfMatch,            if_match,            StrBuf;
+    17, "If-Match",            "If-Match",            IfMatch,            if_match,            String;
     18, "If-Modified-Since",   "If-Modified-Since",   IfModifiedSince,    if_modified_since,   time::Tm;
-    19, "If-None-Match",       "If-None-Match",       IfNoneMatch,        if_none_match,       StrBuf;
-    20, "If-Range",            "If-Range",            IfRange,            if_range,            StrBuf;
+    19, "If-None-Match",       "If-None-Match",       IfNoneMatch,        if_none_match,       String;
+    20, "If-Range",            "If-Range",            IfRange,            if_range,            String;
     21, "If-Unmodified-Since", "If-Unmodified-Since", IfUnmodifiedSince,  if_unmodified_since, time::Tm;
     22, "Max-Forwards",        "Max-Forwards",        MaxForwards,        max_forwards,        uint;
-    23, "Proxy-Authorization", "Proxy-Authorization", ProxyAuthorization, proxy_authorization, StrBuf;
-    24, "Range",               "Range",               Range,              range,               StrBuf;
-    25, "Referer",             "Referer",             Referer,            referer,             StrBuf;
-    26, "TE",                  "Te",                  Te,                 te,                  StrBuf;
-    27, "User-Agent",          "User-Agent",          UserAgent,          user_agent,          StrBuf;
+    23, "Proxy-Authorization", "Proxy-Authorization", ProxyAuthorization, proxy_authorization, String;
+    24, "Range",               "Range",               Range,              range,               String;
+    25, "Referer",             "Referer",             Referer,            referer,             String;
+    26, "TE",                  "Te",                  Te,                 te,                  String;
+    27, "User-Agent",          "User-Agent",          UserAgent,          user_agent,          String;
 
     // RFC 2616, Section 7.1: Entity Header Fields
     28, "Allow",            "Allow",            Allow,           allow,            Vec<::method::Method>;
-    29, "Content-Encoding", "Content-Encoding", ContentEncoding, content_encoding, StrBuf;
-    30, "Content-Language", "Content-Language", ContentLanguage, content_language, StrBuf;
+    29, "Content-Encoding", "Content-Encoding", ContentEncoding, content_encoding, String;
+    30, "Content-Language", "Content-Language", ContentLanguage, content_language, String;
     31, "Content-Length",   "Content-Length",   ContentLength,   content_length,   uint;
-    32, "Content-Location", "Content-Location", ContentLocation, content_location, StrBuf;
-    33, "Content-MD5",      "Content-Md5",      ContentMd5,      content_md5,      StrBuf;
-    34, "Content-Range",    "Content-Range",    ContentRange,    content_range,    StrBuf;
+    32, "Content-Location", "Content-Location", ContentLocation, content_location, String;
+    33, "Content-MD5",      "Content-Md5",      ContentMd5,      content_md5,      String;
+    34, "Content-Range",    "Content-Range",    ContentRange,    content_range,    String;
     35, "Content-Type",     "Content-Type",     ContentType,     content_type,     headers::content_type::MediaType;
     36, "Expires",          "Expires",          Expires,         expires,          time::Tm;
     37, "Last-Modified",    "Last-Modified",    LastModified,    last_modified,    time::Tm;
@@ -1076,37 +1075,37 @@ headers_mod! {
     num_headers: 29;
 
     // RFC 2616, Section 4.5: General Header Fields
-     0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     StrBuf;
+     0, "Cache-Control",     "Cache-Control",     CacheControl,     cache_control,     String;
      1, "Connection",        "Connection",        Connection,       connection,        Vec<headers::connection::Connection>;
      2, "Date",              "Date",              Date,             date,              time::Tm;
-     3, "Pragma",            "Pragma",            Pragma,           pragma,            StrBuf;
-     4, "Trailer",           "Trailer",           Trailer,          trailer,           StrBuf;
+     3, "Pragma",            "Pragma",            Pragma,           pragma,            String;
+     4, "Trailer",           "Trailer",           Trailer,          trailer,           String;
      5, "Transfer-Encoding", "Transfer-Encoding", TransferEncoding, transfer_encoding, Vec<headers::transfer_encoding::TransferCoding>;
-     6, "Upgrade",           "Upgrade",           Upgrade,          upgrade,           StrBuf;
-     7, "Via",               "Via",               Via,              via,               StrBuf;
-     8, "Warning",           "Warning",           Warning,          warning,           StrBuf;
+     6, "Upgrade",           "Upgrade",           Upgrade,          upgrade,           String;
+     7, "Via",               "Via",               Via,              via,               String;
+     8, "Warning",           "Warning",           Warning,          warning,           String;
 
     // RFC 2616, Section 6.2: Response Header Fields
-     9, "Accept-Patch",       "Accept-Patch",       AcceptPatch,       accept_patch,       StrBuf;
+     9, "Accept-Patch",       "Accept-Patch",       AcceptPatch,       accept_patch,       String;
     10, "Accept-Ranges",      "Accept-Ranges",      AcceptRanges,      accept_ranges,      headers::accept_ranges::AcceptableRanges;
-    11, "Age",                "Age",                Age,               age,                StrBuf;
+    11, "Age",                "Age",                Age,               age,                String;
     12, "ETag",               "Etag",               ETag,              etag,               headers::etag::EntityTag;
     13, "Location",           "Location",           Location,          location,           ::url::Url;
-    14, "Proxy-Authenticate", "Proxy-Authenticate", ProxyAuthenticate, proxy_authenticate, StrBuf;
-    15, "Retry-After",        "Retry-After",        RetryAfter,        retry_after,        StrBuf;
-    16, "Server",             "Server",             Server,            server,             StrBuf;
-    17, "Vary",               "Vary",               Vary,              vary,               StrBuf;
-    18, "WWW-Authenticate",   "Www-Authenticate",   WwwAuthenticate,   www_authenticate,   StrBuf;
+    14, "Proxy-Authenticate", "Proxy-Authenticate", ProxyAuthenticate, proxy_authenticate, String;
+    15, "Retry-After",        "Retry-After",        RetryAfter,        retry_after,        String;
+    16, "Server",             "Server",             Server,            server,             String;
+    17, "Vary",               "Vary",               Vary,              vary,               String;
+    18, "WWW-Authenticate",   "Www-Authenticate",   WwwAuthenticate,   www_authenticate,   String;
 
     // RFC 2616, Section 7.1: Entity Header Fields
     19, "Allow",            "Allow",            Allow,           allow,            Vec<::method::Method>;
-    20, "Content-Encoding", "Content-Encoding", ContentEncoding, content_encoding, StrBuf;
-    21, "Content-Language", "Content-Language", ContentLanguage, content_language, StrBuf;
+    20, "Content-Encoding", "Content-Encoding", ContentEncoding, content_encoding, String;
+    21, "Content-Language", "Content-Language", ContentLanguage, content_language, String;
     22, "Content-Length",   "Content-Length",   ContentLength,   content_length,   uint;
-    23, "Content-Location", "Content-Location", ContentLocation, content_location, StrBuf;
-    24, "Content-MD5",      "Content-Md5",      ContentMd5,      content_md5,      StrBuf;
-    25, "Content-Range",    "Content-Range",    ContentRange,    content_range,    StrBuf;
+    23, "Content-Location", "Content-Location", ContentLocation, content_location, String;
+    24, "Content-MD5",      "Content-Md5",      ContentMd5,      content_md5,      String;
+    25, "Content-Range",    "Content-Range",    ContentRange,    content_range,    String;
     26, "Content-Type",     "Content-Type",     ContentType,     content_type,     headers::content_type::MediaType;
-    27, "Expires",          "Expires",          Expires,         expires,          StrBuf; // TODO: Should be Tm
+    27, "Expires",          "Expires",          Expires,         expires,          String; // TODO: Should be Tm
     28, "Last-Modified",    "Last-Modified",    LastModified,    last_modified,    time::Tm;
 }

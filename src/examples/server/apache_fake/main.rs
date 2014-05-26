@@ -23,8 +23,8 @@ impl Server for ApacheFakeServer {
 
     fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
-        w.headers.server = Some(StrBuf::from_str("Apache/2.2.22 (Ubuntu)"));
-        //w.headers.last_modified = Some(StrBuf::from_str("Thu, 05 May 2011 11:46:42 GMT"));
+        w.headers.server = Some(String::from_str("Apache/2.2.22 (Ubuntu)"));
+        //w.headers.last_modified = Some(String::from_str("Thu, 05 May 2011 11:46:42 GMT"));
         w.headers.last_modified = Some(time::Tm {
             tm_sec: 42, // seconds after the minute ~[0-60]
             tm_min: 46, // minutes after the hour ~[0-59]
@@ -40,17 +40,17 @@ impl Server for ApacheFakeServer {
         });
         w.headers.etag = Some(headers::etag::EntityTag {
                                 weak: false,
-                                opaque_tag: StrBuf::from_str("501b29-b1-4a285ed47404a") });
+                                opaque_tag: String::from_str("501b29-b1-4a285ed47404a") });
         w.headers.accept_ranges = Some(headers::accept_ranges::RangeUnits(
                                             vec!(headers::accept_ranges::Bytes)));
         w.headers.content_length = Some(177);
-        w.headers.vary = Some(StrBuf::from_str("Accept-Encoding"));
+        w.headers.vary = Some(String::from_str("Accept-Encoding"));
         w.headers.content_type = Some(headers::content_type::MediaType {
-            type_: StrBuf::from_str("text"),
-            subtype: StrBuf::from_str("html"),
+            type_: String::from_str("text"),
+            subtype: String::from_str("html"),
             parameters: Vec::new()
         });
-        w.headers.extensions.insert(StrBuf::from_str("X-Pad"), StrBuf::from_str("avoid browser bug"));
+        w.headers.extensions.insert(String::from_str("X-Pad"), String::from_str("avoid browser bug"));
 
         w.write(bytes!("\
             <html><body><h1>It works!</h1>\n\

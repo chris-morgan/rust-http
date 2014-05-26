@@ -34,24 +34,24 @@ fn StatusN(code: uint, reason: &'static str) -> HeadingOrStatus {
 }
 
 impl Status {
-    fn ident(&self) -> StrBuf {
+    fn ident(&self) -> String {
         camel_case(self.reason)
     }
 
-    fn padded_ident(&self) -> StrBuf {
+    fn padded_ident(&self) -> String {
         self.ident().append(self.reason_padding_spaces().as_slice())
     }
 
-    fn reason_padding_spaces(&self) -> StrBuf {
+    fn reason_padding_spaces(&self) -> String {
         " ".repeat(unsafe { longest_reason } - self.reason.len())
     }
 }
 
 /// >>> camel_case("I'm a Tea-pot")
 /// "ImATeaPot"
-fn camel_case(msg: &str) -> StrBuf {
+fn camel_case(msg: &str) -> String {
     let msg = msg.replace("-", " ").replace("'", "");
-    let mut result = StrBuf::with_capacity(msg.len());
+    let mut result = String::with_capacity(msg.len());
     let mut capitalise = true;
     for c in msg.as_slice().chars() {
         let c = match capitalise {
@@ -176,7 +176,7 @@ pub enum Status {
     }
 
     try!(out.write("
-    UnregisteredStatus(u16, StrBuf),
+    UnregisteredStatus(u16, String),
 }
 
 impl Status {
@@ -198,13 +198,13 @@ impl Status {
     }
 
     /// Get the reason phrase
-    pub fn reason(&self) -> StrBuf {
+    pub fn reason(&self) -> String {
         match *self {
 ".as_bytes()));
     for &entry in entries.iter() {
         match entry {
             Heading(heading) => try!(write!(out, "\n            // {}\n", heading)),
-            Status(status) => try!(write!(out, "            {} => StrBuf::from_str(\"{}\"),\n",
+            Status(status) => try!(write!(out, "            {} => String::from_str(\"{}\"),\n",
                                                 status.padded_ident(), status.reason))
         }
     }
@@ -214,7 +214,7 @@ impl Status {
     }
 
     /// Get a status from the code and reason
-    pub fn from_code_and_reason(status: u16, reason: StrBuf) -> Status {
+    pub fn from_code_and_reason(status: u16, reason: String) -> Status {
         let reason_lower = reason.as_slice().to_ascii_lower();
         match (status, reason_lower.as_slice()) {
 ".as_bytes()));

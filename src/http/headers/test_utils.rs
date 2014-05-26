@@ -1,5 +1,4 @@
 use std::io::{MemReader, MemWriter};
-use std::strbuf::StrBuf;
 use std::fmt;
 use std::vec::Vec;
 use headers::{HeaderConvertible, HeaderValueByteIterator};
@@ -12,10 +11,10 @@ pub fn from_stream_with_str<T: HeaderConvertible>(s: &str) -> Option<T> {
     HeaderConvertible::from_stream(&mut iter)
 }
 
-pub fn to_stream_into_str<T: HeaderConvertible>(v: &T) -> StrBuf {
+pub fn to_stream_into_str<T: HeaderConvertible>(v: &T) -> String {
     let mut writer = MemWriter::new();
     v.to_stream(&mut writer).unwrap();
-    StrBuf::from_utf8(Vec::from_slice(writer.get_ref())).unwrap()
+    String::from_utf8(Vec::from_slice(writer.get_ref())).unwrap()
 }
 
 // Verify that a value cannot be successfully interpreted as a header value of the specified type.

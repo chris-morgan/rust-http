@@ -1,5 +1,4 @@
 use std::io::{Stream, IoResult, OtherIoError, IoError};
-use std::strbuf::StrBuf;
 use client::request::RequestWriter;
 use rfc2616::{CR, LF, SP};
 use common::read_http_version;
@@ -66,7 +65,7 @@ impl<S: Stream> ResponseReader<S> {
         }
 
         // Read the status reason
-        let mut reason = StrBuf::new();
+        let mut reason = String::new();
         loop {
             match stream.read_byte() {
                 Ok(b) if b == CR => {
