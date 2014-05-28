@@ -27,7 +27,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> Vec<ParseBra
     fn go_down_moses(branch: &mut ParseBranch, mut chariter: Chars, result: &str, case_sensitive: bool) {
         match chariter.next() {
             Some(c) => {
-                let first_case = if case_sensitive { c as u8 } else { c.to_ascii().to_upper().to_byte() };
+                let first_case = if case_sensitive { c as u8 } else { c.to_ascii().to_uppercase().to_byte() };
                 for next_branch in branch.children.mut_iter() {
                     if *next_branch.matches.get(0) == first_case {
                         go_down_moses(next_branch, chariter, result, case_sensitive);
@@ -37,7 +37,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> Vec<ParseBra
                 let mut subbranch = ParseBranch::new();
                 subbranch.matches.push(first_case);
                 if !case_sensitive {
-                    let second_case = c.to_ascii().to_lower().to_byte();
+                    let second_case = c.to_ascii().to_lowercase().to_byte();
                     if first_case != second_case {
                         subbranch.matches.push(second_case);
                     }

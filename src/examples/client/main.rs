@@ -1,5 +1,6 @@
 #![crate_id = "client"]
 
+extern crate debug;
 extern crate http;
 use http::client::RequestWriter;
 use http::method::Get;

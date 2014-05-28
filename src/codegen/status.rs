@@ -55,8 +55,8 @@ fn camel_case(msg: &str) -> String {
     let mut capitalise = true;
     for c in msg.as_slice().chars() {
         let c = match capitalise {
-            true => c.to_ascii().to_upper().to_char(),
-            false => c.to_ascii().to_lower().to_char(),
+            true => c.to_ascii().to_uppercase().to_char(),
+            false => c.to_ascii().to_lowercase().to_char(),
         };
         // For a space, capitalise the next char
         capitalise = c == ' ';

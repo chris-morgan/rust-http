@@ -19,6 +19,7 @@
 extern crate url;
 extern crate time;
 extern crate collections;
+extern crate debug;
 
 pub mod buffer;
 pub mod client;
