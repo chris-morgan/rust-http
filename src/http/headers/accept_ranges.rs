@@ -7,7 +7,7 @@ use std::ascii::StrAsciiExt;
 // RFC 2616: range-unit = bytes-unit | other-range-unit
 pub enum RangeUnit {
     Bytes,                 // bytes-unit       = "bytes"
-    OtherRangeUnit(StrBuf),  // other-range-unit = token
+    OtherRangeUnit(String),  // other-range-unit = token
 }
 
 #[deriving(Clone,Eq)]
@@ -31,7 +31,7 @@ impl super::HeaderConvertible for AcceptableRanges {
                     match token.as_slice() {
                         "bytes" => range_units.push(Bytes),
                         "none" if range_units.len() == 0 => return Some(NoAcceptableRanges),
-                        _ => range_units.push(OtherRangeUnit(StrBuf::from_str(token))),
+                        _ => range_units.push(OtherRangeUnit(token)),
                     }
                 },
                 None => break,
@@ -55,11 +55,11 @@ impl super::HeaderConvertible for AcceptableRanges {
         }
     }
 
-    fn http_value(&self) -> StrBuf {
+    fn http_value(&self) -> String {
         match *self {
-            NoAcceptableRanges => StrBuf::from_str("none"),
+            NoAcceptableRanges => String::from_str("none"),
             RangeUnits(ref range_units) => {
-                let mut result = StrBuf::new();
+                let mut result = String::new();
                 for ru in range_units.iter() {
                     match ru {
                         &Bytes => result.push_str("bytes"),

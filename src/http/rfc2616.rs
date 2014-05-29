@@ -97,7 +97,7 @@ pub fn is_token_item(o: u8) -> bool {
 }
 
 #[inline]
-pub fn is_token(s: &StrBuf) -> bool {
+pub fn is_token(s: &String) -> bool {
     s.as_slice().bytes().all(|b| is_token_item(b))
 }
 

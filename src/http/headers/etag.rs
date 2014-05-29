@@ -5,17 +5,17 @@ use std::fmt;
 #[deriving(Clone, Eq)]
 pub struct EntityTag {
     pub weak: bool,
-    pub opaque_tag: StrBuf,
+    pub opaque_tag: String,
 }
 
-pub fn weak_etag(opaque_tag: StrBuf) -> EntityTag {
+pub fn weak_etag(opaque_tag: String) -> EntityTag {
     EntityTag {
         weak: true,
         opaque_tag: opaque_tag,
     }
 }
 
-pub fn strong_etag(opaque_tag: StrBuf) -> EntityTag {
+pub fn strong_etag(opaque_tag: String) -> EntityTag {
     EntityTag {
         weak: false,
         opaque_tag: opaque_tag,
@@ -25,7 +25,7 @@ pub fn strong_etag(opaque_tag: StrBuf) -> EntityTag {
 impl fmt::Show for EntityTag {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.weak {
-            f.write(push_quoted_string(StrBuf::from_str("W/"), &self.opaque_tag).as_bytes())
+            f.write(push_quoted_string(String::from_str("W/"), &self.opaque_tag).as_bytes())
         } else {
             f.write(quoted_string(&self.opaque_tag).as_bytes())
         }
@@ -65,8 +65,8 @@ impl super::HeaderConvertible for EntityTag {
         writer.write_quoted_string(&self.opaque_tag)
     }
 
-    fn http_value(&self) -> StrBuf {
-        StrBuf::from_str(format!("{}", self))
+    fn http_value(&self) -> String {
+        self.to_str()
     }
 }
 
@@ -74,18 +74,18 @@ impl super::HeaderConvertible for EntityTag {
 fn test_etag() {
     use headers::test_utils::{assert_conversion_correct, assert_interpretation_correct,
                               assert_invalid};
-    assert_conversion_correct("\"\"", strong_etag(StrBuf::new()));
-    assert_conversion_correct("\"fO0\"", strong_etag(StrBuf::from_str("fO0")));
-    assert_conversion_correct("\"fO0 bar\"", strong_etag(StrBuf::from_str("fO0 bar")));
-    assert_conversion_correct("\"fO0 \\\"bar\"", strong_etag(StrBuf::from_str("fO0 \"bar")));
-    assert_conversion_correct("\"fO0 \\\"bar\\\"\"", strong_etag(StrBuf::from_str("fO0 \"bar\"")));
+    assert_conversion_correct("\"\"", strong_etag(String::new()));
+    assert_conversion_correct("\"fO0\"", strong_etag(String::from_str("fO0")));
+    assert_conversion_correct("\"fO0 bar\"", strong_etag(String::from_str("fO0 bar")));
+    assert_conversion_correct("\"fO0 \\\"bar\"", strong_etag(String::from_str("fO0 \"bar")));
+    assert_conversion_correct("\"fO0 \\\"bar\\\"\"", strong_etag(String::from_str("fO0 \"bar\"")));
 
-    assert_conversion_correct("W/\"\"", weak_etag(StrBuf::new()));
-    assert_conversion_correct("W/\"fO0\"", weak_etag(StrBuf::from_str("fO0")));
-    assert_conversion_correct("W/\"fO0 bar\"", weak_etag(StrBuf::from_str("fO0 bar")));
-    assert_conversion_correct("W/\"fO0 \\\"bar\"", weak_etag(StrBuf::from_str("fO0 \"bar")));
-    assert_conversion_correct("W/\"fO0 \\\"bar\\\"\"", weak_etag(StrBuf::from_str("fO0 \"bar\"")));
-    assert_interpretation_correct("w/\"fO0\"", weak_etag(StrBuf::from_str("fO0")));
+    assert_conversion_correct("W/\"\"", weak_etag(String::new()));
+    assert_conversion_correct("W/\"fO0\"", weak_etag(String::from_str("fO0")));
+    assert_conversion_correct("W/\"fO0 bar\"", weak_etag(String::from_str("fO0 bar")));
+    assert_conversion_correct("W/\"fO0 \\\"bar\"", weak_etag(String::from_str("fO0 \"bar")));
+    assert_conversion_correct("W/\"fO0 \\\"bar\\\"\"", weak_etag(String::from_str("fO0 \"bar\"")));
+    assert_interpretation_correct("w/\"fO0\"", weak_etag(String::from_str("fO0")));
 
     assert_invalid::<EntityTag>("");
     assert_invalid::<EntityTag>("fO0");

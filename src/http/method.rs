@@ -15,7 +15,7 @@ pub enum Method {
     Trace,
     Connect,
     Patch,  // RFC 5789
-    ExtensionMethod(StrBuf),
+    ExtensionMethod(String),
 }
 
 impl FromStr for Method {
@@ -80,7 +80,7 @@ impl Method {
             "TRACE"   => Trace,
             "CONNECT" => Connect,
             "PATCH"   => Patch,
-            _         => ExtensionMethod(StrBuf::from_str(method)),
+            _         => ExtensionMethod(String::from_str(method)),
         })
     }
 }

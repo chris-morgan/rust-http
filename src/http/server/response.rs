@@ -41,7 +41,7 @@ impl<'a> ResponseWriter<'a> {
 
     /// Write a response with the specified Content-Type and content; the Content-Length header is
     /// set based upon the contents
-    pub fn write_content_auto(&mut self, content_type: MediaType, content: StrBuf) -> IoResult<()> {
+    pub fn write_content_auto(&mut self, content_type: MediaType, content: String) -> IoResult<()> {
         self.headers.content_type = Some(content_type);
         let cbytes = content.as_bytes();
         self.headers.content_length = Some(cbytes.len());

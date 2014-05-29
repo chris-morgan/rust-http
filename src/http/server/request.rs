@@ -4,7 +4,6 @@ use status;
 use std::io::{Stream, IoResult};
 use std::io::net::ip::SocketAddr;
 use std::io::net::tcp::TcpStream;
-use std::strbuf::StrBuf;
 use std::fmt;
 use rfc2616::{CR, LF, SP};
 use headers;
@@ -59,7 +58,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
 
         // Good, we're now into the Request-URI. Bear in mind that as well as
         // ending in SP, it can for HTTP/0.9 end in CR LF or LF.
-        let mut raw_request_uri = StrBuf::new();
+        let mut raw_request_uri = String::new();
         loop {
             if next_byte == CR {
                 // For CR, we must have an LF immediately afterwards.
@@ -86,7 +85,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
         }
 
         // Now parse it into a RequestUri.
-        let request_uri = match RequestUri::from_strbuf(raw_request_uri) {
+        let request_uri = match RequestUri::from_string(raw_request_uri) {
             Some(r) => r,
             None => return Err(status::BadRequest),
         };
@@ -171,17 +170,17 @@ fn test_read_request_line() {
         }}
     )
 
-    tt!("GET / HTTP/1.1\n" => Ok((Get, AbsolutePath(StrBuf::from_str("/")), (1, 1))));
-    tt!("GET / HTTP/1.1\r\n" => Ok((Get, AbsolutePath(StrBuf::from_str("/")), (1, 1))));
-    tt!("OPTIONS /foo/bar HTTP/1.1\r\n" => Ok((Options, AbsolutePath(StrBuf::from_str("/foo/bar")), (1, 1))));
+    tt!("GET / HTTP/1.1\n" => Ok((Get, AbsolutePath(String::from_str("/")), (1, 1))));
+    tt!("GET / HTTP/1.1\r\n" => Ok((Get, AbsolutePath(String::from_str("/")), (1, 1))));
+    tt!("OPTIONS /foo/bar HTTP/1.1\r\n" => Ok((Options, AbsolutePath(String::from_str("/foo/bar")), (1, 1))));
     tt!("OPTIONS * HTTP/1.1\r\n" => Ok((Options, Star, (1, 1))));
     tt!("CONNECT example.com HTTP/1.1\r\n" => Ok((Connect,
-                                                Authority(StrBuf::from_str("example.com")),
+                                                Authority(String::from_str("example.com")),
                                                 (1, 1))));
-    tt!("FOO /\r\n" => Ok((ExtensionMethod(StrBuf::from_str("FOO")), AbsolutePath(StrBuf::from_str("/")), (0, 9))));
-    tt!("FOO /\n" => Ok((ExtensionMethod(StrBuf::from_str("FOO")), AbsolutePath(StrBuf::from_str("/")), (0, 9))));
+    tt!("FOO /\r\n" => Ok((ExtensionMethod(String::from_str("FOO")), AbsolutePath(String::from_str("/")), (0, 9))));
+    tt!("FOO /\n" => Ok((ExtensionMethod(String::from_str("FOO")), AbsolutePath(String::from_str("/")), (0, 9))));
     tt!("get    http://example.com/ HTTP/42.17\r\n"
-            => Ok((ExtensionMethod(StrBuf::from_str("get")),
+            => Ok((ExtensionMethod(String::from_str("get")),
                     AbsoluteUri(from_str("http://example.com/").unwrap()),
                     (42, 17))));
 
@@ -213,7 +212,7 @@ pub struct Request {
     pub headers: Box<headers::request::HeaderCollection>,
 
     /// The body of the request; empty for such methods as GET.
-    pub body: StrBuf,
+    pub body: String,
 
     /// The HTTP method for the request.
     pub method: Method,
@@ -253,19 +252,19 @@ pub enum RequestUri {
     ///
     /// TODO: this shouldn't be a string; it should be further parsed. `extra::net::url` has some
     /// stuff which might help, but isn't public.
-    AbsolutePath(StrBuf),
+    AbsolutePath(String),
 
     /// 'The authority form is only used by the CONNECT method (CONNECT).'
     ///
     /// TODO: this shouldn't be a string; it should be further parsed. `extra::net::url` has some
     /// stuff which might help, but isn't public.
-    Authority(StrBuf),
+    Authority(String),
 }
 
 impl RequestUri {
     /// Interpret a RFC2616 Request-URI
-    fn from_strbuf(request_uri: StrBuf) -> Option<RequestUri> {
-        if request_uri == StrBuf::from_str("*") {
+    fn from_string(request_uri: String) -> Option<RequestUri> {
+        if request_uri == String::from_str("*") {
             Some(Star)
         } else if request_uri.as_slice()[0] as char == '/' {
             Some(AbsolutePath(request_uri))
@@ -303,7 +302,7 @@ impl Request {
         let mut request = box Request {
             remote_addr: buffer.stream.wrapped.peer_name().ok(),
             headers: box headers::request::HeaderCollection::new(),
-            body: StrBuf::new(),
+            body: String::new(),
             method: Options,
             request_uri: Star,
             close_connection: true,
@@ -372,7 +371,7 @@ impl Request {
         match request.headers.content_length {
             Some(length) => {
                 match buffer.read_exact(length) {
-                    Ok(body) => match StrBuf::from_utf8(body) {
+                    Ok(body) => match String::from_utf8(body) {
                         Ok(body_str) => request.body = body_str,
                         Err(_) => return (request, Err(status::BadRequest))
                     },

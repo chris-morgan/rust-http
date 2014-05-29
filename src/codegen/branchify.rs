@@ -7,7 +7,7 @@ use std::io::IoResult;
 #[deriving(Clone)]
 pub struct ParseBranch {
     matches: Vec<u8>,
-    result: Option<StrBuf>,
+    result: Option<String>,
     children: Vec<ParseBranch>,
 }
 
@@ -27,7 +27,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> Vec<ParseBra
     fn go_down_moses(branch: &mut ParseBranch, mut chariter: Chars, result: &str, case_sensitive: bool) {
         match chariter.next() {
             Some(c) => {
-                let first_case = if case_sensitive { c as u8 } else { c.to_ascii().to_upper().to_byte() };
+                let first_case = if case_sensitive { c as u8 } else { c.to_ascii().to_uppercase().to_byte() };
                 for next_branch in branch.children.mut_iter() {
                     if *next_branch.matches.get(0) == first_case {
                         go_down_moses(next_branch, chariter, result, case_sensitive);
@@ -37,7 +37,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> Vec<ParseBra
                 let mut subbranch = ParseBranch::new();
                 subbranch.matches.push(first_case);
                 if !case_sensitive {
-                    let second_case = c.to_ascii().to_lower().to_byte();
+                    let second_case = c.to_ascii().to_lowercase().to_byte();
                     if first_case != second_case {
                         subbranch.matches.push(second_case);
                     }
@@ -48,7 +48,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> Vec<ParseBra
             },
             None => {
                 assert!(branch.result.is_none());
-                branch.result = Some(StrBuf::from_str(result));
+                branch.result = Some(String::from_str(result));
             },
         }
     };
@@ -78,7 +78,7 @@ macro_rules! branchify(
 /// :param max_len: the maximum length a value may be before giving up and returning ``None``
 /// :param valid: the function call to if a byte ``b`` is valid
 /// :param unknown: the expression to call for an unknown value; in this string, ``{}`` will be
-///         replaced with an expression (literal or non-literal) evaluating to a ``StrBuf`` (it is
+///         replaced with an expression (literal or non-literal) evaluating to a ``String`` (it is
 ///         ``{}`` only, not arbitrary format strings)
 pub fn generate_branchified_method(
         writer: &mut Writer,
@@ -102,13 +102,13 @@ pub fn generate_branchified_method(
             let next_prefix = format!("{}{}", prefix, c as char);
             w!(format!("Ok(b) if b == '{}' as u8 => match {} \\{", c as char, read_call));
             for b in branch.children.iter() {
-                try!(r(writer, b, next_prefix, indent + 1, read_call, end, max_len, valid, unknown));
+                try!(r(writer, b, next_prefix.as_slice(), indent + 1, read_call, end, max_len, valid, unknown));
             }
             match branch.result {
                 Some(ref result) =>
                     w!(format!("    Ok(b) if b == SP => return Ok({}),", *result)),
                 None => w!(format!("    Ok(b) if b == SP => return Ok({}),",
-                                  unknown.replace("{}", format!("StrBuf::from_str(\"{}\")", next_prefix)))),
+                                  unknown.replace("{}", format!("String::from_str(\"{}\")", next_prefix).as_slice()))),
             }
             w!(format!("    Ok(b) if {} => (\"{}\", b),", valid, next_prefix));
             w!("    Ok(_) => return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"bad value\", detail: None }),");
@@ -133,7 +133,7 @@ pub fn generate_branchified_method(
     w!(       ("    Err(err) => return Err(err),"));
     w!(       ("};"));
     w!(       ("// OK, that didn't pan out. Let's read the rest and see what we get."));
-    w!(       ("let mut s = StrBuf::from_str(s);"));
+    w!(       ("let mut s = String::from_str(s);"));
     w!(       ("s.push_char(next_byte as char);"));
     w!(       ("loop {"));
     w!(format!("    match {} \\{", read_call));
