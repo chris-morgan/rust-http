@@ -1,3 +1,20 @@
+OBSOLETION NOTICE
+=================
+
+This library is on the way out. It was a useful experiment and is now being
+replaced under the scope of the `Teepee <http://teepee.rs>`_ project.
+
+For more information on what’s happening with it all,
+see http://chrismorgan.info/blog/introducing-teepee.html.
+
+Until Teepee is ready for use, rust-http will be maintained so you can use it
+with Rust master, but no new work is being done on it. After that, it will
+probably wind down fairly quickly with a migration guide to help you change to
+Teepee. So long as you haven’t built a massive program with it (not advised!),
+migration should not be terribly difficult.
+
+But for now, if you want to play with HTTP in Rust, this is the library to use.
+
 Rust HTTP library
 =================
 
