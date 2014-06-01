@@ -10,6 +10,8 @@ doc/src/http/
 doc/.lock
 doc/*.js
 doc/*.css
+doc/*.woff
+doc/implementors/
 lib/
 .rust/
 Makefile
