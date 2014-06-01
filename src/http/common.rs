@@ -43,7 +43,7 @@ static ASCII_UPPER_F: u8 = 'F' as u8;
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_decimal<R: Reader, N: Unsigned + NumCast + Ord + CheckedMul + CheckedAdd>
+pub fn read_decimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedMul + CheckedAdd>
                    (reader: &mut R, expected_end: |u8| -> bool)
                    -> IoResult<N> {
     // Here and in `read_hexadecimal` there is the possibility of infinite sequence of zeroes. The
@@ -89,7 +89,7 @@ pub fn read_decimal<R: Reader, N: Unsigned + NumCast + Ord + CheckedMul + Checke
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + Ord + CheckedMul + CheckedAdd>
+pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedMul + CheckedAdd>
                        (reader: &mut R, expected_end: |u8| -> bool)
                        -> IoResult<N> {
     let mut n: N = Zero::zero();

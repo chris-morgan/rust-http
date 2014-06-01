@@ -2,7 +2,7 @@ use headers::serialization_utils::{push_quoted_string, quoted_string, WriterUtil
 use std::io::IoResult;
 use std::fmt;
 
-#[deriving(Clone, Eq)]
+#[deriving(Clone, PartialEq, TotalEq)]
 pub struct EntityTag {
     pub weak: bool,
     pub opaque_tag: String,

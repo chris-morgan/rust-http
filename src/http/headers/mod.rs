@@ -62,7 +62,7 @@ pub mod transfer_encoding;
 
 pub type DeltaSeconds = u64;
 
-#[deriving(Clone, Eq)]
+#[deriving(Clone, PartialEq, TotalEq)]
 pub enum ConsumeCommaLWSResult {
     CommaConsumed,
     EndOfValue,
@@ -128,7 +128,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
     }
 }
 
-#[deriving(Eq)]
+#[deriving(PartialEq, TotalEq)]
 enum HeaderValueByteIteratorState {
     Normal,  // Anything other than the rest.
     GotLF,  // Last character was LF (could be end of header or, if followed by SP or HT, LWS)
@@ -425,7 +425,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
                 },
                 Some(b) => {
                     println!("TODO: what should be done with a token ended with a non-separator? \
-(With token {:?}, {:?} was read.)", output, b as char);
+(With token {}, {} was read.)", output, b as char);
                 }
             }
         }
@@ -513,7 +513,7 @@ impl<'a, R: Reader> Iterator<u8> for HeaderValueByteIterator<'a, R> {
 /**
  * A datatype for headers.
  */
-pub trait HeaderConvertible: Eq + Clone {
+pub trait HeaderConvertible: PartialEq + Clone {
     /**
      * Read a header value from an iterator over the raw value.
      *

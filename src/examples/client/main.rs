@@ -30,7 +30,7 @@ fn make_and_print_request(url: &str) {
     println!("[33;1m=======[0m");
     println!("");
     println!("[1mURL:[0m {}", request.url.to_str());
-    println!("[1mRemote address:[0m {:?}", request.remote_addr);
+    println!("[1mRemote address:[0m {}", request.remote_addr);
     println!("[1mMethod:[0m {}", request.method);
     println!("[1mHeaders:[0m");
     for header in request.headers.iter() {

@@ -3,14 +3,14 @@
 use std::io::IoResult;
 use std::ascii::StrAsciiExt;
 
-#[deriving(Clone,Eq)]
+#[deriving(Clone, PartialEq, TotalEq)]
 // RFC 2616: range-unit = bytes-unit | other-range-unit
 pub enum RangeUnit {
     Bytes,                 // bytes-unit       = "bytes"
     OtherRangeUnit(String),  // other-range-unit = token
 }
 
-#[deriving(Clone,Eq)]
+#[deriving(Clone, PartialEq, TotalEq)]
 // RFC 2616: acceptable-ranges = 1#range-unit | "none"
 pub enum AcceptableRanges {
     RangeUnits(Vec<RangeUnit>),

@@ -35,9 +35,9 @@ impl Server for InfoServer {
         w.write(bytes!("<h1>Request</h1>")).unwrap();
         let s = format!("<dl>
             <dt>Method</dt><dd>{}</dd>
-            <dt>Host</dt><dd>{:?}</dd>
-            <dt>Request URI</dt><dd>{:?}</dd>
-            <dt>HTTP version</dt><dd>{:?}</dd>
+            <dt>Host</dt><dd>{}</dd>
+            <dt>Request URI</dt><dd>{}</dd>
+            <dt>HTTP version</dt><dd>{}</dd>
             <dt>Close connection</dt><dd>{}</dd></dl>",
             r.method,
             r.headers.host,
