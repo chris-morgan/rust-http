@@ -1,10 +1,20 @@
+#!/usr/bin/env python
+# (python2 or python3, don’t mind which)
 '''Comparison benchmarker.'''
+
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import os
 import subprocess
 import sys
 import time
-import urllib2
+try:
+    from urllib.request import urlopen
+    from urllib.error import URLError
+except ImportError:  # py2k
+    from urllib2 import urlopen
+    from urllib2 import URLError
 from contextlib import contextmanager
 
 
@@ -69,12 +79,12 @@ class ServerRunner(object):
         args = self.get_server_process_details()
         process = subprocess.Popen(args,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        for _ in xrange(int(self.START_CHECK_TIMEOUT /
-                            self.START_CHECK_FREQUENCY)):
+        for _ in range(int(self.START_CHECK_TIMEOUT /
+                           self.START_CHECK_FREQUENCY)):
             time.sleep(self.START_CHECK_FREQUENCY)
             try:
-                urllib2.urlopen(self.root_url)
-            except urllib2.URLError:
+                urlopen(self.root_url)
+            except URLError:
                 pass
             else:
                 break
@@ -129,9 +139,9 @@ class RustServerRunner(ServerRunner):
     PLATFORM = 'rust'
 
     # e.g. x86_64-unknown-linux-gnu
-    HOST = subprocess.Popen(('rustc', '--version'),
-                            stdout=subprocess.PIPE).communicate()[0].split(
-                                    'host: ')[1].rstrip()
+    rustc_version = subprocess.Popen(('rustc', '--version'),
+                                     stdout=subprocess.PIPE).communicate()[0]
+    HOST = rustc_version.split(b'host: ')[1].rstrip()
 
     def __init__(self, *args, **kwargs):
         super(RustServerRunner, self).__init__(*args, **kwargs)
@@ -234,8 +244,8 @@ class ApacheBenchServerBencher(ServerBencher):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         # Might fail here if it failed. Meh; no point catching it, let it fail.
-        rps_line = next(line for line in stdout.split('\n')
-                        if line.startswith('Requests per second:'))
+        rps_line = next(line for line in stdout.split(b'\n')
+                        if line.startswith(b'Requests per second:'))
         # Matches the 2323.84 part of:
         # Requests per second:    2323.84 [#/sec] (mean)
         return float(rps_line.split()[3])
@@ -269,10 +279,11 @@ def main():
                     .format(runner.PLATFORM, runner.name)):
                 runner.compile_server()
 
-        for concurrency in (1, 2, 3, 4, 8):
+        for concurrency in (1, 2, 3, 4, 8, 16, 32):
             for runner, bencher, result in runners_benchers_cross_product(
                     runners, benchers, concurrency):
-                print runner.PLATFORM, concurrency, bencher.TOOL, result
+                print(' '.join((runner.PLATFORM, str(concurrency),
+                                bencher.TOOL, str(result))))
 
 
 if __name__ == '__main__':
