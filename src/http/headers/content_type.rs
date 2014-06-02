@@ -3,7 +3,7 @@ use headers::serialization_utils::{push_parameters, WriterUtil};
 use std::io::IoResult;
 use std::fmt;
 
-#[deriving(Clone, PartialEq, TotalEq)]
+#[deriving(Clone, PartialEq, Eq)]
 pub struct MediaType {
     pub type_: String,
     pub subtype: String,

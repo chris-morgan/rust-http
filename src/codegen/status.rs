@@ -162,7 +162,7 @@ use std::fmt;
 use std::ascii::StrAsciiExt;
 
 /// HTTP status code
-#[deriving(TotalEq, PartialEq, Clone)]
+#[deriving(Eq, PartialEq, Clone)]
 pub enum Status {
 ".as_bytes()));
     for &entry in entries.iter() {

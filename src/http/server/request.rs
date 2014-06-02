@@ -230,7 +230,7 @@ pub struct Request {
 }
 
 /// The URI (Request-URI in RFC 2616) as specified in the Status-Line of an HTTP request
-#[deriving(PartialEq, TotalEq)]
+#[deriving(PartialEq, Eq)]
 pub enum RequestUri {
     /// 'The asterisk "*" means that the request does not apply to a particular resource, but to the
     /// server itself, and is only allowed when the method used does not necessarily apply to a

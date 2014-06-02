@@ -4,7 +4,7 @@ use std::io::Reader;
 use std::fmt;
 
 /// A simple little thing for the host of a request
-#[deriving(Clone, PartialEq, TotalEq)]
+#[deriving(Clone, PartialEq, Eq)]
 pub struct Host {
 
     /// The name of the host that was requested

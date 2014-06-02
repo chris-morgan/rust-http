@@ -10,7 +10,7 @@ use headers::serialization_utils::{WriterUtil, push_parameters};
 ///
 /// transfer-coding         = "chunked" | transfer-extension
 /// transfer-extension      = token *( ";" parameter )
-#[deriving(Clone, PartialEq, TotalEq)]
+#[deriving(Clone, PartialEq, Eq)]
 pub enum TransferCoding {
     Chunked,
     TransferExtension(String, Vec<(String, String)>),

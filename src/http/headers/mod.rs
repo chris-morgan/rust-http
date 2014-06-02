@@ -62,7 +62,7 @@ pub mod transfer_encoding;
 
 pub type DeltaSeconds = u64;
 
-#[deriving(Clone, PartialEq, TotalEq)]
+#[deriving(Clone, PartialEq, Eq)]
 pub enum ConsumeCommaLWSResult {
     CommaConsumed,
     EndOfValue,
@@ -128,7 +128,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
     }
 }
 
-#[deriving(PartialEq, TotalEq)]
+#[deriving(PartialEq, Eq)]
 enum HeaderValueByteIteratorState {
     Normal,  // Anything other than the rest.
     GotLF,  // Last character was LF (could be end of header or, if followed by SP or HT, LWS)
