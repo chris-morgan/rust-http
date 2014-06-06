@@ -2,8 +2,6 @@
 
 #![feature(macro_rules)]
 
-extern crate collections;
-
 use std::io::{File, Truncate, Write};
 use std::os;
 
