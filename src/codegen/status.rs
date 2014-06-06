@@ -7,7 +7,7 @@
 // No, I don't mind.
 // That was easy. :-)
 
-use collections::hashmap::HashSet;
+use std::collections::hashmap::HashSet;
 use std::ascii::StrAsciiExt;
 use std::io::IoResult;
 use super::get_writer;
