@@ -152,6 +152,8 @@ class RustServerRunner(ServerRunner):
     def compile_server(self):
         subprocess.Popen(('rustc',
             '--opt-level=3', self.source,
+            '-Z', 'lto',
+            #'-Z', 'no-landing-pads',
             #'--out-dir', self.build_dir,
             '-L', '../build', # '../build/{}/http/'.format(RustServerRunner.HOST),
             # Just in case it was built with openssl support. This should
@@ -234,14 +236,19 @@ class ApacheBenchServerBencher(ServerBencher):
 
     TOOL = 'ab'
 
-    def __init__(self, bin='ab'):
+    def __init__(self, bin='ab', keep_alive=False):
         self.bin = bin
+        self.keep_alive = keep_alive
+        if keep_alive:
+            self.TOOL = 'ab-keep-alive'
 
     def bench(self, server_runner, concurrency):
-        process = subprocess.Popen(
-            (self.bin, '-n', '100000', '-c', str(concurrency),
-                server_runner.root_url),
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        args = [self.bin, '-n', '100000', '-c', str(concurrency)]
+        if self.keep_alive:
+            args.append('-k')
+        args.append(server_runner.root_url)
+        process = subprocess.Popen(args, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         # Might fail here if it failed. Meh; no point catching it, let it fail.
         rps_line = next(line for line in stdout.split(b'\n')
@@ -249,6 +256,30 @@ class ApacheBenchServerBencher(ServerBencher):
         # Matches the 2323.84 part of:
         # Requests per second:    2323.84 [#/sec] (mean)
         return float(rps_line.split()[3])
+
+
+class WrkServerBencher(ServerBencher):
+
+    TOOL = 'wrk'
+
+    def __init__(self, bin='wrk'):
+        self.bin = bin
+
+    def bench(self, server_runner, concurrency):
+        process = subprocess.Popen(
+            # defaults: --duration 10s --threads 2 --connections 10
+            (self.bin,
+             '--threads', str(concurrency),
+             '--connections', str(concurrency),
+             server_runner.root_url),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        # Might fail here if it failed. Meh; no point catching it, let it fail.
+        rps_line = next(line for line in stdout.split(b'\n')
+                        if line.startswith(b'Requests/sec: '))
+        # Matches the 106353.48 part of:
+        # Requests/sec: 106353.48
+        return float(rps_line.split()[1])
 
 
 def runners_benchers_cross_product(runners, benchers, concurrency):
@@ -264,9 +295,10 @@ def runners_benchers_cross_product(runners, benchers, concurrency):
 
 
 def main():
-    ab = ApacheBenchServerBencher()
-    #wrk = WrkServerBencher()
-    benchers = [ab]
+    ab = ApacheBenchServerBencher(keep_alive=False)
+    ab_k = ApacheBenchServerBencher(keep_alive=True)
+    wrk = WrkServerBencher()
+    benchers = [ab, ab_k, wrk]
 
     for server_name in ('apache_fake',):
         runners = ServerRunnerCollection(
