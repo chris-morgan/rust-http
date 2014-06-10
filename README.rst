@@ -68,6 +68,10 @@ Getting started
 This is developed on Ubuntu and is aimed at the moving target of Rust's master
 branch.
 
+Configure the makefile::
+
+   ./configure
+
 Build everything::
 
    make all
