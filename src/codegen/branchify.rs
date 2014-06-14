@@ -100,7 +100,7 @@ pub fn generate_branchified_method(
         )
         for &c in branch.matches.iter() {
             let next_prefix = format!("{}{}", prefix, c as char);
-            w!(format!("Ok(b) if b == '{}' as u8 => match {} \\{", c as char, read_call));
+            w!(format!("Ok(b) if b == '{}' as u8 => match {} {{", c as char, read_call));
             for b in branch.children.iter() {
                 try!(r(writer, b, next_prefix.as_slice(), indent + 1, read_call, end, max_len, valid, unknown));
             }
@@ -124,7 +124,7 @@ pub fn generate_branchified_method(
         }
     )
 
-    w!(format!("let (s, next_byte) = match {} \\{", read_call));
+    w!(format!("let (s, next_byte) = match {} {{", read_call));
     for b in branches.iter() {
         try!(r(writer, b, "", indent + 1, read_call, end, max_len, valid, unknown));
     }
@@ -136,10 +136,10 @@ pub fn generate_branchified_method(
     w!(       ("let mut s = String::from_str(s);"));
     w!(       ("s.push_char(next_byte as char);"));
     w!(       ("loop {"));
-    w!(format!("    match {} \\{", read_call));
+    w!(format!("    match {} {{", read_call));
     w!(format!("        Ok(b) if b == {} => return Ok({}),", end, unknown.replace("{}", "s")));
-    w!(format!("        Ok(b) if {} => \\{", valid));
-    w!(format!("            if s.len() == {} \\{", max_len));
+    w!(format!("        Ok(b) if {} => {{", valid));
+    w!(format!("            if s.len() == {} {{", max_len));
     w!(       ("                // Too long; bad request"));
     w!(       ("                return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"too long, bad request\", detail: None });"));
     w!(       ("            }"));
