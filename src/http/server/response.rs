@@ -20,8 +20,8 @@ use headers::transfer_encoding::Chunked;
 
 pub struct ResponseWriter<'a> {
     // The place to write to (typically a TCP stream, io::net::tcp::TcpStream)
-    writer: &'a mut BufferedStream<TcpStream>,
-    headers_written: bool,
+    pub writer: &'a mut BufferedStream<TcpStream>,
+    pub headers_written: bool,
     pub request: &'a Request,
     pub headers: Box<HeaderCollection>,
     pub status: status::Status,
