@@ -58,10 +58,18 @@ pub trait Server: Send + Clone {
                 let mut time_start = time_start;
                 let mut stream = BufferedStream::new(stream);
                 debug!("accepted connection");
+                let mut first = true;
                 loop {  // A keep-alive loop, condition at end
-                    let time_spawned = precise_time_ns();
+                    let mut time_spawned = precise_time_ns();
                     let (request, err_status) = Request::load(&mut stream);
                     let time_request_made = precise_time_ns();
+                    if !first {
+                        // Subsequent requests on this connection have no spawn time.
+                        // Moreover we cannot detect the time spent parsing the request as we have
+                        // not exposed the time when the first byte was received.
+                        time_start = time_request_made;
+                        time_spawned = time_request_made;
+                    }
                     let mut response = box ResponseWriter::new(&mut stream, request);
                     let time_response_made = precise_time_ns();
                     match err_status {
@@ -102,12 +110,10 @@ pub trait Server: Send + Clone {
                     let time_finished = precise_time_ns();
                     child_perf_sender.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
 
-                    // Subsequent requests on this connection have no spawn time
-                    time_start = time_finished;
-
                     if request.close_connection {
                         break;
                     }
+                    first = false;
                 }
             });
         }
