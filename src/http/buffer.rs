@@ -93,7 +93,7 @@ impl<T: Writer> BufferedStream<T> {
     pub fn finish_response(&mut self) -> IoResult<()> {
         try!(self.flush());
         if self.writing_chunked_body {
-            try!(self.wrapped.write(bytes!("0\r\n\r\n")));
+            try!(self.wrapped.write(b"0\r\n\r\n"));
         }
         Ok(())
     }
@@ -132,7 +132,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
             try!(self.wrapped.write(buf));
             self.write_len = 0;
             if self.writing_chunked_body {
-                try!(self.wrapped.write(bytes!("\r\n")));
+                try!(self.wrapped.write(b"\r\n"));
             }
         } else {
             unsafe {
@@ -146,7 +146,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
                     let s = format!("{}\r\n", self.write_len.to_str_radix(16));
                     try!(self.wrapped.write(s.as_bytes()));
                     try!(self.wrapped.write(self.write_buffer.as_slice()));
-                    try!(self.wrapped.write(bytes!("\r\n")));
+                    try!(self.wrapped.write(b"\r\n"));
                 } else {
                     try!(self.wrapped.write(self.write_buffer.as_slice()));
                 }
@@ -164,7 +164,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
             }
             try!(self.wrapped.write(self.write_buffer.slice_to(self.write_len)));
             if self.writing_chunked_body {
-                try!(self.wrapped.write(bytes!("\r\n")));
+                try!(self.wrapped.write(b"\r\n"));
             }
             self.write_len = 0;
         }

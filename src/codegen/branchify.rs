@@ -100,14 +100,14 @@ pub fn generate_branchified_method(
         )
         for &c in branch.matches.iter() {
             let next_prefix = format!("{}{}", prefix, c as char);
-            w!(format!("Ok(b) if b == '{}' as u8 => match {} {{", c as char, read_call));
+            w!(format!("Ok(b'{}') => match {} {{", c as char, read_call));
             for b in branch.children.iter() {
                 try!(r(writer, b, next_prefix.as_slice(), indent + 1, read_call, end, max_len, valid, unknown));
             }
             match branch.result {
                 Some(ref result) =>
-                    w!(format!("    Ok(b) if b == SP => return Ok({}),", *result)),
-                None => w!(format!("    Ok(b) if b == SP => return Ok({}),",
+                    w!(format!("    Ok(b' ') => return Ok({}),", *result)),
+                None => w!(format!("    Ok(b' ') => return Ok({}),",
                                   unknown.replace("{}", format!("String::from_str(\"{}\")", next_prefix).as_slice()))),
             }
             w!(format!("    Ok(b) if {} => (\"{}\", b),", valid, next_prefix));

@@ -267,7 +267,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     pub fn consume_comma_lws(&mut self) -> ConsumeCommaLWSResult {
         self.consume_optional_lws();
         match self.next() {
-            Some(b) if b == ',' as u8 => {
+            Some(b',') => {
                 self.consume_optional_lws();
                 CommaConsumed
             },
@@ -294,10 +294,10 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
                 None => return None,
                 Some(b) => {
                     state = match state {
-                        Start if b == '"' as u8 => Normal,
+                        Start if b == b'"' => Normal,
                         Start => return None,
-                        Normal if b == '\\' as u8 => Escaping,
-                        Normal if b == '"' as u8 => break,
+                        Normal if b == b'\\' => Escaping,
+                        Normal if b == b'"' => break,
                         Normal | Escaping => { output.push_char(b as char); Normal },
                     }
                 }
@@ -307,7 +307,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     }
 
     fn read_parameter(&mut self, already_read_semicolon: bool) -> Option<(String, String)> {
-        if !already_read_semicolon && self.next() != Some(';' as u8) {
+        if !already_read_semicolon && self.next() != Some(b';') {
             return None;
         }
         self.consume_optional_lws();
@@ -316,7 +316,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
             None => return None,
         };
         self.consume_optional_lws();
-        if self.next() != Some('=' as u8) {
+        if self.next() != Some(b'=') {
             return None;
         }
         self.consume_optional_lws();
@@ -339,7 +339,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
                 //This catches the LWS after the last ';', and can probably be replaced with
                 //consume_optional_lws().
                 Some(b) if b == SP || b == HT => (),
-                Some(b) if b == ';' as u8 => {
+                Some(b) if b == b';' => {
                     match self.read_parameter(true) {
                         Some(parameter) => result.push(parameter),
                         None => return None,
@@ -363,7 +363,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
 
         let mut output = String::new();
         match self.next() {
-            Some(b) if b == '"' as u8 => {
+            Some(b'"') => {
                 // It is a quoted-string.
                 enum State { Normal, Escaping }
                 let mut state = Normal;
@@ -371,8 +371,8 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
                     match self.next() {
                         None => return None,
                         Some(b) => state = match state {
-                            Normal if b == '\\' as u8 => Escaping,
-                            Normal if b == '"' as u8 => break,
+                            Normal if b == b'\\' => Escaping,
+                            Normal if b == b'"' => break,
                             Normal | Escaping => { output.push_char(b as char); Normal },
                         }
                     }
@@ -576,7 +576,7 @@ impl<T: CommaListHeaderConvertible> HeaderConvertible for Vec<T> {
     fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
         for (i, item) in self.iter().enumerate() {
             if i != 0 {
-                try!(writer.write(bytes!(", ")))
+                try!(writer.write(b", "))
             }
             try!(item.to_stream(writer))
         }
@@ -932,7 +932,7 @@ macro_rules! headers_mod {
                     for header in self.iter() {
                         try!(header.write_header(&mut *writer));
                     }
-                    writer.write(bytes!("\r\n"))
+                    writer.write(b"\r\n")
                 }
             }
 

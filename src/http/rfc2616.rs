@@ -10,11 +10,11 @@ pub fn is_char(octet: u8) -> bool { octet < 128 }
 
 /// UPALPHA: any US-ASCII uppercase letter "A".."Z">
 #[inline]
-pub fn is_upalpha(octet: u8) -> bool { octet >= 'A' as u8 && octet <= 'Z' as u8 }
+pub fn is_upalpha(octet: u8) -> bool { octet >= b'A' && octet <= b'Z' }
 
 /// LOALPHA: any US-ASCII lowercase letter "a".."z">
 #[inline]
-pub fn is_loalpha(octet: u8) -> bool { octet >= 'a' as u8 && octet <= 'z' as u8 }
+pub fn is_loalpha(octet: u8) -> bool { octet >= b'a' && octet <= b'z' }
 
 /// ALPHA: UPALPHA | LOALPHA
 #[inline]
@@ -22,32 +22,32 @@ pub fn is_alpha(octet: u8) -> bool { is_upalpha(octet) || is_loalpha(octet) }
 
 /// DIGIT: any US-ASCII digit "0".."9"
 #[inline]
-pub fn is_digit(octet: u8) -> bool { octet >= '0' as u8 && octet <= '9' as u8 }
+pub fn is_digit(octet: u8) -> bool { octet >= b'0' && octet <= b'9' }
 
 /// CTL: any US-ASCII control character (octets 0 - 31) and DEL (127)
 #[inline]
 pub fn is_ctl(octet: u8) -> bool { octet < 32 || octet == 127 }
 
 /// CR: US-ASCII CR, carriage return (13)
-pub static CR: u8 = '\r' as u8;
+pub static CR: u8 = b'\r';
 
 /// LF: US-ASCII LF, linefeed (10)
-pub static LF: u8 = '\n' as u8;
+pub static LF: u8 = b'\n';
 
 /// SP: US-ASCII SP, space (32)
-pub static SP: u8 = ' ' as u8;
+pub static SP: u8 = b' ';
 
 /// HT: US-ASCII HT, horizontal-tab (9)
-pub static HT: u8 = '\t' as u8;
+pub static HT: u8 = b'\t';
 
 /// US-ASCII colon (58)
-pub static COLON: u8 = ':' as u8;
+pub static COLON: u8 = b':';
 
 /// <">: US-ASCII double-quote mark (34)
-pub static DOUBLE_QUOTE: u8 = '"' as u8;
+pub static DOUBLE_QUOTE: u8 = b'"';
 
 /// "\": US-ASCII backslash (92)
-pub static BACKSLASH: u8 = '\\' as u8;
+pub static BACKSLASH: u8 = b'\\';
 
 // CRLF: CR LF
 //static CRLF: [u8] = [CR, LF];
@@ -85,8 +85,8 @@ fn is_lws(octets: &[u8]) -> bool {
 /// HEX: "A" | "B" | "C" | "D" | "E" | "F" | "a" | "b" | "c" | "d" | "e" | "f" | DIGIT
 #[inline]
 pub fn is_hex(octet: u8) -> bool {
-    (octet >= 'A' as u8 && octet <= 'F' as u8) ||
-    (octet >= 'a' as u8 && octet <= 'f' as u8) ||
+    (octet >= b'A' && octet <= b'F') ||
+    (octet >= b'a' && octet <= b'f') ||
     is_digit(octet)
 }
 
@@ -107,10 +107,10 @@ pub fn is_token(s: &String) -> bool {
 ///           | "}" | SP | HT
 #[inline]
 pub fn is_separator(o: u8) -> bool {
-    o == '(' as u8 || o == ')' as u8 || o == '<' as u8 || o == '>' as u8 || o == '@' as u8 ||
-    o == ',' as u8 || o == ';' as u8 || o == ':' as u8 || o == '\\' as u8 || o == '"' as u8 ||
-    o == '/' as u8 || o == '[' as u8 || o == ']' as u8 || o == '?' as u8 || o == '=' as u8 ||
-    o == '{' as u8 || o == '}' as u8 || o == SP || o == HT
+    o == b'(' || o == b')' || o == b'<' || o == b'>' || o == b'@' ||
+    o == b',' || o == b';' || o == b':' || o == b'\\' || o == b'"' ||
+    o == b'/' || o == b'[' || o == b']' || o == b'?' || o == b'=' ||
+    o == b'{' || o == b'}' || o == SP || o == HT
 }
 
 /*
@@ -177,10 +177,10 @@ mod content_coding {
     impl fmt::Show for ValueToken {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             f.write(match *self {
-                Gzip => "gzip".as_bytes(),
-                Compress => "compress".as_bytes(),
-                Deflate => "deflate".as_bytes(),
-                Identity => "identity".as_bytes(),
+                Gzip => b"gzip",
+                Compress => b"compress",
+                Deflate => b"deflate",
+                Identity => b"identity",
             })
         }
     }
@@ -213,10 +213,10 @@ mod transfer_coding {
     impl fmt::Show for ValueToken {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             f.write(match *self {
-                Chunked => "chunked".as_bytes(),
-                Gzip => "gzip".as_bytes(),
-                Compress => "compress".as_bytes(),
-                Deflate => "deflate".as_bytes(),
+                Chunked => b"chunked",
+                Gzip => b"gzip",
+                Compress => b"compress",
+                Deflate => b"deflate",
             })
         }
     }

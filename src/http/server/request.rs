@@ -284,7 +284,7 @@ impl RequestUri {
 impl fmt::Show for RequestUri {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Star => f.write("*".as_bytes()),
+            Star => f.write(b"*"),
             AbsoluteUri(ref url) => url.fmt(f),
             AbsolutePath(ref str) => f.write(str.as_bytes()),
             Authority(ref str) => f.write(str.as_bytes()),
