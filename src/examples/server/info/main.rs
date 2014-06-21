@@ -22,7 +22,7 @@ impl Server for InfoServer {
         Config { bind_address: SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 } }
     }
 
-    fn handle_request(&self, r: &Request, w: &mut ResponseWriter) {
+    fn handle_request(&self, r: Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
         w.headers.content_type = Some(MediaType {
             type_: String::from_str("text"),

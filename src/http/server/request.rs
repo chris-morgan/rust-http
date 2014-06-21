@@ -295,11 +295,11 @@ impl fmt::Show for RequestUri {
 impl Request {
 
     /// Get a response from an open socket.
-    pub fn load(stream: &mut BufferedStream<TcpStream>) -> (Box<Request>, Result<(), status::Status>) {
+    pub fn load(stream: &mut BufferedStream<TcpStream>) -> (Request, Result<(), status::Status>) {
         let mut buffer = RequestBuffer::new(stream);
 
         // Start out with dummy values
-        let mut request = box Request {
+        let mut request = Request {
             remote_addr: buffer.stream.wrapped.peer_name().ok(),
             headers: box headers::request::HeaderCollection::new(),
             body: String::new(),

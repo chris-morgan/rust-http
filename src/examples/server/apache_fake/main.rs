@@ -21,7 +21,7 @@ impl Server for ApacheFakeServer {
         Config { bind_address: SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 } }
     }
 
-    fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
+    fn handle_request(&self, _r: Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
         w.headers.server = Some(String::from_str("Apache/2.2.22 (Ubuntu)"));
         //w.headers.last_modified = Some(String::from_str("Thu, 05 May 2011 11:46:42 GMT"));
