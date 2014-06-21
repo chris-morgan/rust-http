@@ -64,7 +64,7 @@ impl Server for RequestUriServer {
             parameters: Vec::new()
         });
 
-        w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>")).unwrap();
+        w.write(b"<!DOCTYPE html><title>Rust HTTP server</title>").unwrap();
 
         match r.request_uri {
             Star | Authority(_) => {

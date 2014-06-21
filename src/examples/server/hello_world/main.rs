@@ -29,7 +29,7 @@ impl Server for HelloWorldServer {
         });
         w.headers.server = Some(String::from_str("Example"));
 
-        w.write(bytes!("Hello, World!\n")).unwrap();
+        w.write(b"Hello, World!\n").unwrap();
     }
 }
 
