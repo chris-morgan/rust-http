@@ -19,7 +19,7 @@ impl Server for HelloWorldServer {
         Config { bind_address: SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 } }
     }
 
-    fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
+    fn handle_request(&self, _r: Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
         w.headers.content_length = Some(14);
         w.headers.content_type = Some(MediaType {

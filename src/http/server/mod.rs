@@ -13,7 +13,7 @@ pub mod request;
 pub mod response;
 
 pub trait Server: Send + Clone {
-	fn handle_request(&self, request: &Request, response: &mut ResponseWriter) -> ();
+	fn handle_request(&self, request: Request, response: &mut ResponseWriter) -> ();
 
 	// XXX: this could also be implemented on the serve methods
 	fn get_config(&self) -> Config;
@@ -62,6 +62,7 @@ pub trait Server: Send + Clone {
                 loop {  // A keep-alive loop, condition at end
                     let mut time_spawned = precise_time_ns();
                     let (request, err_status) = Request::load(&mut stream);
+                    let close_connection = request.close_connection;
                     let time_request_made = precise_time_ns();
                     if !first {
                         // Subsequent requests on this connection have no spawn time.
@@ -70,7 +71,7 @@ pub trait Server: Send + Clone {
                         time_start = time_request_made;
                         time_spawned = time_request_made;
                     }
-                    let mut response = box ResponseWriter::new(&mut stream, request);
+                    let mut response = box ResponseWriter::new(&mut stream);
                     let time_response_made = precise_time_ns();
                     match err_status {
                         Ok(()) => {
@@ -110,7 +111,7 @@ pub trait Server: Send + Clone {
                     let time_finished = precise_time_ns();
                     child_perf_sender.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
 
-                    if request.close_connection {
+                    if close_connection {
                         break;
                     }
                     first = false;
