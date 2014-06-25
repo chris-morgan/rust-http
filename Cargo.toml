@@ -1,0 +1,15 @@
+
+[package]
+
+name = "rust-http"
+version = "0.1.0"
+readme = "README.md"
+authors = [ "Chris Morgan <me@chrismorgan.info>" ]
+tags = ["web", "http", "library"]
+build = "./configure && make target/codegen && mkdir -p src/http/generated && ./target/codegen read_method.rs src/http/generated && ./target/codegen status.rs src/http/generated"
+
+[[lib]]
+
+name = "http"
+path = "src/http/lib.rs"
+
