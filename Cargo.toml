@@ -2,11 +2,11 @@
 [package]
 
 name = "rust-http"
-version = "0.1.0"
+version = "0.1.0-pre"
 readme = "README.md"
 authors = [ "Chris Morgan <me@chrismorgan.info>" ]
 tags = ["web", "http", "library"]
-build = "./configure && make target/codegen && mkdir -p src/http/generated && ./target/codegen read_method.rs src/http/generated && ./target/codegen status.rs src/http/generated"
+build = "./prebuild"
 
 [[lib]]
 
