@@ -45,6 +45,8 @@ $(libhttp_so): Makefile $(http_files)
 	$(RUSTC) $(RUSTFLAGS) src/http/lib.rs --out-dir=build
 	@touch build/.libhttp.timestamp
 
+http_generated: $(http_files)
+
 all: http examples docs
 
 build/codegen: $(codegen_files)
@@ -90,4 +92,4 @@ clean:
 TAGS: $(http_files)
 	ctags -f TAGS --options="$(RUST_CTAGS)" -R src/http
 
-.PHONY: all http examples docs clean check quickcheck
+.PHONY: all http http_generated examples docs clean check quickcheck

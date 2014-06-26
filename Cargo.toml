@@ -1,0 +1,11 @@
+[package]
+
+name = "http"
+version = "0.1.0"
+authors = [ "me@chrismorgan.info" ]
+build = "bash build.sh"
+
+[[lib]]
+
+name = "http"
+path = "src/http/lib.rs"
