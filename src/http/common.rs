@@ -51,7 +51,7 @@ pub fn read_decimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedMul +
     // attack surface, though, because of the low return.
     let mut n: N = Zero::zero();
     let mut got_content = false;
-    let ten: N = cast(10).unwrap();
+    let ten: N = cast(10u32).unwrap();
     loop {
         n = match reader.read_byte() {
             Ok(b@ASCII_ZERO..ASCII_NINE) => {
@@ -94,7 +94,7 @@ pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedM
                        -> IoResult<N> {
     let mut n: N = Zero::zero();
     let mut got_content = false;
-    let sixteen: N = cast(16).unwrap();
+    let sixteen: N = cast(16u32).unwrap();
     loop {
         n = match reader.read_byte() {
             Ok(b@ASCII_ZERO..ASCII_NINE) => {

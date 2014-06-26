@@ -71,11 +71,11 @@ pub trait Server: Send + Clone {
                         time_start = time_request_made;
                         time_spawned = time_request_made;
                     }
-                    let mut response = box ResponseWriter::new(&mut stream);
+                    let mut response = ResponseWriter::new(&mut stream);
                     let time_response_made = precise_time_ns();
                     match err_status {
                         Ok(()) => {
-                            child_self.handle_request(request, response);
+                            child_self.handle_request(request, &mut response);
                             // Ensure that we actually do send a response:
                             match response.try_write_headers() {
                                 Err(err) => {
