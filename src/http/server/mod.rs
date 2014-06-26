@@ -75,7 +75,7 @@ pub trait Server: Send + Clone {
                     let time_response_made = precise_time_ns();
                     match err_status {
                         Ok(()) => {
-                            child_self.handle_request(request, response);
+                            child_self.handle_request(request, &mut *response);
                             // Ensure that we actually do send a response:
                             match response.try_write_headers() {
                                 Err(err) => {
