@@ -5,12 +5,12 @@
 //! that, you won't be able to use SSL (an attempt to make an HTTPS connection
 //! will return an error).
 
-#[cfg(openssl)]
+#[cfg(not(nossl))]
 pub use self::openssl::NetworkStream;
-#[cfg(not(openssl))]
+#[cfg(nossl)]
 pub use self::none::NetworkStream;
 
-#[cfg(openssl)]
+#[cfg(not(nossl))]
 mod openssl;
-#[cfg(not(openssl))]
+#[cfg(nossl)]
 mod none;
