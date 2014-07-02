@@ -67,13 +67,13 @@ examples: $(patsubst src/examples/%/main.rs,target/examples/%,$(wildcard src/exa
 docs: doc/http/index.html
 
 doc/http/index.html: $(http_files)
-	$(RUSTDOC) src/http/lib.rs
+	$(RUSTDOC) $(SSL_CFG_AND_LIB) src/http/lib.rs
 
 target/tests: $(http_files)
 	$(RUSTC) $(RUSTFLAGS) --test -o target/tests src/http/lib.rs
 
 target/quicktests: $(http_files)
-	$(RUSTC) --test -o target/quicktests src/http/lib.rs
+	$(RUSTC) $(SSL_CFG_AND_LIB) --test -o target/quicktests src/http/lib.rs
 
 # Can't wait for everything to build, optimised too? OK, you can save some time here.
 quickcheck: target/quicktests
