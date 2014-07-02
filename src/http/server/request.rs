@@ -266,7 +266,7 @@ impl RequestUri {
     fn from_string(request_uri: String) -> Option<RequestUri> {
         if request_uri == String::from_str("*") {
             Some(Star)
-        } else if request_uri.as_slice()[0] as char == '/' {
+        } else if request_uri.as_bytes()[0] as char == '/' {
             Some(AbsolutePath(request_uri))
         } else if request_uri.as_slice().contains("/") {
             // An authority can't have a slash in it
