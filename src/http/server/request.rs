@@ -268,9 +268,9 @@ impl RequestUri {
             Some(Star)
         } else if request_uri.as_bytes()[0] as char == '/' {
             Some(AbsolutePath(request_uri))
-        } else if request_uri.as_bytes().contains("/") {
+        } else if request_uri.as_slice().contains("/") {
             // An authority can't have a slash in it
-            match from_str(request_uri.as_bytes()) {
+            match from_str(request_uri.as_slice()) {
                 Some(url) => Some(AbsoluteUri(url)),
                 None => None,
             }
