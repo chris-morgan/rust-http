@@ -215,14 +215,16 @@ impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
             try!(self.connect());
         }
 
+        let ref path = self.url.path;
+
         // Write the Request-Line (RFC2616 §5.1)
         // TODO: get to the point where we can say HTTP/1.1 with good conscience
         try!(write!(self.stream.get_mut_ref() as &mut Writer,
             "{} {}{}{} HTTP/1.0\r\n",
             self.method.to_str(),
-            if self.url.path.len()  > 0 { self.url.path.as_slice() } else { "/" },
-            if self.url.query.len() > 0 { "?" } else { "" },
-            url::query_to_str(&self.url.query)));
+            if path.path.len()  > 0 { path.path.as_slice() } else { "/" },
+            if path.query.len() > 0 { "?" } else { "" },
+            url::query_to_str(&path.query)));
 
         try!(self.headers.write_all(self.stream.get_mut_ref()));
         self.headers_written = true;
