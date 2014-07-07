@@ -111,9 +111,9 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
                 name: url.host.clone(),
                 port: None,
             },
-            Some(ref p) => Host {
+            Some(p) => Host {
                 name: url.host.clone(),
-                port: Some(from_str(p.as_slice()).expect("You didn’t aught to give a bad port!")),
+                port: Some(p),
             },
         };
 
@@ -135,7 +135,7 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
 
             // Default to 80, using the port specified or 443 if the protocol is HTTPS.
             let port = match url.port {
-                Some(ref p) => from_str(p.as_slice()).expect("You didn’t aught to give a bad port!"),
+                Some(p) => p,
                 // FIXME: case insensitivity?
                 None => if url.scheme.as_slice() == "https" { 443 } else { 80 },
             };
