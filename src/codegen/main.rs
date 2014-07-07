@@ -1,4 +1,4 @@
-#![crate_id = "codegen"]
+#![crate_name = "codegen"]
 
 #![feature(macro_rules)]
 
