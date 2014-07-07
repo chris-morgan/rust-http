@@ -2,7 +2,7 @@
 //! configuration. Potentially useful for a smidgeon of performance comparison, though naturally
 //! Apache is doing a lot more than this does.
 
-#![crate_id = "apache_fake"]
+#![crate_name = "apache_fake"]
 
 extern crate time;
 extern crate http;

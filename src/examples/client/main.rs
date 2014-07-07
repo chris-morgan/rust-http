@@ -1,4 +1,4 @@
-#![crate_id = "client"]
+#![crate_name = "client"]
 
 extern crate debug;
 extern crate http;
