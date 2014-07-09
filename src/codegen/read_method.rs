@@ -6,11 +6,14 @@ pub fn generate(output_dir: &Path) -> IoResult<()> {
     let mut writer = get_writer(output_dir, "read_method.rs");
     try!(writer.write(b"\
 // This automatically generated file is included in request.rs.
-{
-    use method::{Connect, Delete, Get, Head, Options, Patch, Post, Put, Trace, ExtensionMethod};
-    use server::request::MAX_METHOD_LEN;
-    use rfc2616::{SP, is_token_item};
+use std::io::{Stream, IoResult};
+use method::{Method, Connect, Delete, Get, Head, Options, Patch, Post, Put, Trace, ExtensionMethod};
+use server::request::MAX_METHOD_LEN;
+use rfc2616::{SP, is_token_item};
+use buffer::BufferedStream;
 
+#[inline]
+pub fn read_method<S: Stream>(stream: &mut BufferedStream<S>) -> IoResult<Method> {
 "));
 
     try!(generate_branchified_method(
@@ -27,7 +30,7 @@ pub fn generate(output_dir: &Path) -> IoResult<()> {
             "TRACE"   => Trace
         ),
         1,
-        "self.stream.read_byte()",
+        "stream.read_byte()",
         "SP",
         "MAX_METHOD_LEN",
         "is_token_item(b)",
