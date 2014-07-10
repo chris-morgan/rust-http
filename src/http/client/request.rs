@@ -118,7 +118,7 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
         };
 
         let remote_addr = try!(url_to_socket_addr(&url));
-        info!("using ip address {}:{} for {}", remote_addr.ip, remote_addr.port, url.host.as_slice());
+        info!("using ip address {} for {}", remote_addr, url.host.as_slice());
 
         fn url_to_socket_addr(url: &Url) -> IoResult<SocketAddr> {
             // Just grab the first IPv4 address
