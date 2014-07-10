@@ -617,7 +617,7 @@ impl HeaderConvertible for uint {
     }
 
     fn http_value(&self) -> String {
-        self.to_string()
+        format!("{}", self)
     }
 }
 
@@ -627,7 +627,7 @@ impl HeaderConvertible for Url {
     }
 
     fn http_value(&self) -> String {
-        self.to_string()
+        format!("{}", self)
     }
 }
 
@@ -642,7 +642,7 @@ impl HeaderConvertible for Method {
     }
 
     fn http_value(&self) -> String {
-        self.to_string()
+        format!("{}", self)
     }
 }
 
