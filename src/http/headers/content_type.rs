@@ -71,7 +71,7 @@ impl super::HeaderConvertible for MediaType {
     }
 
     fn http_value(&self) -> String {
-        self.to_string()
+        format!("{}", self)
     }
 }
 
