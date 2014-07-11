@@ -5,7 +5,7 @@ ifdef SSL_LIB
 else
 	SSL_CFG_AND_LIB=$(SSL_CFG)
 endif
-RUSTC ?= rustc
+RUSTC ?= rustc -C rpath
 RUSTDOC ?= rustdoc
 RUSTPKG ?= rustpkg
 RUSTFLAGS ?= -O $(SSL_CFG_AND_LIB)
