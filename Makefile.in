@@ -8,7 +8,7 @@ endif
 RUSTC ?= rustc
 RUSTDOC ?= rustdoc
 RUSTPKG ?= rustpkg
-RUSTFLAGS ?= -O $(SSL_CFG_AND_LIB)
+RUSTFLAGS ?= -O $(SSL_CFG_AND_LIB) -C rpath
 RUST_REPOSITORY ?= ../rust
 RUST_CTAGS ?= $(RUST_REPOSITORY)/src/etc/ctags.rust
 VERSION=0.1-pre
