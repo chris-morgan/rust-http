@@ -11,13 +11,11 @@ install:
   - cd rust-openssl
   - ./configure
   - make
-  - make clean
   - cd ..
   - mv rust-openssl ../
 script:
   - WITHOUT_SSL=1 ./configure
   - make all check
-  - make clean
   - ./configure
   - make all check docs
 after_script:
