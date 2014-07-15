@@ -181,7 +181,7 @@ fn test_read_request_line() {
     tt!("FOO /\n" => Ok((ExtensionMethod(String::from_str("FOO")), AbsolutePath(String::from_str("/")), (0, 9))));
     tt!("get    http://example.com/ HTTP/42.17\r\n"
             => Ok((ExtensionMethod(String::from_str("get")),
-                    AbsoluteUri(from_str("http://example.com/").unwrap()),
+                    AbsoluteUri(Url::parse("http://example.com/").unwrap()),
                     (42, 17))));
 
     // Now for some failing cases.
@@ -270,9 +270,9 @@ impl RequestUri {
             Some(AbsolutePath(request_uri))
         } else if request_uri.as_slice().contains("/") {
             // An authority can't have a slash in it
-            match from_str(request_uri.as_slice()) {
-                Some(url) => Some(AbsoluteUri(url)),
-                None => None,
+            match Url::parse(request_uri.as_slice()) {
+                Ok(url) => Some(AbsoluteUri(url)),
+                Err(_) => None,
             }
         } else {
             // TODO: parse authority with extra::net::url

@@ -36,7 +36,6 @@ let response = match request.read_response() {
 
 */
 
-use url;
 use url::Url;
 use method::Method;
 use std::io::{IoError, IoResult};
@@ -106,23 +105,24 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
     }
 
     pub fn new_request(method: Method, url: Url, use_ssl: bool, auto_detect_ssl: bool) -> IoResult<RequestWriter<S>> {
-        let host = match url.port {
-            None => Host {
-                name: url.host.clone(),
-                port: None,
-            },
-            Some(ref p) => Host {
-                name: url.host.clone(),
-                port: Some(from_str(p.as_slice()).expect("You didn’t aught to give a bad port!")),
+        let host = Host {
+            name: url.domain().unwrap().to_string(),
+            port: {
+                let port = url.port().unwrap();
+                if port.is_empty() {
+                    None
+                } else {
+                    Some(from_str(port).expect("You didn’t aught to give a bad port!"))
+                }
             },
         };
 
-        let remote_addr = try!(url_to_socket_addr(&url));
-        info!("using ip address {} for {}", remote_addr.to_str(), url.host.as_slice());
+        let remote_addr = try!(url_to_socket_addr(&url, &host));
+        info!("using ip address {} for {}", remote_addr.to_str(), host.name.as_slice());
 
-        fn url_to_socket_addr(url: &Url) -> IoResult<SocketAddr> {
+        fn url_to_socket_addr(url: &Url, host: &Host) -> IoResult<SocketAddr> {
             // Just grab the first IPv4 address
-            let addrs = try!(get_host_addresses(url.host.as_slice()));
+            let addrs = try!(get_host_addresses(host.name.as_slice()));
             let addr = addrs.move_iter().find(|&a| {
                 match a {
                     Ipv4Addr(..) => true,
@@ -134,8 +134,8 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
             let addr = addr.unwrap();
 
             // Default to 80, using the port specified or 443 if the protocol is HTTPS.
-            let port = match url.port {
-                Some(ref p) => from_str(p.as_slice()).expect("You didn’t aught to give a bad port!"),
+            let port = match host.port {
+                Some(p) => p,
                 // FIXME: case insensitivity?
                 None => if url.scheme.as_slice() == "https" { 443 } else { 80 },
             };
@@ -186,7 +186,8 @@ impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
 
         self.stream = match self.remote_addr {
             Some(addr) => {
-                let stream = try!(Connecter::connect(addr, self.url.host.as_slice(), self.use_ssl));
+                let stream = try!(Connecter::connect(
+                    addr, self.headers.host.as_ref().unwrap().name.as_slice(), self.use_ssl));
                 Some(BufferedStream::new(stream))
             },
             None => fail!("connect() called before remote_addr was set"),
@@ -217,12 +218,13 @@ impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
 
         // Write the Request-Line (RFC2616 §5.1)
         // TODO: get to the point where we can say HTTP/1.1 with good conscience
+        let (question_mark, query) = match self.url.query {
+            Some(ref query) => ("?", query.as_slice()),
+            None => ("", "")
+        };
         try!(write!(self.stream.get_mut_ref() as &mut Writer,
             "{} {}{}{} HTTP/1.0\r\n",
-            self.method.to_str(),
-            if self.url.path.len()  > 0 { self.url.path.as_slice() } else { "/" },
-            if self.url.query.len() > 0 { "?" } else { "" },
-            url::query_to_str(&self.url.query)));
+            self.method.to_str(), self.url.serialize_path().unwrap(), question_mark, query));
 
         try!(self.headers.write_all(self.stream.get_mut_ref()));
         self.headers_written = true;

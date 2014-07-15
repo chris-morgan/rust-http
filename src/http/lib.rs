@@ -15,7 +15,7 @@
 #![feature(phase)]
 
 #[phase(plugin, link)] extern crate log;
-extern crate url;
+extern crate url = "url_";
 extern crate time;
 extern crate collections;
 extern crate debug;
