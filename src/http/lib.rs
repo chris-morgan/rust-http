@@ -1,4 +1,4 @@
-#![crate_id = "http#0.1-pre"]
+#![crate_name = "http"]
 
 #![comment = "Rust HTTP server"]
 #![license = "MIT/ASL2"]

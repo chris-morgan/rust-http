@@ -19,12 +19,12 @@ fn bad_input() -> IoError {
     }
 }
 
-static ASCII_ZERO: u8 = '0' as u8;
-static ASCII_NINE: u8 = '9' as u8;
-static ASCII_LOWER_A: u8 = 'a' as u8;
-static ASCII_LOWER_F: u8 = 'f' as u8;
-static ASCII_UPPER_A: u8 = 'A' as u8;
-static ASCII_UPPER_F: u8 = 'F' as u8;
+static ASCII_ZERO: u8 = b'0';
+static ASCII_NINE: u8 = b'9';
+static ASCII_LOWER_A: u8 = b'a';
+static ASCII_LOWER_F: u8 = b'f';
+static ASCII_UPPER_A: u8 = b'A';
+static ASCII_UPPER_F: u8 = b'F';
 
 /**
  * Read a positive decimal integer from the given reader.
@@ -51,7 +51,7 @@ pub fn read_decimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedMul +
     // attack surface, though, because of the low return.
     let mut n: N = Zero::zero();
     let mut got_content = false;
-    let ten: N = cast(10).unwrap();
+    let ten: N = cast(10u32).unwrap();
     loop {
         n = match reader.read_byte() {
             Ok(b@ASCII_ZERO..ASCII_NINE) => {
@@ -94,7 +94,7 @@ pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedM
                        -> IoResult<N> {
     let mut n: N = Zero::zero();
     let mut got_content = false;
-    let sixteen: N = cast(16).unwrap();
+    let sixteen: N = cast(16u32).unwrap();
     loop {
         n = match reader.read_byte() {
             Ok(b@ASCII_ZERO..ASCII_NINE) => {
@@ -154,15 +154,15 @@ pub fn read_http_version<R: Reader>
     let b2 = try!(reader.read_byte());
     let b3 = try!(reader.read_byte());
     let b4 = try!(reader.read_byte());
-    if (b0 != 'h' as u8 && b0 != 'H' as u8) ||
-       (b1 != 't' as u8 && b1 != 'T' as u8) ||
-       (b2 != 't' as u8 && b2 != 'T' as u8) ||
-       (b3 != 'p' as u8 && b3 != 'P' as u8) ||
-       b4 != '/' as u8 {
+    if (b0 != b'h' && b0 != b'H') ||
+       (b1 != b't' && b1 != b'T') ||
+       (b2 != b't' && b2 != b'T') ||
+       (b3 != b'p' && b3 != b'P') ||
+       b4 != b'/' {
         return Err(bad_input());
     }
 
-    let major = try!(read_decimal(reader, |b| b == '.' as u8));
+    let major = try!(read_decimal(reader, |b| b == b'.'));
     let minor = try!(read_decimal(reader, expected_end));
     Ok((major, minor))
 }

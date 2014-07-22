@@ -19,7 +19,7 @@ pub struct Host {
 impl fmt::Show for Host {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.port {
-            Some(port) => write!(f, "{}:{}", self.name, port.to_str()),
+            Some(port) => write!(f, "{}:{}", self.name, port),
             None => f.write(self.name.as_bytes()),
         }
     }
@@ -41,6 +41,6 @@ impl super::HeaderConvertible for Host {
     }
 
     fn http_value(&self) -> String {
-        self.to_str()
+        format!("{}", self)
     }
 }

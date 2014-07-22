@@ -20,7 +20,7 @@ impl fmt::Show for Connection {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write(match *self {
             Token(ref s) => s.as_bytes(),
-            Close => "close".as_bytes(),
+            Close => b"close",
         })
     }
 }
@@ -43,7 +43,7 @@ impl super::HeaderConvertible for Connection {
 
     fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
         writer.write(match *self {
-            Close => "close".as_bytes(),
+            Close => b"close",
             Token(ref s) => s.as_bytes(),
         })
     }

@@ -19,7 +19,7 @@ codegen_files=\
 	        src/codegen/read_method.rs \
 	        src/codegen/status.rs \
 
-libhttp_so=build/.libhttp.timestamp
+libhttp_so=target/.libhttp.timestamp
 http_files=\
 		      $(wildcard src/http/*.rs) \
 		      src/http/generated/read_method.rs \
@@ -41,50 +41,50 @@ Makefile: configure Makefile.in
 	@exit 1
 
 $(libhttp_so): Makefile $(http_files)
-	mkdir -p build/
-	$(RUSTC) $(RUSTFLAGS) src/http/lib.rs --out-dir=build
-	@touch build/.libhttp.timestamp
+	mkdir -p target/
+	$(RUSTC) $(RUSTFLAGS) src/http/lib.rs --out-dir=target
+	@touch target/.libhttp.timestamp
 
 all: http examples docs
 
-build/codegen: $(codegen_files)
-	mkdir -p build/
-	$(RUSTC) src/codegen/main.rs --out-dir=build
+target/codegen: $(codegen_files)
+	mkdir -p target/
+	$(RUSTC) src/codegen/main.rs --out-dir=target
 
 src/http/generated:
 	mkdir -p src/http/generated
 
-src/http/generated/%.rs: build/codegen src/http/generated
-	build/codegen $(patsubst src/http/generated/%,%,$@) src/http/generated/
+src/http/generated/%.rs: target/codegen src/http/generated
+	target/codegen $(patsubst src/http/generated/%,%,$@) src/http/generated/
 
-build/%:: src/%/main.rs $(libhttp_so)
+target/%:: src/%/main.rs $(libhttp_so)
 	mkdir -p "$(dir $@)"
-	$(RUSTC) $(RUSTFLAGS) $< -o $@ -L build/
+	$(RUSTC) $(RUSTFLAGS) $< -o $@ -L target/
 
-examples: $(patsubst src/examples/%/main.rs,build/examples/%,$(wildcard src/examples/*/main.rs)) \
-		  $(patsubst src/examples/%/main.rs,build/examples/%,$(wildcard src/examples/*/*/main.rs))
+examples: $(patsubst src/examples/%/main.rs,target/examples/%,$(wildcard src/examples/*/main.rs)) \
+		  $(patsubst src/examples/%/main.rs,target/examples/%,$(wildcard src/examples/*/*/main.rs))
 
 docs: doc/http/index.html
 
 doc/http/index.html: $(http_files)
-	$(RUSTDOC) src/http/lib.rs
+	$(RUSTDOC) $(SSL_CFG_AND_LIB) src/http/lib.rs
 
-build/tests: $(http_files)
-	$(RUSTC) $(RUSTFLAGS) --test -o build/tests src/http/lib.rs
+target/tests: $(http_files)
+	$(RUSTC) $(RUSTFLAGS) --test -o target/tests src/http/lib.rs
 
-build/quicktests: $(http_files)
-	$(RUSTC) --test -o build/quicktests src/http/lib.rs
+target/quicktests: $(http_files)
+	$(RUSTC) $(SSL_CFG_AND_LIB) --test -o target/quicktests src/http/lib.rs
 
 # Can't wait for everything to build, optimised too? OK, you can save some time here.
-quickcheck: build/quicktests
-	build/quicktests --test
+quickcheck: target/quicktests
+	target/quicktests --test
 
-check: all build/tests
-	build/tests --test
+check: all target/tests
+	target/tests --test
 
 clean:
 	rm -rf src/http/generated/ src/http/codegen/codegen
-	rm -rf build/
+	rm -rf target/
 	rm -rf bin/ .rust/
 
 TAGS: $(http_files)

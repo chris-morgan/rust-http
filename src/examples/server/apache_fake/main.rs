@@ -2,7 +2,7 @@
 //! configuration. Potentially useful for a smidgeon of performance comparison, though naturally
 //! Apache is doing a lot more than this does.
 
-#![crate_id = "apache_fake"]
+#![crate_name = "apache_fake"]
 
 extern crate time;
 extern crate http;
@@ -21,7 +21,7 @@ impl Server for ApacheFakeServer {
         Config { bind_address: SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 } }
     }
 
-    fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
+    fn handle_request(&self, _r: Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
         w.headers.server = Some(String::from_str("Apache/2.2.22 (Ubuntu)"));
         //w.headers.last_modified = Some(String::from_str("Thu, 05 May 2011 11:46:42 GMT"));
@@ -52,11 +52,11 @@ impl Server for ApacheFakeServer {
         });
         w.headers.extensions.insert(String::from_str("X-Pad"), String::from_str("avoid browser bug"));
 
-        w.write(bytes!("\
+        w.write(b"\
             <html><body><h1>It works!</h1>\n\
             <p>This is the default web page for this server.</p>\n\
             <p>The web server software is running but no content has been added, yet.</p>\n\
-            </body></html>\n")).unwrap();
+            </body></html>\n").unwrap();
     }
 }
 

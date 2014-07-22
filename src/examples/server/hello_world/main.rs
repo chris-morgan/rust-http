@@ -1,6 +1,6 @@
 //! A very simple HTTP server which responds with the plain text "Hello, World!" to every request.
 
-#![crate_id = "hello_world"]
+#![crate_name = "hello_world"]
 
 extern crate time;
 extern crate http;
@@ -19,7 +19,7 @@ impl Server for HelloWorldServer {
         Config { bind_address: SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 } }
     }
 
-    fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
+    fn handle_request(&self, _r: Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
         w.headers.content_length = Some(14);
         w.headers.content_type = Some(MediaType {
@@ -29,7 +29,7 @@ impl Server for HelloWorldServer {
         });
         w.headers.server = Some(String::from_str("Example"));
 
-        w.write(bytes!("Hello, World!\n")).unwrap();
+        w.write(b"Hello, World!\n").unwrap();
     }
 }
 

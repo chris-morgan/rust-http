@@ -3,7 +3,7 @@
 *.swp
 src/http/generated/
 bin/
-build/
+target/
 TAGS
 doc/http/
 doc/src/http/

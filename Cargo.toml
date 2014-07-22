@@ -1,0 +1,14 @@
+[package]
+name = "http"
+version = "0.1.0-pre"
+readme = "README.md"
+authors = [ "Chris Morgan <me@chrismorgan.info>" ]
+tags = ["web", "http", "library"]
+build = "./prebuild"
+
+[[lib]]
+name = "http"
+path = "src/http/lib.rs"
+
+[dependencies.openssl]
+git = "https://github.com/sfackler/rust-openssl.git"

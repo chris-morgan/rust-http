@@ -2,7 +2,6 @@ use std::io::IoResult;
 use std::io::net::tcp::TcpStream;
 
 use buffer::BufferedStream;
-use server::Request;
 use status;
 use headers::response::HeaderCollection;
 use headers::content_type::MediaType;
@@ -22,18 +21,16 @@ pub struct ResponseWriter<'a> {
     // The place to write to (typically a TCP stream, io::net::tcp::TcpStream)
     writer: &'a mut BufferedStream<TcpStream>,
     headers_written: bool,
-    pub request: &'a Request,
     pub headers: Box<HeaderCollection>,
     pub status: status::Status,
 }
 
 impl<'a> ResponseWriter<'a> {
     /// Create a `ResponseWriter` writing to the specified location
-    pub fn new(writer: &'a mut BufferedStream<TcpStream>, request: &'a Request) -> ResponseWriter<'a> {
+    pub fn new(writer: &'a mut BufferedStream<TcpStream>) -> ResponseWriter<'a> {
         ResponseWriter {
             writer: writer,
             headers_written: false,
-            request: request,
             headers: box HeaderCollection::new(),
             status: status::Ok,
         }
@@ -75,7 +72,7 @@ impl<'a> ResponseWriter<'a> {
         // XXX: might be better not to hardcode HTTP/1.1.
         // XXX: Rust's current lack of statement-duration lifetime handling prevents this from being
         // one statement ("error: borrowed value does not live long enough")
-        let s = format!("HTTP/1.1 {}\r\n", self.status.to_str());
+        let s = format!("HTTP/1.1 {}\r\n", self.status);
         try!(self.writer.write(s.as_bytes()));
 
         // FIXME: this is not an impressive way of handling it, but so long as chunked is the only

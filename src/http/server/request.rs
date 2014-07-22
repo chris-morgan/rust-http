@@ -113,7 +113,9 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
 
     #[inline]
     fn read_method(&mut self) -> IoResult<Method> {
-        include!("../generated/read_method.rs");
+        #[path = "../generated/read_method.rs"]
+        mod read_method;
+        read_method::read_method(self.stream)
     }
 
     /// Read a header (name, value) pair.
@@ -266,7 +268,7 @@ impl RequestUri {
     fn from_string(request_uri: String) -> Option<RequestUri> {
         if request_uri == String::from_str("*") {
             Some(Star)
-        } else if request_uri.as_slice()[0] as char == '/' {
+        } else if request_uri.as_bytes()[0] as char == '/' {
             Some(AbsolutePath(request_uri))
         } else if request_uri.as_slice().contains("/") {
             // An authority can't have a slash in it
@@ -284,7 +286,7 @@ impl RequestUri {
 impl fmt::Show for RequestUri {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Star => f.write("*".as_bytes()),
+            Star => f.write(b"*"),
             AbsoluteUri(ref url) => url.fmt(f),
             AbsolutePath(ref str) => f.write(str.as_bytes()),
             Authority(ref str) => f.write(str.as_bytes()),
@@ -295,11 +297,11 @@ impl fmt::Show for RequestUri {
 impl Request {
 
     /// Get a response from an open socket.
-    pub fn load(stream: &mut BufferedStream<TcpStream>) -> (Box<Request>, Result<(), status::Status>) {
+    pub fn load(stream: &mut BufferedStream<TcpStream>) -> (Request, Result<(), status::Status>) {
         let mut buffer = RequestBuffer::new(stream);
 
         // Start out with dummy values
-        let mut request = box Request {
+        let mut request = Request {
             remote_addr: buffer.stream.wrapped.peer_name().ok(),
             headers: box headers::request::HeaderCollection::new(),
             body: String::new(),

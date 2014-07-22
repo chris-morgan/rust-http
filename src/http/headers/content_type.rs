@@ -42,7 +42,7 @@ impl super::HeaderConvertible for MediaType {
             Some(v) => v,
             None => return None,
         };
-        if reader.next() != Some('/' as u8) {
+        if reader.next() != Some(b'/') {
             return None;
         }
         let subtype = match reader.read_token() {
@@ -65,13 +65,13 @@ impl super::HeaderConvertible for MediaType {
 
     fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
         try!(writer.write_token(&self.type_));
-        try!(writer.write(['/' as u8]));
+        try!(writer.write(b"/"));
         try!(writer.write_token(&self.subtype));
         writer.write_parameters(self.parameters.as_slice())
     }
 
     fn http_value(&self) -> String {
-        self.to_str()
+        format!("{}", self)
     }
 }
 

@@ -17,9 +17,6 @@ pub enum AcceptableRanges {
     NoAcceptableRanges,
 }
 
-// Merely here because of mozilla/rust#11641
-static BYTES: &'static [u8] = bytes!("bytes");
-
 impl super::HeaderConvertible for AcceptableRanges {
     fn from_stream<R: Reader>(reader: &mut super::HeaderValueByteIterator<R>)
             -> Option<AcceptableRanges> {
@@ -42,11 +39,11 @@ impl super::HeaderConvertible for AcceptableRanges {
 
     fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
         match *self {
-            NoAcceptableRanges => writer.write(bytes!("none")),
+            NoAcceptableRanges => writer.write(b"none"),
             RangeUnits(ref range_units) => {
                 for ru in range_units.iter() {
                     try!(writer.write(match *ru {
-                        Bytes => BYTES,
+                        Bytes => b"bytes",
                         OtherRangeUnit(ref ru) => ru.as_bytes(),
                     }));
                 }

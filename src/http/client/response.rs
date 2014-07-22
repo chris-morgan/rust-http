@@ -55,7 +55,7 @@ impl<S: Stream> ResponseReader<S> {
                 return Err((request, bad_response_err()));
             }
             match stream.read_byte() {
-                Ok(b) if b >= '0' as u8 && b <= '9' as u8 => {
+                Ok(b) if b >= b'0' && b <= b'9' => {
                     status_code = status_code * 10 + b as u16 - '0' as u16;
                 },
                 Ok(b) if b == SP => break,

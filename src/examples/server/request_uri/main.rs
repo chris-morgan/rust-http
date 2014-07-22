@@ -4,7 +4,7 @@
 //! This demonstrates some handling of the RequestURI, which has several possibilities and for which
 //! the correct values depend on the method.
 
-#![crate_id = "request_uri"]
+#![crate_name = "request_uri"]
 
 extern crate time;
 extern crate http;
@@ -26,7 +26,7 @@ impl Server for RequestUriServer {
         Config { bind_address: SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 } }
     }
 
-    fn handle_request(&self, r: &Request, w: &mut ResponseWriter) {
+    fn handle_request(&self, r: Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
         w.headers.server = Some(String::from_str("Rust Thingummy/0.1-pre"));
 
@@ -64,7 +64,7 @@ impl Server for RequestUriServer {
             parameters: Vec::new()
         });
 
-        w.write(bytes!("<!DOCTYPE html><title>Rust HTTP server</title>")).unwrap();
+        w.write(b"<!DOCTYPE html><title>Rust HTTP server</title>").unwrap();
 
         match r.request_uri {
             Star | Authority(_) => {

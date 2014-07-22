@@ -35,13 +35,13 @@ impl fmt::Show for EntityTag {
 impl super::HeaderConvertible for EntityTag {
     fn from_stream<R: Reader>(reader: &mut super::HeaderValueByteIterator<R>) -> Option<EntityTag> {
         let weak = match reader.next() {
-            Some(b) if b == 'W' as u8 || b == 'w' as u8 => {
-                if reader.next() != Some('/' as u8) || reader.next() != Some('"' as u8) {
+            Some(b) if b == b'W' || b == b'w' => {
+                if reader.next() != Some(b'/') || reader.next() != Some(b'"') {
                     return None;
                 }
                 true
             },
-            Some(b) if b == '"' as u8 => {
+            Some(b) if b == b'"' => {
                 false
             },
             _ => {
@@ -60,13 +60,13 @@ impl super::HeaderConvertible for EntityTag {
 
     fn to_stream<W: Writer>(&self, writer: &mut W) -> IoResult<()> {
         if self.weak {
-            try!(writer.write(bytes!("W/")));
+            try!(writer.write(b"W/"));
         }
         writer.write_quoted_string(&self.opaque_tag)
     }
 
     fn http_value(&self) -> String {
-        self.to_str()
+        format!("{}", self)
     }
 }
 
