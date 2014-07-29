@@ -105,9 +105,14 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
 
         // FIXME: we still have one inconsistency here: this isn't trimming *SP.
         match read_http_version(self.stream, |b| { read_b = b; b == CR || b == LF }) {
-            Ok(vv) if read_b == LF || self.stream.read_byte() == Ok(LF)
-                => Ok((method, request_uri, vv)),  // LF or CR LF: valid
-            _   => Err(status::BadRequest),  // invalid, or CR but no LF: not valid
+            Ok(vv) => {
+                if read_b == LF || self.stream.read_byte() == Ok(LF) {
+                    Ok((method, request_uri, vv))  // LF or CR LF: valid
+                } else {
+                    Err(status::BadRequest)  // CR but no LF: not valid
+                }
+            },
+            Err(_) => Err(status::BadRequest),  // invalid: ... not valid ;-)
         }
     }
 
