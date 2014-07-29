@@ -102,13 +102,18 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
         // By this point, next_byte can only be SP. Now we want an HTTP-Version.
 
         let mut read_b = 0;
-
+        let mut method = Some(method);
+        let mut request_uri = Some(request_uri);
         // FIXME: we still have one inconsistency here: this isn't trimming *SP.
-        match read_http_version(self.stream, |b| { read_b = b; b == CR || b == LF }) {
-            Ok(vv) if read_b == LF || self.stream.read_byte() == Ok(LF)
-                => Ok((method, request_uri, vv)),  // LF or CR LF: valid
-            _   => Err(status::BadRequest),  // invalid, or CR but no LF: not valid
-        }
+        read_http_version(self.stream, |b| { read_b = b; b == CR || b == LF })
+            .or_else(|_| Err(status::BadRequest) /* invalid, or CR but no LF: not valid */)
+            .and_then(|vv| {
+                if read_b == LF || self.stream.read_byte() == Ok(LF) {
+                   Ok((method.take_unwrap(), request_uri.take_unwrap(), vv))  // LF or CR LF: valid 
+                } else {
+                   Err(status::BadRequest)
+                }
+            })
     }
 
     #[inline]
