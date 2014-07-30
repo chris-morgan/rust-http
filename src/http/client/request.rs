@@ -216,8 +216,6 @@ impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
             try!(self.connect());
         }
 
-        let ref path = self.url.path;
-
         // Write the Request-Line (RFC2616 §5.1)
         // TODO: get to the point where we can say HTTP/1.1 with good conscience
         let (question_mark, query) = match self.url.query {
