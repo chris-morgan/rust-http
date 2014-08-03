@@ -1,3 +1,8 @@
 ./configure
-make target/codegen src/http/generated/read_method.rs src/http/generated/status.rs
+if [ -e /usr/local/bin/gmake ]; then
+  MAKE=gmake
+else
+  MAKE=make
+fi
 
+${MAKE} target/codegen src/http/generated/read_method.rs src/http/generated/status.rs
