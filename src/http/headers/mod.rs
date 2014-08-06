@@ -623,7 +623,7 @@ impl HeaderConvertible for uint {
 
 impl HeaderConvertible for Url {
     fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<Url> {
-        from_str(reader.collect_to_string().as_slice())
+        Url::parse(reader.collect_to_string().as_slice()).ok()
     }
 
     fn http_value(&self) -> String {

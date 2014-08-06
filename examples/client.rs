@@ -2,12 +2,14 @@
 
 extern crate debug;
 extern crate http;
+extern crate url;
 use http::client::RequestWriter;
 use http::method::Get;
 use http::headers::HeaderEnum;
 use std::os;
 use std::str;
 use std::io::println;
+use url::Url;
 
 fn main() {
     format!("{}", Get);
@@ -23,8 +25,8 @@ fn main() {
 }
 
 fn make_and_print_request(url: &str) {
-    let request: RequestWriter = RequestWriter::new(Get, from_str(url).expect("Invalid URL :-("))
-                                              .unwrap();
+    let url = Url::parse(url).ok().expect("Invalid URL :-(");
+    let request: RequestWriter = RequestWriter::new(Get, url).unwrap();
 
     println!("[33;1mRequest[0m");
     println!("[33;1m=======[0m");
