@@ -1,3 +1,0 @@
-./configure
-make target/codegen src/http/generated/read_method.rs src/http/generated/status.rs
-

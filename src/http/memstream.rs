@@ -8,6 +8,11 @@ struct MemWriterFakeStream(MemWriter);
 
 impl MemWriterFakeStream {
     pub fn new() -> MemWriterFakeStream { MemWriterFakeStream(MemWriter::new()) }
+
+    pub fn get_ref(&self) -> &[u8] {
+        let &MemWriterFakeStream(ref s) = self;
+        s.get_ref()
+    }
 }
 
 impl Writer for MemWriterFakeStream {
@@ -19,18 +24,6 @@ impl Writer for MemWriterFakeStream {
     fn flush(&mut self) -> IoResult<()> {
         let &MemWriterFakeStream(ref mut s) = self;
         s.flush()
-    }
-}
-
-impl Seek for MemWriterFakeStream {
-    fn tell(&self) -> IoResult<u64> {
-        let &MemWriterFakeStream(ref s) = self;
-        s.tell()
-    }
-
-    fn seek(&mut self, pos: i64, style: SeekStyle) -> IoResult<()> {
-        let &MemWriterFakeStream(ref mut s) = self;
-        s.seek(pos, style)
     }
 }
 
@@ -82,12 +75,12 @@ mod test {
     #[test]
     fn test_mem_writer_fake_stream() {
         let mut writer = MemWriterFakeStream::new();
-        assert_eq!(writer.tell(),              Ok(0));
+        assert_eq!(writer.get_ref(),           &[]);
         assert_eq!(writer.write([0]),          Ok(()));
-        assert_eq!(writer.tell(),              Ok(1));
+        assert_eq!(writer.get_ref(),           &[0]);
         assert_eq!(writer.write([1, 2, 3]),    Ok(()));
         assert_eq!(writer.write([4, 5, 6, 7]), Ok(()));
-        assert_eq!(writer.tell(),              Ok(8));
+        assert_eq!(writer.get_ref(),           &[0, 1, 2, 3, 4, 5, 6, 7]);
     }
 
     #[test]

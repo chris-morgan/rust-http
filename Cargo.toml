@@ -4,7 +4,7 @@ version = "0.1.0-pre"
 readme = "README.md"
 authors = [ "Chris Morgan <me@chrismorgan.info>" ]
 tags = ["web", "http", "library"]
-build = "./prebuild"
+build = "./prebuild.sh"
 
 [[lib]]
 name = "http"

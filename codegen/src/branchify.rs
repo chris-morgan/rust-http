@@ -29,7 +29,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> Vec<ParseBra
             Some(c) => {
                 let first_case = if case_sensitive { c as u8 } else { c.to_ascii().to_uppercase().to_byte() };
                 for next_branch in branch.children.mut_iter() {
-                    if *next_branch.matches.get(0) == first_case {
+                    if next_branch.matches[0] == first_case {
                         go_down_moses(next_branch, chariter, result, case_sensitive);
                         return;
                     }
