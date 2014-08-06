@@ -1,0 +1,9 @@
+[package]
+
+name = "rust-http-codegen"
+version = "0.1.0-pre"
+authors = [ "Chris Morgan <me@chrismorgan.info>" ]
+
+[[bin]]
+
+name = "codegen"

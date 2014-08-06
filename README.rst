@@ -68,21 +68,21 @@ Getting started
 This is developed on Ubuntu and is aimed at the moving target of Rust's master
 branch.
 
-Configure the makefile::
+Build with Cargo::
 
-   ./configure
+   cargo build
 
-Build everything::
+Compile the examples::
 
-   make all
+   cargo test
 
 Run one of the servers::
 
-   build/examples/server/apache_fake
+   target/test/apache_fake
 
 To run the client example, start one of the servers and run::
 
-   build/examples/client http://127.0.0.1:8001/
+   target/test/client http://127.0.0.1:8001/
 
 At present, all of the example servers serve to http://127.0.0.1:8001/.
 
@@ -92,18 +92,7 @@ in any way compliant yet.
 SSL support
 -----------
 
-rust-http can be compiled with or without SSL support.
-
-To compile with SSL support, drop rust-openssl_ in a sibling directory of
-rust-http (i.e. ``../rust-openssl`` from this file) and run its ``configure``
-and ``make``. rust-http's ``configure`` will then automatically detect it and
-you will get SSL support enabled.
-
-To compile rust-http without SSL support, just don’t put rust-openssl_ where it
-can find it. You'll then get an ``IoError { kind: InvalidInput, .. }`` if you
-try to make an SSL request (e.g. HTTPS).
-
-.. _rust-openssl: https://github.com/sfackler/rust-openssl
+rust-http is compiled with SSL support.
 
 Roadmap
 -------
