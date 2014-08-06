@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Pre-build code generation script.
 
