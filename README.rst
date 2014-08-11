@@ -30,6 +30,8 @@ This project has two parts:
 Both are in progress; both have basic, low-level implementations in place.
 Neither is complete nor yet compliant in any way.
 
+`Online documentation can be found here <http://www.rust-ci.org/chris-morgan/rust-http/doc/http/>`_.
+
 Rust versions
 -------------
 
