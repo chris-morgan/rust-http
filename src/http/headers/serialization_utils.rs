@@ -16,8 +16,9 @@ use rfc2616::is_token;
 /// # Examples
 ///
 /// ~~~ .{rust}
-/// assert_eq!(normalise_header_name(String::from_str("foo-bar"), "Foo-Bar");
-/// assert_eq!(normalise_header_name(String::from_str("FOO-BAR"), "Foo-Bar");
+/// # use http::headers::serialization_utils::normalise_header_name;
+/// assert_eq!(normalise_header_name(&String::from_str("foo-bar")), String::from_str("Foo-Bar"));
+/// assert_eq!(normalise_header_name(&String::from_str("FOO-BAR")), String::from_str("Foo-Bar"));
 /// ~~~
 pub fn normalise_header_name(name: &String) -> String {
     let mut result: String = String::with_capacity(name.len());
@@ -41,7 +42,11 @@ pub fn normalise_header_name(name: &String) -> String {
 /// # Examples
 ///
 /// ~~~ .{rust}
-/// assert_eq!(comma_split(" en;q=0.8, en_AU, text/html"), ["en;q=0.8", "en_AU", "text/html"])
+/// # use http::headers::serialization_utils::comma_split;
+/// assert_eq!(
+///     comma_split(" en;q=0.8, en_AU, text/html"),
+///     vec![String::from_str("en;q=0.8"), String::from_str("en_AU"), String::from_str("text/html")]
+/// )
 /// ~~~
 pub fn comma_split(value: &str) -> Vec<String> {
     value.split(',').map(|w| String::from_str(w.trim_left())).collect()
@@ -109,7 +114,11 @@ impl<W: Writer> WriterUtil for W { }
 /// # Examples
 ///
 /// ~~~ .{rust}
-/// assert_eq!(comma_split(["en;q=0.8", "en_AU", "text/html"]), "en;q=0.8, en_AU, text/html")
+/// # use http::headers::serialization_utils::comma_join;
+/// assert_eq!(
+///     comma_join([String::from_str("en;q=0.8"), String::from_str("en_AU"), String::from_str("text/html")]),
+///     String::from_str("en;q=0.8, en_AU, text/html")
+/// )
 /// ~~~
 #[inline]
 pub fn comma_join(values: &[String]) -> String {
