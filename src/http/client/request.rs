@@ -6,11 +6,20 @@ If you want to make a request, `RequestWriter::new` is where you start, and
 `RequestWriter.read_response` is where you will send the request and read the response.
 
 ```rust
+extern crate http;
+extern crate url;
+
 use http::client::RequestWriter;
 use http::method::Get;
+use url::Url;
 
 fn main() {
-    let request = RequestWriter::new(Get, from_str("http://example.com/").unwrap());
+    let url = Url::parse("http://example.com/").unwrap();
+    let request: RequestWriter = match RequestWriter::new(Get, url) {
+        Ok(request) => request,
+        Err(error) => fail!(":-( {}", error),
+    };
+
     let mut response = match request.read_response() {
         Ok(response) => response,
         Err((_request, error)) => fail!(":-( {}", error),
@@ -23,8 +32,19 @@ If you wish to send a request body (e.g. POST requests), I'm sorry to have to te
 not *good* support for this yet. However, it can be done; here is an example:
 
 ```rust
-let data: &[u8];
-let mut request: RequestWriter;
+# extern crate url;
+# extern crate http;
+# use http::client::RequestWriter;
+# use http::method::Get;
+# use url::Url;
+# #[allow(unused_must_use)]
+# fn main() {
+# let url = Url::parse("http://example.com/").unwrap();
+let data = b"var1=val1&var2=val2";
+let mut request: RequestWriter = match RequestWriter::new(Get, url) {
+    Ok(request) => request,
+    Err(error) => fail!(":-( {}", error),
+};
 
 request.headers.content_length = Some(data.len());
 request.write(data);
@@ -32,6 +52,7 @@ let response = match request.read_response() {
     Ok(response) => response,
     Err((_request, error)) => fail!(":-( {}", error),
 };
+# }
 ```
 
 */
