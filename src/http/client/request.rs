@@ -128,14 +128,7 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
     pub fn new_request(method: Method, url: Url, use_ssl: bool, auto_detect_ssl: bool) -> IoResult<RequestWriter<S>> {
         let host = Host {
             name: url.domain().unwrap().to_string(),
-            port: {
-                let port = url.port().unwrap();
-                if port.is_empty() {
-                    None
-                } else {
-                    Some(from_str(port).expect("You didn’t aught to give a bad port!"))
-                }
-            },
+            port: url.port(),
         };
 
         let remote_addr = try!(url_to_socket_addr(&url, &host));
