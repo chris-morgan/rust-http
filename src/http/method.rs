@@ -4,7 +4,7 @@ use std::from_str::FromStr;
 /// HTTP methods, as defined in RFC 2616, §5.1.1.
 ///
 /// Method names are case-sensitive.
-#[deriving(PartialEq, Eq, Clone)]
+#[deriving(PartialEq, Eq, Clone, Hash)]
 pub enum Method {
     Options,
     Get,
