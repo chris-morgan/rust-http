@@ -4,7 +4,7 @@ version = "0.1.0-pre"
 authors = [ "Chris Morgan <me@chrismorgan.info>" ]
 build = "./prebuild.sh"
 
-[[lib]]
+[lib]
 name = "http"
 path = "src/http/lib.rs"
 
