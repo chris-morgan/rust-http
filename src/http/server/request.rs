@@ -19,7 +19,7 @@ use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeaderSyntax, Mal
 static MAX_REQUEST_URI_LEN: uint = 1024;
 pub static MAX_METHOD_LEN: uint = 64;
 
-pub struct RequestBuffer<'a, S> {
+pub struct RequestBuffer<'a, S: 'a> {
     /// The socket connection to read from
     pub stream: &'a mut BufferedStream<S>,
 }
