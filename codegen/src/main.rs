@@ -35,7 +35,7 @@ fn main() {
     }
 }
 
-pub fn get_writer(output_dir: &Path, filename: &str) -> Box<Writer> {
+pub fn get_writer(output_dir: &Path, filename: &str) -> Box<Writer + 'static> {
     let mut output_file = output_dir.clone();
     output_file.push(filename);
     match File::open_mode(&output_file, Truncate, Write) {

@@ -139,7 +139,7 @@ enum HeaderValueByteIteratorState {
 /// This ensures one cannot read past the end of a header mistakenly and that linear white space is
 /// handled correctly so that nothing else needs to worry about it. Any linear whitespace (multiple
 /// spaces outside of a quoted-string) is compacted into a single SP.
-pub struct HeaderValueByteIterator<'a, R> {
+pub struct HeaderValueByteIterator<'a, R: 'a> {
     pub reader: &'a mut R,
 
     /// This field serves two purposes. *During* iteration, it will typically be ``None``, but

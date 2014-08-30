@@ -275,11 +275,11 @@ impl<S: Reader + Writer + Connecter = super::NetworkStream> Writer for RequestWr
         }
         // TODO: decide whether using get_mut_ref() is sound
         // (it will cause failure if None)
-        self.stream.get_mut_ref().write(buf)
+        self.stream.as_mut().unwrap().write(buf)
     }
 
     fn flush(&mut self) -> IoResult<()> {
         // TODO: ditto
-        self.stream.get_mut_ref().flush()
+        self.stream.as_mut().unwrap().flush()
     }
 }
