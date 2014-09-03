@@ -22,7 +22,7 @@ pub struct ResponseReader<S> {
     pub status: Status,
 
     /// The headers received in the response.
-    pub headers: Box<headers::response::HeaderCollection>,
+    pub headers: headers::response::HeaderCollection,
 }
 
 fn bad_response_err() -> IoError {
@@ -92,7 +92,7 @@ impl<S: Stream> ResponseReader<S> {
         // between a request and response.
         let headers = {
             let mut buffer = RequestBuffer::new(&mut stream);
-            let mut headers = box headers::response::HeaderCollection::new();
+            let mut headers = headers::response::HeaderCollection::new();
             loop {
                 let xxx = buffer.read_header::<headers::response::Header>();
                 info!("header = {:?}", xxx);

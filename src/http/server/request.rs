@@ -216,7 +216,7 @@ pub struct Request {
     //host: Option<Host>,  // Now in headers.host
 
     /// The headers sent with the request.
-    pub headers: Box<headers::request::HeaderCollection>,
+    pub headers: headers::request::HeaderCollection,
 
     /// The body of the request; empty for such methods as GET.
     pub body: String,
@@ -308,7 +308,7 @@ impl Request {
         // Start out with dummy values
         let mut request = Request {
             remote_addr: buffer.stream.wrapped.peer_name().ok(),
-            headers: box headers::request::HeaderCollection::new(),
+            headers: headers::request::HeaderCollection::new(),
             body: String::new(),
             method: Options,
             request_uri: Star,
