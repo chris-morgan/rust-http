@@ -21,7 +21,7 @@ pub struct ResponseWriter<'a> {
     // The place to write to (typically a TCP stream, io::net::tcp::TcpStream)
     writer: &'a mut BufferedStream<TcpStream>,
     headers_written: bool,
-    pub headers: Box<HeaderCollection>,
+    pub headers: HeaderCollection,
     pub status: status::Status,
 }
 
@@ -31,7 +31,7 @@ impl<'a> ResponseWriter<'a> {
         ResponseWriter {
             writer: writer,
             headers_written: false,
-            headers: box HeaderCollection::new(),
+            headers: HeaderCollection::new(),
             status: status::Ok,
         }
     }
