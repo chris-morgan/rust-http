@@ -101,7 +101,7 @@ pub struct RequestWriter<S = super::NetworkStream> {
     //host: Host,  // Now headers.host
 
     /// The headers sent with the request.
-    pub headers: Box<HeaderCollection>,
+    pub headers: HeaderCollection,
 
     /// The HTTP method for the request.
     pub method: Method,
@@ -164,7 +164,7 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
             stream: None,
             headers_written: false,
             remote_addr: Some(remote_addr),
-            headers: box HeaderCollection::new(),
+            headers: HeaderCollection::new(),
             method: method,
             url: url,
             use_ssl: use_ssl,
