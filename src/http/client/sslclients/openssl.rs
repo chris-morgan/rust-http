@@ -4,8 +4,9 @@ extern crate openssl;
 
 use std::io::net::ip::SocketAddr;
 use std::io::net::tcp::TcpStream;
-use std::io::IoResult;
+use std::io::{IoResult, IoError, ConnectionAborted, OtherIoError};
 use self::openssl::ssl::{SslStream, SslContext, Sslv23};
+use self::openssl::ssl::error::{SslError, StreamError, SslSessionClosed, OpenSslErrors};
 use connecter::Connecter;
 
 /// A TCP stream, either plain text or SSL.
@@ -20,7 +21,8 @@ impl Connecter for NetworkStream {
     fn connect(addr: SocketAddr, _host: &str, use_ssl: bool) -> IoResult<NetworkStream> {
         let stream = try!(TcpStream::connect(format!("{}", addr.ip).as_slice(), addr.port));
         if use_ssl {
-            let ssl_stream = SslStream::new(&SslContext::new(Sslv23), stream);
+            let context = try!(SslContext::new(Sslv23).map_err(lift_ssl_error));
+            let ssl_stream = try!(SslStream::new(&context, stream).map_err(lift_ssl_error));
             Ok(SslProtectedStream(ssl_stream))
         } else {
             Ok(NormalStream(stream))
@@ -52,3 +54,22 @@ impl Writer for NetworkStream {
         }
     }
 }
+
+fn lift_ssl_error(ssl: SslError) -> IoError {
+    match ssl {
+        StreamError(err) => err,
+        SslSessionClosed => IoError {
+            kind: ConnectionAborted,
+            desc: "SSL Connection Closed",
+            detail: None
+        },
+        // Unfortunately throw this away. No way to support this
+        // detail without a better Error abstraction.
+        OpenSslErrors(errs) => IoError {
+            kind: OtherIoError,
+            desc: "Error in OpenSSL",
+            detail: Some(format!("{}", errs))
+        }
+    }
+}
+
