@@ -1,4 +1,4 @@
-use std::io::{Listener, Acceptor};
+use std::io::{Listener, Acceptor, IoResult};
 use std::io::net::ip::SocketAddr;
 use time::precise_time_ns;
 
@@ -118,6 +118,69 @@ pub trait Server: Send + Clone {
                 }
             });
         }
+    }
+
+    /**
+     * Attempt to bind to the address and port and serve for only one request.
+     *
+     * The server will wait for one request and handle it before the program continues.
+     * It will not be kept alive.
+     *
+     * # Arguments
+     * - `retry_accept` - try to accept an other connection if accept failed.
+     * - `timeout_ms` - optional timeout in milliseconds.
+     */
+    fn serve_once(&self, retry_accept: bool, timeout_ms: Option<u64>) -> IoResult<()> {
+        let config = self.get_config();
+        debug!("About to bind to {}", config.bind_address);
+        let mut acceptor = try!(TcpListener::bind(format!("{}", config.bind_address.ip).as_slice(), config.bind_address.port).listen());
+        debug!("listening for one request");
+
+        loop {
+            acceptor.set_timeout(timeout_ms);
+            let stream = match acceptor.accept() {
+                Err(error) => {
+                    debug!("accept failed: {}", error);
+                    // Question: is this the correct thing to do? We should probably be more
+                    // intelligent, for there are some accept failures that are likely to be
+                    // permanent, such that continuing would be a very bad idea, such as
+                    // ENOBUFS/ENOMEM; and some where it should just be ignored, e.g.
+                    // ECONNABORTED. TODO.
+                    if retry_accept {
+                        continue;
+                    } else {
+                        return Err(error);
+                    }
+                },
+                Ok(socket) => socket,
+            };
+
+            let mut stream = BufferedStream::new(stream);
+            debug!("accepted connection");
+            let (request, err_status) = Request::load(&mut stream);
+            let mut response = ResponseWriter::new(&mut stream);
+            match err_status {
+                Ok(()) => {
+                    self.handle_request(request, &mut response);
+                    // Ensure that we actually do send a response:
+                    try!(response.try_write_headers());
+                },
+                Err(status) => {
+                    // Uh oh, it's a response that I as a server cannot cope with.
+                    // No good user-agent should have caused this, so for the moment
+                    // at least I am content to send no body in the response.
+                    response.status = status;
+                    response.headers.content_length = Some(0);
+                    try!(response.write_headers());
+                },
+            }
+            // Ensure the request is flushed, any Transfer-Encoding completed, etc.
+            try!(response.finish_response());
+
+            break;
+        }
+
+        Ok(())
     }
 }
 
