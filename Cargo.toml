@@ -2,7 +2,7 @@
 name = "http"
 version = "0.1.0-pre"
 authors = [ "Chris Morgan <me@chrismorgan.info>" ]
-build = "./prebuild.sh"
+build = "sh prebuild.sh"
 
 [lib]
 name = "http"
