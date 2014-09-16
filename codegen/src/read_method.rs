@@ -17,7 +17,7 @@ pub fn read_method<S: Stream>(stream: &mut BufferedStream<S>) -> IoResult<Method
 "));
 
     try!(generate_branchified_method(
-        &mut writer,
+        &mut *writer,
         branchify!(case sensitive,
             "CONNECT" => Connect,
             "DELETE"  => Delete,
