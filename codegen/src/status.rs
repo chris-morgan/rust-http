@@ -14,10 +14,10 @@ use super::get_writer;
 
 enum HeadingOrStatus {
     Heading(&'static str),
-    Status(Status),
+    Status(HttpStatus),
 }
 
-struct Status {
+struct HttpStatus {
     code: uint,
     reason: &'static str,
     comment: Option<&'static str>,
@@ -25,15 +25,15 @@ struct Status {
 
 /// Status with comment
 fn status_c(code: uint, reason: &'static str, comment: &'static str) -> HeadingOrStatus {
-    Status(Status { code: code, reason: reason, comment: Some(comment) })
+    Status(HttpStatus { code: code, reason: reason, comment: Some(comment) })
 }
 
 /// Status without comment
 fn status_n(code: uint, reason: &'static str) -> HeadingOrStatus {
-    Status(Status { code: code, reason: reason, comment: None })
+    Status(HttpStatus { code: code, reason: reason, comment: None })
 }
 
-impl Status {
+impl HttpStatus {
     fn ident(&self) -> String {
         camel_case(self.reason)
     }

@@ -137,7 +137,7 @@ impl<S: Reader + Writer = super::NetworkStream> RequestWriter<S> {
         fn url_to_socket_addr(url: &Url, host: &Host) -> IoResult<SocketAddr> {
             // Just grab the first IPv4 address
             let addrs = try!(get_host_addresses(host.name.as_slice()));
-            let addr = addrs.move_iter().find(|&a| {
+            let addr = addrs.into_iter().find(|&a| {
                 match a {
                     Ipv4Addr(..) => true,
                     _ => false
