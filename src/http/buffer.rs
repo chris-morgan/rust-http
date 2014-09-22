@@ -137,7 +137,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
         } else {
             unsafe {
                 let len = self.write_buffer.len();
-                self.write_buffer.mut_slice(self.write_len, len).copy_memory(buf);
+                self.write_buffer.slice_mut(self.write_len, len).copy_memory(buf);
             }
 
             self.write_len += buf.len();
