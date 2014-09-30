@@ -5,7 +5,7 @@ extern crate openssl;
 use std::io::net::ip::SocketAddr;
 use std::io::net::tcp::TcpStream;
 use std::io::{IoResult, IoError, ConnectionAborted, OtherIoError};
-use self::openssl::ssl::{SslStream, SslContext, Sslv23};
+use self::openssl::ssl::{SslStream, SslContext, Sslv23, Ssl};
 use self::openssl::ssl::error::{SslError, StreamError, SslSessionClosed, OpenSslErrors};
 use connecter::Connecter;
 
@@ -22,7 +22,9 @@ impl Connecter for NetworkStream {
         let stream = try!(TcpStream::connect(format!("{}", addr.ip).as_slice(), addr.port));
         if use_ssl {
             let context = try!(SslContext::new(Sslv23).map_err(lift_ssl_error));
-            let ssl_stream = try!(SslStream::new(&context, stream).map_err(lift_ssl_error));
+            let ssl = try!(Ssl::new(&context).map_err(lift_ssl_error));
+            ssl.set_hostname(_host);
+            let ssl_stream = try!(SslStream::new_from(ssl, stream).map_err(lift_ssl_error));
             Ok(SslProtectedStream(ssl_stream))
         } else {
             Ok(NormalStream(stream))
@@ -72,4 +74,3 @@ fn lift_ssl_error(ssl: SslError) -> IoError {
         }
     }
 }
-
