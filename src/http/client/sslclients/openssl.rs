@@ -18,12 +18,12 @@ pub enum NetworkStream {
 }
 
 impl Connecter for NetworkStream {
-    fn connect(addr: SocketAddr, _host: &str, use_ssl: bool) -> IoResult<NetworkStream> {
+    fn connect(addr: SocketAddr, host: &str, use_ssl: bool) -> IoResult<NetworkStream> {
         let stream = try!(TcpStream::connect(format!("{}", addr.ip).as_slice(), addr.port));
         if use_ssl {
             let context = try!(SslContext::new(Sslv23).map_err(lift_ssl_error));
             let ssl = try!(Ssl::new(&context).map_err(lift_ssl_error));
-            ssl.set_hostname(_host);
+            ssl.set_hostname(host);
             let ssl_stream = try!(SslStream::new_from(ssl, stream).map_err(lift_ssl_error));
             Ok(SslProtectedStream(ssl_stream))
         } else {
