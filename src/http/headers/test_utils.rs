@@ -14,7 +14,7 @@ pub fn from_stream_with_str<T: HeaderConvertible>(s: &str) -> Option<T> {
 pub fn to_stream_into_str<T: HeaderConvertible>(v: &T) -> String {
     let mut writer = MemWriter::new();
     v.to_stream(&mut writer).unwrap();
-    String::from_utf8(Vec::from_slice(writer.get_ref())).unwrap()
+    String::from_utf8(writer.get_ref().to_vec()).unwrap()
 }
 
 // Verify that a value cannot be successfully interpreted as a header value of the specified type.
