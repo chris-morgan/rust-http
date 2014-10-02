@@ -54,7 +54,7 @@ pub fn read_decimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedMul +
     let ten: N = cast(10u32).unwrap();
     loop {
         n = match reader.read_byte() {
-            Ok(b@ASCII_ZERO..ASCII_NINE) => {
+            Ok(b@ASCII_ZERO...ASCII_NINE) => {
                 // Written sanely, this is: n * 10 + (b - '0'), but we avoid
                 // (semantically unsound) overflow by using checked operations.
                 // There is no need in the b - '0' part as it is safe.
@@ -97,21 +97,21 @@ pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedM
     let sixteen: N = cast(16u32).unwrap();
     loop {
         n = match reader.read_byte() {
-            Ok(b@ASCII_ZERO..ASCII_NINE) => {
+            Ok(b@ASCII_ZERO...ASCII_NINE) => {
                 match n.checked_mul(&sixteen).and_then(
                         |n| n.checked_add(&cast(b - ASCII_ZERO).unwrap())) {
                     Some(new_n) => new_n,
                     None => return Err(bad_input()),  // overflow
                 }
             },
-            Ok(b@ASCII_LOWER_A..ASCII_LOWER_F) => {
+            Ok(b@ASCII_LOWER_A...ASCII_LOWER_F) => {
                 match n.checked_mul(&sixteen).and_then(
                         |n| n.checked_add(&cast(b - ASCII_LOWER_A + 10).unwrap())) {
                     Some(new_n) => new_n,
                     None => return Err(bad_input()),  // overflow
                 }
             },
-            Ok(b@ASCII_UPPER_A..ASCII_UPPER_F) => {
+            Ok(b@ASCII_UPPER_A...ASCII_UPPER_F) => {
                 match n.checked_mul(&sixteen).and_then(
                         |n| n.checked_add(&cast(b - ASCII_UPPER_A + 10).unwrap())) {
                     Some(new_n) => new_n,
