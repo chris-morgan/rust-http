@@ -76,7 +76,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
             if raw_request_uri.len() == MAX_REQUEST_URI_LEN {
                 return Err(status::RequestUriTooLong)
             }
-            raw_request_uri.push_char(next_byte as char);
+            raw_request_uri.push(next_byte as char);
 
             next_byte = match self.stream.read_byte() {
                 Ok(b) => b,

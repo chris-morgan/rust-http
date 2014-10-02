@@ -28,7 +28,7 @@ pub fn normalise_header_name(name: &String) -> String {
             true => c.to_ascii().to_uppercase(),
             false => c.to_ascii().to_lowercase(),
         };
-        result.push_char(c.to_char());
+        result.push(c.to_char());
         // ASCII 45 is '-': in that case, capitalise the next char
         capitalise = c.to_byte() == 45;
     }
@@ -159,14 +159,14 @@ pub fn maybe_quoted_string(s: &String) -> String {
 pub fn push_quoted_string(mut s: String, t: &String) -> String {
     let i = s.len();
     s.reserve(t.len() + i + 2);
-    s.push_char('"');
+    s.push('"');
     for c in t.as_slice().chars() {
         if c == '\\' || c == '"' {
-            s.push_char('\\');
+            s.push('\\');
         }
-        s.push_char(c);
+        s.push(c);
     }
-    s.push_char('"');
+    s.push('"');
     s
 }
 
@@ -190,7 +190,7 @@ pub fn unquote_string(s: &String) -> Option<String> {
             (Start, Some(_)) => return None,
             (Normal, Some(c)) if c == '\\' => Escaping,
             (Normal, Some(c)) if c == '"' => End,
-            (Normal, Some(c)) | (Escaping, Some(c)) => { output.push_char(c); Normal },
+            (Normal, Some(c)) | (Escaping, Some(c)) => { output.push(c); Normal },
             (End, Some(_)) => return None,
             (End, None) => return Some(output),
             (_, None) => return None,
@@ -210,14 +210,14 @@ pub fn maybe_unquote_string(s: &String) -> Option<String> {
 // Takes and emits the String instead of the &mut str for a simpler, fluid interface
 pub fn push_parameter(mut s: String, k: &String, v: &String) -> String {
     s.push_str(k.as_slice());
-    s.push_char('=');
+    s.push('=');
     push_maybe_quoted_string(s, v)
 }
 
 // pub fn push_parameters<K: Str, V: Str>(mut s: String, parameters: &[(K, V)]) -> String {
 pub fn push_parameters(mut s: String, parameters: &[(String, String)]) -> String {
     for &(ref k, ref v) in parameters.iter() {
-        s.push_char(';');
+        s.push(';');
         s = push_parameter(s, k, v);
     }
     s

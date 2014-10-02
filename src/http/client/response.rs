@@ -77,7 +77,7 @@ impl<S: Stream> ResponseReader<S> {
                     }
                 }
                 Ok(b) => {
-                    reason.push_char(b as char);
+                    reason.push(b as char);
                 }
                 Err(_) => return Err((request, bad_response_err())),
             }

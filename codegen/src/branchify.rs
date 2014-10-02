@@ -134,7 +134,7 @@ pub fn generate_branchified_method(
     w!(       ("};"));
     w!(       ("// OK, that didn't pan out. Let's read the rest and see what we get."));
     w!(       ("let mut s = String::from_str(s);"));
-    w!(       ("s.push_char(next_byte as char);"));
+    w!(       ("s.push(next_byte as char);"));
     w!(       ("loop {"));
     w!(format!("    match {} {{", read_call));
     w!(format!("        Ok(b) if b == {} => return Ok({}),", end, unknown.replace("{}", "s")));
@@ -143,7 +143,7 @@ pub fn generate_branchified_method(
     w!(       ("                // Too long; bad request"));
     w!(       ("                return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"too long, bad request\", detail: None });"));
     w!(       ("            }"));
-    w!(       ("            s.push_char(b as char);"));
+    w!(       ("            s.push(b as char);"));
     w!(       ("        },"));
     w!(       ("        Ok(_) => return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"bad value\", detail: None }),"));
     w!(       ("        Err(err) => return Err(err),"));
