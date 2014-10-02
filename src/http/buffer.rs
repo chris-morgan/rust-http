@@ -4,6 +4,7 @@ use std::io::{IoResult, Stream};
 use std::cmp::min;
 use std::slice;
 use std::fmt::radix;
+use std::ptr;
 
 // 64KB chunks (moderately arbitrary)
 static READ_BUF_SIZE: uint = 0x10000;
@@ -136,8 +137,8 @@ impl<T: Writer> Writer for BufferedStream<T> {
             }
         } else {
             unsafe {
-                let len = self.write_buffer.len();
-                self.write_buffer.slice_mut(self.write_len, len).copy_memory(buf);
+                ptr::copy_memory(self.write_buffer.as_mut_ptr().offset(self.write_len as int),
+                    buf.as_ptr(), buf.len());
             }
 
             self.write_len += buf.len();
