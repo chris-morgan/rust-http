@@ -100,7 +100,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
     loop {
         state = match (state, reader.read_byte()) {
             (Start, Ok(b)) | (ReadingName, Ok(b)) if is_token_item(b) => {
-                header_name.push_char(b as char);
+                header_name.push(b as char);
                 ReadingName
             },
             // TODO: check up on the rules for a line like "Name : value". Full LWS?
@@ -213,12 +213,12 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
         loop {
             match self.next() {
                 None => break,
-                Some(b) => out.push_char(b as char),
+                Some(b) => out.push(b as char),
             }
         }
         /*Doesn't work: "cannot borrow immutable self value as mutable" (!! TODO: report bug)
         for b in self {
-            out.push_char(b as char);
+            out.push(b as char);
         }*/
         out
     }
@@ -300,7 +300,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
                         Start => return None,
                         Normal if b == b'\\' => Escaping,
                         Normal if b == b'"' => break,
-                        Normal | Escaping => { output.push_char(b as char); Normal },
+                        Normal | Escaping => { output.push(b as char); Normal },
                     }
                 }
             }
@@ -375,7 +375,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
                         Some(b) => state = match state {
                             Normal if b == b'\\' => Escaping,
                             Normal if b == b'"' => break,
-                            Normal | Escaping => { output.push_char(b as char); Normal },
+                            Normal | Escaping => { output.push(b as char); Normal },
                         }
                     }
                 }
@@ -394,7 +394,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
                     break;
                 },
                 Some(b) if is_token_item(b) => {
-                    output.push_char(b as char);
+                    output.push(b as char);
                 },
                 Some(b) => {
                     println!("TODO: what should be done with a token ended with a non-separator? \
@@ -423,7 +423,7 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
                     break;
                 },
                 Some(b) if is_token_item(b) => {
-                    output.push_char(b as char);
+                    output.push(b as char);
                 },
                 Some(b) => {
                     println!("TODO: what should be done with a token ended with a non-separator? \

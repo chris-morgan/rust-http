@@ -236,11 +236,11 @@ impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
             Some(ref query) => ("?", query.as_slice()),
             None => ("", "")
         };
-        try!(write!(self.stream.get_mut_ref() as &mut Writer,
+        try!(write!(self.stream.as_mut().unwrap() as &mut Writer,
             "{} {}{}{} HTTP/1.0\r\n",
             self.method, self.url.serialize_path().unwrap(), question_mark, query));
 
-        try!(self.headers.write_all(self.stream.get_mut_ref()));
+        try!(self.headers.write_all(self.stream.as_mut().unwrap()));
         self.headers_written = true;
         Ok(())
     }
