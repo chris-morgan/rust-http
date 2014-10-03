@@ -111,7 +111,7 @@ impl<T: Reader> Reader for BufferedStream<T> {
             try!(self.fill_buffer());
         }
         let size = min(self.read_max - self.read_pos, buf.len());
-        slice::bytes::copy_memory(buf, self.read_buffer.slice_from(self.read_pos).slice_to(size));
+        slice::bytes::copy_memory(buf, self.read_buffer[self.read_pos..][..size]);
         self.read_pos += size;
         Ok(size)
     }

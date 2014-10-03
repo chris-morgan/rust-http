@@ -13,6 +13,7 @@
 #![feature(default_type_params)]
 #![feature(macro_rules)]
 #![feature(phase)]
+#![feature(slicing_syntax)]
 
 #[phase(plugin, link)] extern crate log;
 extern crate url;
