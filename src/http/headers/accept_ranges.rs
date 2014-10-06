@@ -24,8 +24,8 @@ impl super::HeaderConvertible for AcceptableRanges {
         loop {
             match reader.read_token() {
                 Some(token) => {
-                    let token = token.as_slice().to_ascii_lower();
-                    match token.as_slice() {
+                    let token = token[].to_ascii_lower();
+                    match token[] {
                         "bytes" => range_units.push(Bytes),
                         "none" if range_units.len() == 0 => return Some(NoAcceptableRanges),
                         _ => range_units.push(OtherRangeUnit(token)),
@@ -60,7 +60,7 @@ impl super::HeaderConvertible for AcceptableRanges {
                 for ru in range_units.iter() {
                     match ru {
                         &Bytes => result.push_str("bytes"),
-                        &OtherRangeUnit(ref ru) => result.push_str(ru.as_slice()),
+                        &OtherRangeUnit(ref ru) => result.push_str(ru[]),
                     }
                 }
                 result

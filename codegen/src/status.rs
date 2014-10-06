@@ -39,7 +39,7 @@ impl HttpStatus {
     }
 
     fn padded_ident(&self) -> String {
-        self.ident().append(self.reason_padding_spaces().as_slice())
+        self.ident().append(self.reason_padding_spaces()[])
     }
 
     fn reason_padding_spaces(&self) -> String {
@@ -53,7 +53,7 @@ fn camel_case(msg: &str) -> String {
     let msg = msg.replace("-", " ").replace("'", "");
     let mut result = String::with_capacity(msg.len());
     let mut capitalise = true;
-    for c in msg.as_slice().chars() {
+    for c in msg[].chars() {
         let c = match capitalise {
             true => c.to_ascii().to_uppercase().to_char(),
             false => c.to_ascii().to_lowercase().to_char(),
@@ -215,8 +215,8 @@ impl Status {
 
     /// Get a status from the code and reason
     pub fn from_code_and_reason(status: u16, reason: String) -> Status {
-        let reason_lower = reason.as_slice().to_ascii_lower();
-        match (status, reason_lower.as_slice()) {
+        let reason_lower = reason[].to_ascii_lower();
+        match (status, reason_lower[]) {
 ".as_bytes()));
     for &entry in entries.iter() {
         match entry {

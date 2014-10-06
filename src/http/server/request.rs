@@ -275,9 +275,9 @@ impl RequestUri {
             Some(Star)
         } else if request_uri.as_bytes()[0] as char == '/' {
             Some(AbsolutePath(request_uri))
-        } else if request_uri.as_slice().contains("/") {
+        } else if request_uri[].contains("/") {
             // An authority can't have a slash in it
-            match Url::parse(request_uri.as_slice()) {
+            match Url::parse(request_uri[]) {
                 Ok(url) => Some(AbsoluteUri(url)),
                 Err(_) => None,
             }
@@ -364,7 +364,7 @@ impl Request {
                         request.close_connection = true;
                         break;
                     },
-                    headers::connection::Token(ref s) if s.as_slice() == "keep-alive" => {
+                    headers::connection::Token(ref s) if s[] == "keep-alive" => {
                         request.close_connection = false;
                         // No break; let it be overridden by close should some weird person do that
                     },

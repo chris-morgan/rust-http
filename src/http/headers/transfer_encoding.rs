@@ -24,8 +24,8 @@ impl super::HeaderConvertible for TransferCoding {
         match reader.read_token() {
             Some(token) => {
                 // XXX is this actually the best way to do this?
-                let token = token.as_slice().to_ascii_lower();
-                if token.as_slice() == "chunked" {
+                let token = token[].to_ascii_lower();
+                if token[] == "chunked" {
                     Some(Chunked)
                 } else {
                     match reader.read_parameters() {
@@ -43,7 +43,7 @@ impl super::HeaderConvertible for TransferCoding {
             Chunked => writer.write(b"chunked"),
             TransferExtension(ref token, ref parameters) => {
                 try!(writer.write_token(token));
-                writer.write_parameters(parameters.as_slice())
+                writer.write_parameters(parameters[])
             }
         }
     }
@@ -52,7 +52,7 @@ impl super::HeaderConvertible for TransferCoding {
         match *self {
             Chunked => String::from_str("chunked"),
             TransferExtension(ref token, ref parameters) => {
-                push_parameters(token.clone(), parameters.as_slice())
+                push_parameters(token.clone(), parameters[])
             }
         }
     }

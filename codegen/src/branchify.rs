@@ -102,13 +102,13 @@ pub fn generate_branchified_method(
             let next_prefix = format!("{}{}", prefix, c as char);
             w!(format!("Ok(b'{}') => match {} {{", c as char, read_call));
             for b in branch.children.iter() {
-                try!(r(writer, b, next_prefix.as_slice(), indent + 1, read_call, end, max_len, valid, unknown));
+                try!(r(writer, b, next_prefix[], indent + 1, read_call, end, max_len, valid, unknown));
             }
             match branch.result {
                 Some(ref result) =>
                     w!(format!("    Ok(b' ') => return Ok({}),", *result)),
                 None => w!(format!("    Ok(b' ') => return Ok({}),",
-                                  unknown.replace("{}", format!("String::from_str(\"{}\")", next_prefix).as_slice()))),
+                                  unknown.replace("{}", format!("String::from_str(\"{}\")", next_prefix)[]))),
             }
             w!(format!("    Ok(b) if {} => (\"{}\", b),", valid, next_prefix));
             w!("    Ok(_) => return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"bad value\", detail: None }),");

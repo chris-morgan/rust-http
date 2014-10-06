@@ -34,7 +34,7 @@ impl super::HeaderConvertible for Connection {
             Some(s) => normalise_header_name(&s),
             None => return None,
         };
-        if s.as_slice() == "Close" {
+        if s[] == "Close" {
             Some(Close)
         } else {
             Some(Token(s))

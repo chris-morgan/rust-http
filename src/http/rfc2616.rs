@@ -98,7 +98,7 @@ pub fn is_token_item(o: u8) -> bool {
 
 #[inline]
 pub fn is_token(s: &String) -> bool {
-    s.as_slice().bytes().all(|b| is_token_item(b))
+    s[].bytes().all(|b| is_token_item(b))
 }
 
 
@@ -187,7 +187,7 @@ mod content_coding {
     impl FromStr for ValueToken {
         fn from_str(s: &str) -> Option<ValueToken> {
             use std::ascii::StrAsciiExt;
-            match s.to_ascii_lower().as_slice() {
+            match s.to_ascii_lower()[] {
                 "gzip" => Some(Gzip),
                 "compress" => Some(Compress),
                 "deflate" => Some(Deflate),

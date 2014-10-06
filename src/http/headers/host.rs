@@ -30,7 +30,7 @@ impl super::HeaderConvertible for Host {
         let s = reader.collect_to_string();
         // TODO: this doesn't support IPv6 address access (e.g. "[::1]")
         // Do this properly with correct authority parsing.
-        let mut hi = s.as_slice().splitn(1, ':');
+        let mut hi = s[].splitn(1, ':');
         Some(Host {
             name: String::from_str(hi.next().unwrap()),
             port: match hi.next() {

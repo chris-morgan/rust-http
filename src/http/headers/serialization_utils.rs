@@ -23,7 +23,7 @@ use rfc2616::is_token;
 pub fn normalise_header_name(name: &String) -> String {
     let mut result: String = String::with_capacity(name.len());
     let mut capitalise = true;
-    for c in name.as_slice().chars() {
+    for c in name[].chars() {
         let c = match capitalise {
             true => c.to_ascii().to_uppercase(),
             false => c.to_ascii().to_lowercase(),
@@ -87,7 +87,7 @@ pub trait WriterUtil: Writer {
     fn write_parameters(&mut self, parameters: &[(String, String)]) -> IoResult<()> {
         for &(ref k, ref v) in parameters.iter() {
             try!(self.write(b";"));
-            try!(self.write_parameter(k.as_slice(), v));
+            try!(self.write_parameter(k[], v));
         }
         Ok(())
     }
@@ -125,13 +125,13 @@ pub fn comma_join(values: &[String]) -> String {
     let mut out = String::new();
     let mut iter = values.iter();
     match iter.next() {
-        Some(s) => out.push_str(s.as_slice()),
+        Some(s) => out.push_str(s[]),
         None => return out
     }
 
     for value in iter {
         out.push_str(", ");
-        out.push_str(value.as_slice());
+        out.push_str(value[]);
     }
     out
 }
@@ -139,7 +139,7 @@ pub fn comma_join(values: &[String]) -> String {
 /// Push a ( token | quoted-string ) onto a string and return it again
 pub fn push_maybe_quoted_string(mut s: String, t: &String) -> String {
     if is_token(t) {
-        s.push_str(t.as_slice());
+        s.push_str(t[]);
         s
     } else {
         push_quoted_string(s, t)
@@ -160,7 +160,7 @@ pub fn push_quoted_string(mut s: String, t: &String) -> String {
     let i = s.len();
     s.reserve(t.len() + i + 2);
     s.push('"');
-    for c in t.as_slice().chars() {
+    for c in t[].chars() {
         if c == '\\' || c == '"' {
             s.push('\\');
         }
@@ -183,7 +183,7 @@ pub fn unquote_string(s: &String) -> Option<String> {
     let mut output = String::new();
     // Strings with escapes cause overallocation, but it's not worth a second pass to avoid this!
     output.reserve(s.len() - 2);
-    let mut iter = s.as_slice().chars();
+    let mut iter = s[].chars();
     loop {
         state = match (state, iter.next()) {
             (Start, Some(c)) if c == '"' => Normal,
@@ -209,7 +209,7 @@ pub fn maybe_unquote_string(s: &String) -> Option<String> {
 
 // Takes and emits the String instead of the &mut str for a simpler, fluid interface
 pub fn push_parameter(mut s: String, k: &String, v: &String) -> String {
-    s.push_str(k.as_slice());
+    s.push_str(k[]);
     s.push('=');
     push_maybe_quoted_string(s, v)
 }

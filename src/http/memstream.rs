@@ -75,30 +75,30 @@ mod test {
     #[test]
     fn test_mem_writer_fake_stream() {
         let mut writer = MemWriterFakeStream::new();
-        assert_eq!(writer.get_ref(),           [].as_slice());
+        assert_eq!(writer.get_ref(),           [][]);
         assert_eq!(writer.write([0]),          Ok(()));
-        assert_eq!(writer.get_ref(),           [0].as_slice());
+        assert_eq!(writer.get_ref(),           [0][]);
         assert_eq!(writer.write([1, 2, 3]),    Ok(()));
         assert_eq!(writer.write([4, 5, 6, 7]), Ok(()));
-        assert_eq!(writer.get_ref(),           [0, 1, 2, 3, 4, 5, 6, 7].as_slice());
+        assert_eq!(writer.get_ref(),           [0, 1, 2, 3, 4, 5, 6, 7][]);
     }
 
     #[test]
     fn test_mem_reader_fake_stream() {
         let mut reader = MemReaderFakeStream::new(vec!(0, 1, 2, 3, 4, 5, 6, 7));
         let mut buf = vec![];
-        assert_eq!(reader.read(buf.as_mut_slice()),      Ok(0));
-        assert_eq!(reader.tell(),         Ok(0));
+        assert_eq!(reader.read(buf[mut]),      Ok(0));
+        assert_eq!(reader.tell(),              Ok(0));
         let mut buf = vec![0];
-        assert_eq!(reader.read(buf.as_mut_slice()),      Ok(1));
-        assert_eq!(reader.tell(),         Ok(1));
-        assert_eq!(buf,                   vec![0]);
+        assert_eq!(reader.read(buf[mut]),      Ok(1));
+        assert_eq!(reader.tell(),              Ok(1));
+        assert_eq!(buf,                        vec![0]);
         let mut buf = vec![0, 0, 0, 0];
-        assert_eq!(reader.read(buf.as_mut_slice()),      Ok(4));
-        assert_eq!(reader.tell(),         Ok(5));
-        assert_eq!(buf,                   vec![1, 2, 3, 4]);
-        assert_eq!(reader.read(buf.as_mut_slice()),      Ok(3));
-        assert_eq!(buf.slice(0, 3),       [5, 6, 7].as_slice());
-        assert_eq!(reader.read(buf.as_mut_slice()).ok(), None);
+        assert_eq!(reader.read(buf[mut]),      Ok(4));
+        assert_eq!(reader.tell(),              Ok(5));
+        assert_eq!(buf,                        vec![1, 2, 3, 4]);
+        assert_eq!(reader.read(buf[mut]),      Ok(3));
+        assert_eq!(buf[0..3],                  [5, 6, 7][]);
+        assert_eq!(reader.read(buf[mut]).ok(), None);
     }
 }
