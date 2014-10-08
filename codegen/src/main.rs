@@ -1,6 +1,6 @@
 #![crate_name = "codegen"]
 
-#![feature(macro_rules, slicing_syntax)]
+#![feature(macro_rules)]
 
 use std::io::{File, Truncate, Write};
 use std::os;
