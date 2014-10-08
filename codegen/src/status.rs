@@ -61,7 +61,7 @@ fn camel_case(msg: &str) -> String {
         // For a space, capitalise the next char
         capitalise = c == ' ';
         if !capitalise {  // And also, for a space, don't keep it
-            result.push_char(c);
+            result.push(c);
         }
     }
     result
