@@ -39,7 +39,9 @@ impl HttpStatus {
     }
 
     fn padded_ident(&self) -> String {
-        self.ident().append(self.reason_padding_spaces()[])
+        let mut ident = self.ident();
+        ident.push_str(self.reason_padding_spaces()[]);
+        ident
     }
 
     fn reason_padding_spaces(&self) -> String {
@@ -61,7 +63,7 @@ fn camel_case(msg: &str) -> String {
         // For a space, capitalise the next char
         capitalise = c == ' ';
         if !capitalise {  // And also, for a space, don't keep it
-            result.push_char(c);
+            result.push(c);
         }
     }
     result
