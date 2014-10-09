@@ -10,6 +10,7 @@
 #![deny(non_camel_case_types)]
 //#[deny(missing_doc)];
 
+#![allow(unknown_features)]
 #![feature(slicing_syntax)]
 #![feature(default_type_params)]
 #![feature(macro_rules)]
