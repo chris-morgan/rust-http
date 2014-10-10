@@ -14,10 +14,10 @@ use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeaderSyntax, Mal
 
 // /// Line/header can't be more than 4KB long (note that with the compacting of LWS the actual source
 // /// data could be longer than 4KB)
-// static MAX_LINE_LEN: uint = 0x1000;
+// const MAX_LINE_LEN: uint = 0x1000;
 
-static MAX_REQUEST_URI_LEN: uint = 1024;
-pub static MAX_METHOD_LEN: uint = 64;
+const MAX_REQUEST_URI_LEN: uint = 1024;
+pub const MAX_METHOD_LEN: uint = 64;
 
 pub struct RequestBuffer<'a, S: 'a> {
     /// The socket connection to read from

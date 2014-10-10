@@ -19,12 +19,12 @@ fn bad_input() -> IoError {
     }
 }
 
-static ASCII_ZERO: u8 = b'0';
-static ASCII_NINE: u8 = b'9';
-static ASCII_LOWER_A: u8 = b'a';
-static ASCII_LOWER_F: u8 = b'f';
-static ASCII_UPPER_A: u8 = b'A';
-static ASCII_UPPER_F: u8 = b'F';
+const ASCII_ZERO: u8 = b'0';
+const ASCII_NINE: u8 = b'9';
+const ASCII_LOWER_A: u8 = b'a';
+const ASCII_LOWER_F: u8 = b'f';
+const ASCII_UPPER_A: u8 = b'A';
+const ASCII_UPPER_F: u8 = b'F';
 
 /**
  * Read a positive decimal integer from the given reader.
