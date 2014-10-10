@@ -7,8 +7,8 @@ use std::fmt::radix;
 use std::ptr;
 
 // 64KB chunks (moderately arbitrary)
-static READ_BUF_SIZE: uint = 0x10000;
-static WRITE_BUF_SIZE: uint = 0x10000;
+const READ_BUF_SIZE: uint = 0x10000;
+const WRITE_BUF_SIZE: uint = 0x10000;
 // TODO: consider removing constants and giving a buffer size in the constructor
 
 pub struct BufferedStream<T> {

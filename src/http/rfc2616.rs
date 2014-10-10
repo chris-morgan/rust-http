@@ -29,28 +29,28 @@ pub fn is_digit(octet: u8) -> bool { octet >= b'0' && octet <= b'9' }
 pub fn is_ctl(octet: u8) -> bool { octet < 32 || octet == 127 }
 
 /// CR: US-ASCII CR, carriage return (13)
-pub static CR: u8 = b'\r';
+pub const CR: u8 = b'\r';
 
 /// LF: US-ASCII LF, linefeed (10)
-pub static LF: u8 = b'\n';
+pub const LF: u8 = b'\n';
 
 /// SP: US-ASCII SP, space (32)
-pub static SP: u8 = b' ';
+pub const SP: u8 = b' ';
 
 /// HT: US-ASCII HT, horizontal-tab (9)
-pub static HT: u8 = b'\t';
+pub const HT: u8 = b'\t';
 
 /// US-ASCII colon (58)
-pub static COLON: u8 = b':';
+pub const COLON: u8 = b':';
 
 /// <">: US-ASCII double-quote mark (34)
-pub static DOUBLE_QUOTE: u8 = b'"';
+pub const DOUBLE_QUOTE: u8 = b'"';
 
 /// "\": US-ASCII backslash (92)
-pub static BACKSLASH: u8 = b'\\';
+pub const BACKSLASH: u8 = b'\\';
 
 // CRLF: CR LF
-//static CRLF: [u8] = [CR, LF];
+//const CRLF: [u8] = [CR, LF];
 
 // LWS: [CRLF] 1*( SP | HT )
 /*#[inline]

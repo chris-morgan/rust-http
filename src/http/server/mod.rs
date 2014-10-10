@@ -192,7 +192,7 @@ pub struct Config {
 	pub bind_address: SocketAddr,
 }
 
-static PERF_DUMP_FREQUENCY : u64 = 10_000;
+const PERF_DUMP_FREQUENCY : u64 = 10_000;
 
 /// Simple function to dump out perf stats every `PERF_DUMP_FREQUENCY` requests
 fn perf_dumper(perf_receiver: Receiver<(u64, u64, u64, u64, u64)>) {
