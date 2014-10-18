@@ -4,7 +4,6 @@
 #![crate_name = "info"]
 
 extern crate time;
-extern crate debug;
 extern crate http;
 
 use std::io::net::ip::{SocketAddr, Ipv4Addr};

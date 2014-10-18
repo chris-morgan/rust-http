@@ -3,7 +3,6 @@
 #![allow(unknown_features)]
 #![feature(slicing_syntax)]
 
-extern crate debug;
 extern crate http;
 extern crate url;
 use http::client::RequestWriter;
