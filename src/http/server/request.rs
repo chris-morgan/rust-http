@@ -219,7 +219,7 @@ pub struct Request {
     pub headers: headers::request::HeaderCollection,
 
     /// The body of the request; empty for such methods as GET.
-    pub body: String,
+    pub body: Vec<u8>,
 
     /// The HTTP method for the request.
     pub method: Method,
@@ -309,7 +309,7 @@ impl Request {
         let mut request = Request {
             remote_addr: buffer.stream.wrapped.peer_name().ok(),
             headers: headers::request::HeaderCollection::new(),
-            body: String::new(),
+            body: Vec::new(),
             method: Options,
             request_uri: Star,
             close_connection: true,
@@ -378,10 +378,7 @@ impl Request {
         match request.headers.content_length {
             Some(length) => {
                 match buffer.read_exact(length) {
-                    Ok(body) => match String::from_utf8(body) {
-                        Ok(body_str) => request.body = body_str,
-                        Err(_) => return (request, Err(status::BadRequest))
-                    },
+                    Ok(body) => request.body = body,
                     Err(_) => return (request, Err(status::BadRequest))
                 }
             },
