@@ -875,7 +875,7 @@ macro_rules! headers_mod {
 
             #[allow(unused_imports)]
             use std::io::{BufReader, IoResult};
-            use std::ascii::OwnedStrAsciiExt;
+            use std::ascii::OwnedAsciiExt;
             use time;
             use collections::treemap::{TreeMap, Entries};
             use headers;
@@ -960,7 +960,7 @@ macro_rules! headers_mod {
                                 self.ext_iter = Some(self.coll.extensions.iter());
                                 continue
                             },
-                            _ => match self.ext_iter.get_mut_ref().next() {
+                            _ => match self.ext_iter.as_mut().unwrap().next() {
                                 Some((k, v)) =>
                                     return Some(ExtensionHeader(k.clone(), v.clone())),
                                 None => return None,

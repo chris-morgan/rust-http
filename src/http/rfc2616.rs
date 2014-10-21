@@ -186,7 +186,7 @@ mod content_coding {
     }
     impl FromStr for ValueToken {
         fn from_str(s: &str) -> Option<ValueToken> {
-            use std::ascii::StrAsciiExt;
+            use std::ascii::AsciiExt;
             match s.to_ascii_lower()[] {
                 "gzip" => Some(Gzip),
                 "compress" => Some(Compress),
