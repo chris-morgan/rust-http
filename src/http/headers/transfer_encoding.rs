@@ -2,7 +2,7 @@
 //!
 //! Transfer-Encoding       = "Transfer-Encoding" ":" 1#transfer-coding
 
-use std::ascii::StrAsciiExt;
+use std::ascii::AsciiExt;
 use std::io::IoResult;
 use headers::serialization_utils::{WriterUtil, push_parameters};
 

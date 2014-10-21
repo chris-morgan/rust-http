@@ -30,7 +30,7 @@ fn main() {
             }
         },
         _ => {
-            println!("usage: {} [read_method|status].rs <output-dir>", args.get(0));
+            println!("usage: {} [read_method|status].rs <output-dir>", args[0]);
             os::set_exit_status(1);
         }
     }
