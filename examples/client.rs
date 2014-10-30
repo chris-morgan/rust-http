@@ -47,7 +47,7 @@ fn make_and_print_request(url: &str) {
     println!("");
     let mut response = match request.read_response() {
         Ok(response) => response,
-        Err(_request) => fail!("This example can progress no further with no response :-("),
+        Err(_request) => panic!("This example can progress no further with no response :-("),
     };
     println!("[1mStatus:[0m {}", response.status);
     println!("[1mHeaders:[0m");
@@ -57,7 +57,7 @@ fn make_and_print_request(url: &str) {
     println!("[1mBody:[0m");
     let body = match response.read_to_end() {
         Ok(body) => body,
-        Err(err) => fail!("Reading response failed: {}", err),
+        Err(err) => panic!("Reading response failed: {}", err),
     };
     println(str::from_utf8(body[]).expect("Uh oh, response wasn't UTF-8"));
 }

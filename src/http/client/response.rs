@@ -98,7 +98,7 @@ impl<S: Stream> ResponseReader<S> {
                 match xxx {
                 //match buffer.read_header::<headers::response::Header>() {
                     Err(EndOfFile) => {
-                        //fail!("server disconnected, no more response to receive :-(");
+                        //panic!("server disconnected, no more response to receive :-(");
                         return Err((request, bad_response_err()));
                     },
                     Err(EndOfHeaders) => break,

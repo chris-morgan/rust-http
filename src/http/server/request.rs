@@ -334,7 +334,7 @@ impl Request {
 
         loop {
             match buffer.read_header() {
-                Err(EndOfFile) => fail!("client disconnected, nowhere to send response"),
+                Err(EndOfFile) => panic!("client disconnected, nowhere to send response"),
                 Err(EndOfHeaders) => break,
                 Err(MalformedHeaderSyntax) => {
                     println!("BAD REQUEST: malformed header (TODO: is this right?)");
