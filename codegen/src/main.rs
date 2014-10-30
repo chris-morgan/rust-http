@@ -41,6 +41,6 @@ pub fn get_writer(output_dir: &Path, filename: &str) -> Box<Writer + 'static> {
     output_file.push(filename);
     match File::open_mode(&output_file, Truncate, Write) {
         Ok(writer) => box writer as Box<Writer>,
-        Err(e) => fail!("Unable to write file: {}", e.desc),
+        Err(e) => panic!("Unable to write file: {}", e.desc),
     }
 }

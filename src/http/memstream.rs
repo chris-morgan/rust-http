@@ -29,7 +29,7 @@ impl Writer for MemWriterFakeStream {
 
 impl Reader for MemWriterFakeStream {
     fn read(&mut self, _buf: &mut [u8]) -> IoResult<uint> {
-        fail!("Uh oh, you didn't aught to call MemWriterFakeStream.read()!")
+        panic!("Uh oh, you didn't aught to call MemWriterFakeStream.read()!")
     }
 }
 
@@ -61,10 +61,10 @@ impl Seek for MemReaderFakeStream {
 
 impl Writer for MemReaderFakeStream {
     fn write(&mut self, _buf: &[u8]) -> IoResult<()> {
-        fail!("Uh oh, you didn't aught to call MemReaderFakeStream.write()!")
+        panic!("Uh oh, you didn't aught to call MemReaderFakeStream.write()!")
     }
     fn flush(&mut self) -> IoResult<()> {
-        fail!("Uh oh, you didn't aught to call MemReaderFakeStream.flush()!")
+        panic!("Uh oh, you didn't aught to call MemReaderFakeStream.flush()!")
     }
 }
 

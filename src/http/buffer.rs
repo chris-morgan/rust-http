@@ -50,7 +50,7 @@ impl<T: Reader> BufferedStream<T> {
     pub fn poke_byte(&mut self, byte: u8) {
         match (self.read_pos, self.read_max) {
             (0, 0) => self.read_max = 1,
-            (0, _) => fail!("poke called when buffer is full"),
+            (0, _) => panic!("poke called when buffer is full"),
             (_, _) => self.read_pos -= 1,
         }
         self.read_buffer[mut][self.read_pos] = byte;

@@ -65,7 +65,7 @@ impl<'a> ResponseWriter<'a> {
     pub fn write_headers(&mut self) -> IoResult<()> {
         // This marks the beginning of the response (RFC2616 §6)
         if self.headers_written {
-            fail!("ResponseWriter.write_headers() called, but headers already written");
+            panic!("ResponseWriter.write_headers() called, but headers already written");
         }
 
         // Write the Status-Line (RFC2616 §6.1)

@@ -17,12 +17,12 @@ fn main() {
     let url = Url::parse("http://example.com/").unwrap();
     let request: RequestWriter = match RequestWriter::new(Get, url) {
         Ok(request) => request,
-        Err(error) => fail!(":-( {}", error),
+        Err(error) => panic!(":-( {}", error),
     };
 
     let mut response = match request.read_response() {
         Ok(response) => response,
-        Err((_request, error)) => fail!(":-( {}", error),
+        Err((_request, error)) => panic!(":-( {}", error),
     };
     // Now you have a `ResponseReader`; see http::client::response for docs on that.
 }
@@ -43,14 +43,14 @@ not *good* support for this yet. However, it can be done; here is an example:
 let data = b"var1=val1&var2=val2";
 let mut request: RequestWriter = match RequestWriter::new(Get, url) {
     Ok(request) => request,
-    Err(error) => fail!(":-( {}", error),
+    Err(error) => panic!(":-( {}", error),
 };
 
 request.headers.content_length = Some(data.len());
 request.write(data);
 let response = match request.read_response() {
     Ok(response) => response,
-    Err((_request, error)) => fail!(":-( {}", error),
+    Err((_request, error)) => panic!(":-( {}", error),
 };
 # }
 ```
@@ -73,7 +73,7 @@ use client::response::ResponseReader;
     {
         let mut buf = [0u8, ..2000];
         match stream.read(buf) {
-            None => fail!("Read error :-("),  // conditions for error interception, again
+            None => panic!("Read error :-("),  // conditions for error interception, again
             Some(bytes_read) => {
                 println!(str::from_bytes(buf[..bytes_read]));
             }
@@ -195,7 +195,7 @@ impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
     /// Returns ``true`` upon success and ``false`` upon failure (also use conditions).
     pub fn connect(&mut self) -> IoResult<()> {
         if !self.stream.is_none() {
-            fail!("I don't think you meant to call connect() twice, you know.");
+            panic!("I don't think you meant to call connect() twice, you know.");
         }
 
         self.stream = match self.remote_addr {
@@ -204,7 +204,7 @@ impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
                     addr, self.headers.host.as_ref().unwrap().name[], self.use_ssl));
                 Some(BufferedStream::new(stream))
             },
-            None => fail!("connect() called before remote_addr was set"),
+            None => panic!("connect() called before remote_addr was set"),
         };
         Ok(())
     }
@@ -224,7 +224,7 @@ impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
     pub fn write_headers(&mut self) -> IoResult<()> {
         // This marks the beginning of the response (RFC2616 §5)
         if self.headers_written {
-            fail!("RequestWriter.write_headers() called, but headers already written");
+            panic!("RequestWriter.write_headers() called, but headers already written");
         }
         if self.stream.is_none() {
             try!(self.connect());
