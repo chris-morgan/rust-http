@@ -877,7 +877,7 @@ macro_rules! headers_mod {
             use std::io::{BufReader, IoResult};
             use std::ascii::OwnedAsciiExt;
             use time;
-            use collections::treemap::{TreeMap, Entries};
+            use collections::tree_map::{TreeMap, Entries};
             use headers;
             use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
 
