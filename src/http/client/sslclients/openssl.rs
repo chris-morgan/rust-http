@@ -19,7 +19,7 @@ pub enum NetworkStream {
 
 impl Connecter for NetworkStream {
     fn connect(addr: SocketAddr, host: &str, use_ssl: bool) -> IoResult<NetworkStream> {
-        let stream = try!(TcpStream::connect(format!("{}", addr.ip)[], addr.port));
+        let stream = try!(TcpStream::connect(addr));
         if use_ssl {
             let context = try!(SslContext::new(Sslv23).map_err(lift_ssl_error));
             let ssl = try!(Ssl::new(&context).map_err(lift_ssl_error));
