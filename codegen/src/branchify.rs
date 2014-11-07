@@ -44,7 +44,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> Vec<ParseBra
                 }
                 branch.children.push(subbranch);
                 let i = branch.children.len() - 1;
-                go_down_moses(branch.children.get_mut(i), chariter, result, case_sensitive);
+                go_down_moses(&mut branch.children[i], chariter, result, case_sensitive);
             },
             None => {
                 assert!(branch.result.is_none());
