@@ -730,7 +730,7 @@ impl HeaderConvertible for Tm {
     }
 
     fn http_value(&self) -> String {
-        self.to_utc().strftime("%a, %d %b %Y %T GMT").unwrap()
+        self.to_utc().strftime("%a, %d %b %Y %T GMT").unwrap().to_string()
     }
 }
 
