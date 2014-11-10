@@ -9,7 +9,7 @@ name = "http"
 path = "src/http/lib.rs"
 
 [dependencies.openssl]
-git = "https://github.com/sfackler/rust-openssl.git"
+git = "https://github.com/DiamondLovesYou/rust-openssl.git"
 
 [dependencies.url]
 git = "https://github.com/servo/rust-url"
