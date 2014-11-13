@@ -24,7 +24,7 @@ impl Connecter for NetworkStream {
                 detail: None,
             })
         } else {
-            let stream = try!(TcpStream::connect(format!("{}", addr.ip)[], addr.port));
+            let stream = try!(TcpStream::connect(addr));
             Ok(NormalStream(stream))
         }
     }
