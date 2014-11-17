@@ -1,5 +1,5 @@
 use std::fmt;
-use std::str::FromStr;
+use std::from_str::FromStr;
 
 /// HTTP methods, as defined in RFC 2616, §5.1.1.
 ///
