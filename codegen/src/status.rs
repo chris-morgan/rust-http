@@ -12,6 +12,8 @@ use std::ascii::AsciiExt;
 use std::io::IoResult;
 use super::get_writer;
 
+use self::HeadingOrStatus::{Heading, Status};
+
 enum HeadingOrStatus {
     Heading(&'static str),
     Status(HttpStatus),
@@ -162,6 +164,8 @@ pub fn generate(output_dir: &Path) -> IoResult<()> {
 
 use std::fmt;
 use std::ascii::AsciiExt;
+
+use self::Status::*;
 
 /// HTTP status code
 #[deriving(Eq, PartialEq, Clone)]

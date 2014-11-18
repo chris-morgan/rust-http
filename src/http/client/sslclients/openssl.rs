@@ -7,6 +7,7 @@ use std::io::net::tcp::TcpStream;
 use std::io::{IoResult, IoError, ConnectionAborted, OtherIoError};
 use self::openssl::ssl::{SslStream, SslContext, Sslv23, Ssl};
 use self::openssl::ssl::error::{SslError, StreamError, SslSessionClosed, OpenSslErrors};
+use self::NetworkStream::{NormalStream, SslProtectedStream};
 use connecter::Connecter;
 
 /// A TCP stream, either plain text or SSL.

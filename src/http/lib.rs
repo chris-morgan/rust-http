@@ -15,6 +15,7 @@
 #![feature(default_type_params)]
 #![feature(macro_rules)]
 #![feature(phase)]
+#![feature(globs)]
 
 #[phase(plugin, link)] extern crate log;
 extern crate url;

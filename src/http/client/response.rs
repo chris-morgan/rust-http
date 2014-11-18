@@ -7,7 +7,8 @@ use status::Status;
 
 use buffer::BufferedStream;
 use server::request::{RequestBuffer};
-use headers::{EndOfFile, EndOfHeaders, MalformedHeaderSyntax, MalformedHeaderValue};
+use headers::HeaderLineErr::{EndOfFile, EndOfHeaders, MalformedHeaderSyntax,
+                             MalformedHeaderValue};
 
 pub struct ResponseReader<S> {
     stream: BufferedStream<S>,

@@ -12,6 +12,11 @@ use method::Method;
 
 use self::serialization_utils::{normalise_header_name};
 
+use self::ConsumeCommaLWSResult::{CommaConsumed, EndOfValue, ErrCommaNotFound};
+use self::HeaderLineErr::{EndOfFile, EndOfHeaders, MalformedHeaderValue,
+                          MalformedHeaderSyntax};
+use self::HeaderValueByteIteratorState::{Normal, GotLF, Finished};
+
 pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeaderValue, MalformedHeaderSyntax }
 
 pub mod test_utils;
@@ -95,20 +100,21 @@ pub trait HeaderEnum {
 pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
         -> (Result<E, HeaderLineErr>, Option<u8>) {
     enum State { Start, ReadingName, NameFinished, GotCR }
-    let mut state = Start;
+
+    let mut state = State::Start;
     let mut header_name = String::new();
     loop {
         state = match (state, reader.read_byte()) {
-            (Start, Ok(b)) | (ReadingName, Ok(b)) if is_token_item(b) => {
+            (State::Start, Ok(b)) | (State::ReadingName, Ok(b)) if is_token_item(b) => {
                 header_name.push(b as char);
-                ReadingName
+                State::ReadingName
             },
             // TODO: check up on the rules for a line like "Name : value". Full LWS?
-            (Start, Ok(b)) if b == CR => GotCR,
-            (Start, Ok(b)) | (GotCR, Ok(b)) if b == LF => {
+            (State::Start, Ok(b)) if b == CR => State::GotCR,
+            (State::Start, Ok(b)) | (State::GotCR, Ok(b)) if b == LF => {
                 return (Err(EndOfHeaders), None);
             },
-            (_, Ok(b)) if b == SP => NameFinished,
+            (_, Ok(b)) if b == SP => State::NameFinished,
             (_, Ok(b)) if b == COLON => break,
             (_, Ok(_)) => return (Err(MalformedHeaderSyntax), None),
             (_, Err(_)) => return (Err(EndOfFile), None),
@@ -289,18 +295,22 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     pub fn read_quoted_string(&mut self, already_opened: bool) -> Option<String> {
         enum State { Start, Normal, Escaping }
 
-        let mut state = if already_opened { Normal } else { Start };
+        let mut state =
+            if already_opened { State::Normal } else { State::Start };
         let mut output = String::new();
         loop {
             match self.next() {
                 None => return None,
                 Some(b) => {
                     state = match state {
-                        Start if b == b'"' => Normal,
-                        Start => return None,
-                        Normal if b == b'\\' => Escaping,
-                        Normal if b == b'"' => break,
-                        Normal | Escaping => { output.push(b as char); Normal },
+                        State::Start if b == b'"' => State::Normal,
+                        State::Start => return None,
+                        State::Normal if b == b'\\' => State::Escaping,
+                        State::Normal if b == b'"' => break,
+                        State::Normal | State::Escaping => {
+                            output.push(b as char);
+                            State::Normal
+                        },
                     }
                 }
             }
@@ -368,14 +378,17 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
             Some(b'"') => {
                 // It is a quoted-string.
                 enum State { Normal, Escaping }
-                let mut state = Normal;
+                let mut state = State::Normal;
                 loop {
                     match self.next() {
                         None => return None,
                         Some(b) => state = match state {
-                            Normal if b == b'\\' => Escaping,
-                            Normal if b == b'"' => break,
-                            Normal | Escaping => { output.push(b as char); Normal },
+                            State::Normal if b == b'\\' => State::Escaping,
+                            State::Normal if b == b'"' => break,
+                            State::Normal | State::Escaping => {
+                                output.push(b as char);
+                                State::Normal
+                            },
                         }
                     }
                 }
@@ -880,6 +893,9 @@ macro_rules! headers_mod {
             use collections::tree_map::{TreeMap, Entries};
             use headers;
             use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
+
+            use self::Header::{$($caps_ident),+};
+            use self::Header::ExtensionHeader;
 
             pub enum Header {
                 $($caps_ident($htype),)*
