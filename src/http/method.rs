@@ -1,5 +1,5 @@
 use std::fmt;
-use std::str::FromStr;
+use std::from_str::FromStr;
 
 use self::Method::{Options, Get, Head, Post, Put, Delete, Trace,
                    Connect, Patch, ExtensionMethod};

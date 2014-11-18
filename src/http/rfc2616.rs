@@ -142,7 +142,7 @@ pub fn is_separator(o: u8) -> bool {
 
 mod content_coding {
     use std::fmt;
-    use std::str::FromStr;
+    use std::from_str::FromStr;
 
     use self::ValueToken::{Gzip, Compress, Deflate, Identity};
 
