@@ -179,20 +179,23 @@ pub fn quoted_string(s: &String) -> String {
 pub fn unquote_string(s: &String) -> Option<String> {
     enum State { Start, Normal, Escaping, End }
 
-    let mut state = Start;
+    let mut state = State::Start;
     let mut output = String::new();
     // Strings with escapes cause overallocation, but it's not worth a second pass to avoid this!
     output.reserve(s.len() - 2);
     let mut iter = s[].chars();
     loop {
         state = match (state, iter.next()) {
-            (Start, Some(c)) if c == '"' => Normal,
-            (Start, Some(_)) => return None,
-            (Normal, Some(c)) if c == '\\' => Escaping,
-            (Normal, Some(c)) if c == '"' => End,
-            (Normal, Some(c)) | (Escaping, Some(c)) => { output.push(c); Normal },
-            (End, Some(_)) => return None,
-            (End, None) => return Some(output),
+            (State::Start, Some(c)) if c == '"' => State::Normal,
+            (State::Start, Some(_)) => return None,
+            (State::Normal, Some(c)) if c == '\\' => State::Escaping,
+            (State::Normal, Some(c)) if c == '"' => State::End,
+            (State::Normal, Some(c)) | (State::Escaping, Some(c)) => {
+                output.push(c);
+                State::Normal
+            },
+            (State::End, Some(_)) => return None,
+            (State::End, None) => return Some(output),
             (_, None) => return None,
         }
     }

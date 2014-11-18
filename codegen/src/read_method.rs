@@ -7,7 +7,8 @@ pub fn generate(output_dir: &Path) -> IoResult<()> {
     try!(writer.write(b"\
 // This automatically generated file is included in request.rs.
 use std::io::{Stream, IoResult};
-use method::{Method, Connect, Delete, Get, Head, Options, Patch, Post, Put, Trace, ExtensionMethod};
+use method::Method;
+use method::Method::{Connect, Delete, Get, Head, Options, Patch, Post, Put, Trace, ExtensionMethod};
 use server::request::MAX_METHOD_LEN;
 use rfc2616::{SP, is_token_item};
 use buffer::BufferedStream;

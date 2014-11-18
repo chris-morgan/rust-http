@@ -6,6 +6,8 @@ use std::ascii::AsciiExt;
 use std::io::IoResult;
 use headers::serialization_utils::{WriterUtil, push_parameters};
 
+use self::TransferCoding::{Chunked, TransferExtension};
+
 /// RFC 2616, section 3.6:
 ///
 /// transfer-coding         = "chunked" | transfer-extension
