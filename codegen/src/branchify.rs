@@ -62,10 +62,10 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> Vec<ParseBra
 
 macro_rules! branchify(
     (case sensitive, $($key:expr => $value:ident),*) => (
-        ::branchify::branchify([$(($key, stringify!($value))),*], true)
+        ::branchify::branchify(&[$(($key, stringify!($value))),*], true)
     );
     (case insensitive, $($key:expr => $value:ident),*) => (
-        ::branchify::branchify([$(($key, stringify!($value))),*], false)
+        ::branchify::branchify(&[$(($key, stringify!($value))),*], false)
     );
 )
 
