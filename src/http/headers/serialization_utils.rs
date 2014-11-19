@@ -116,7 +116,7 @@ impl<W: Writer> WriterUtil for W { }
 /// ~~~ .{rust}
 /// # use http::headers::serialization_utils::comma_join;
 /// assert_eq!(
-///     comma_join([String::from_str("en;q=0.8"), String::from_str("en_AU"), String::from_str("text/html")]),
+///     comma_join(&[String::from_str("en;q=0.8"), String::from_str("en_AU"), String::from_str("text/html")]),
 ///     String::from_str("en;q=0.8, en_AU, text/html")
 /// )
 /// ~~~
