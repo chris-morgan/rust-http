@@ -124,9 +124,9 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
 
     #[inline]
     fn read_method(&mut self) -> IoResult<Method> {
-        #[path = "../generated/read_method.rs"]
-        mod read_method;
-        read_method::read_method(self.stream)
+        mod dummy { include!(concat!(env!("OUT_DIR"), "/read_method.rs")) }
+
+        dummy::dummy::read_method(self.stream)
     }
 
     /// Read a header (name, value) pair.

@@ -2,7 +2,7 @@
 name = "http"
 version = "0.1.0-pre"
 authors = [ "Chris Morgan <me@chrismorgan.info>" ]
-build = "sh prebuild.sh"
+build = "codegen/main.rs"
 
 [lib]
 name = "http"

@@ -30,8 +30,7 @@ pub mod server;
 pub mod method;
 pub mod headers;
 pub mod rfc2616;
-#[path = "generated/status.rs"]
-pub mod status;  // Getting an error? It's generated; use ``make`` or see the ``Makefile``
+include!(concat!(env!("OUT_DIR"), "/status.rs"))  // defines pub mod status
 
 /// TODO: submit upstream
 #[cfg(test)]
