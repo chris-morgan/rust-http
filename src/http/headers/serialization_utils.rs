@@ -279,12 +279,12 @@ mod test {
 
     #[test]
     fn test_comma_join() {
-        assert_eq!(comma_join([String::new()]), String::new());
-        assert_eq!(comma_join([String::from_str("foo")]), String::from_str("foo"));
-        assert_eq!(comma_join([String::from_str("foo"), String::from_str("bar")]), String::from_str("foo, bar"));
-        assert_eq!(comma_join([String::from_str("foo"), String::from_str("bar"), String::from_str("baz"), String::from_str("quux")]), String::from_str("foo, bar, baz, quux"));
-        assert_eq!(comma_join([String::from_str("\"foo,bar\""), String::from_str("baz")]), String::from_str("\"foo,bar\", baz"));
-        assert_eq!(comma_join([String::from_str(" foo;q=0.8 "), String::from_str("bar/* ")]), String::from_str(" foo;q=0.8 , bar/* "));
+        assert_eq!(comma_join(&[String::new()]), String::new());
+        assert_eq!(comma_join(&[String::from_str("foo")]), String::from_str("foo"));
+        assert_eq!(comma_join(&[String::from_str("foo"), String::from_str("bar")]), String::from_str("foo, bar"));
+        assert_eq!(comma_join(&[String::from_str("foo"), String::from_str("bar"), String::from_str("baz"), String::from_str("quux")]), String::from_str("foo, bar, baz, quux"));
+        assert_eq!(comma_join(&[String::from_str("\"foo,bar\""), String::from_str("baz")]), String::from_str("\"foo,bar\", baz"));
+        assert_eq!(comma_join(&[String::from_str(" foo;q=0.8 "), String::from_str("bar/* ")]), String::from_str(" foo;q=0.8 , bar/* "));
     }
 
     #[test]
@@ -344,14 +344,14 @@ mod test {
 
     #[test]
     fn test_push_parameters() {
-        assert_eq!(push_parameters(String::from_str("foo"), []), String::from_str("foo"));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz"))]), String::from_str("foo;bar=baz"));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz/quux"))]), String::from_str("foo;bar=\"baz/quux\""));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz"))]),
+        assert_eq!(push_parameters(String::from_str("foo"), [][]), String::from_str("foo"));
+        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz"))][]), String::from_str("foo;bar=baz"));
+        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz/quux"))][]), String::from_str("foo;bar=\"baz/quux\""));
+        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz"))][]),
                    String::from_str("foo;bar=baz;quux=fuzz"));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz zee"))]),
+        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz zee"))][]),
                    String::from_str("foo;bar=baz;quux=\"fuzz zee\""));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz/quux")), (String::from_str("fuzz"), String::from_str("zee"))]),
+        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz/quux")), (String::from_str("fuzz"), String::from_str("zee"))][]),
                    String::from_str("foo;bar=\"baz/quux\";fuzz=zee"));
     }
 }
