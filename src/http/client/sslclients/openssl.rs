@@ -24,7 +24,7 @@ impl Connecter for NetworkStream {
         if use_ssl {
             let context = try!(SslContext::new(Sslv23).map_err(lift_ssl_error));
             let ssl = try!(Ssl::new(&context).map_err(lift_ssl_error));
-            ssl.set_hostname(host);
+            try!(ssl.set_hostname(host).map_err(lift_ssl_error));
             let ssl_stream = try!(SslStream::new_from(ssl, stream).map_err(lift_ssl_error));
             Ok(SslProtectedStream(ssl_stream))
         } else {
