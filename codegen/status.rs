@@ -247,14 +247,6 @@ impl fmt::Show for Status {
     }
 }
 
-impl fmt::Unsigned for Status {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use std::fmt::Unsigned;
-        self.code().fmt(f)
-    }
-}
-
-
 impl ToPrimitive for Status {
 
     /// Equivalent to `Some(self.code() as i64)`
@@ -298,7 +290,7 @@ impl FromPrimitive for Status {
                 if !matched_numbers.contains(&status.code) {
                     // Purpose: FailedDependency and MethodFailure both use 424,
                     // but clearly they mustn't both go in here
-                    try!(write!(out, "            {:u} => {},\n", status.code, status.ident()));
+                    try!(write!(out, "            {} => {},\n", status.code, status.ident()));
                     matched_numbers.insert(status.code);
                 }
             },
