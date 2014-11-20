@@ -215,18 +215,18 @@ fn perf_dumper(perf_receiver: Receiver<(u64, u64, u64, u64, u64)>) {
         if i % PERF_DUMP_FREQUENCY == 0 {
             println!("");
             println!("{} requests made thus far. Current means:", i);
-            println!("- Total:               100%, {:12f}",
+            println!("- Total:               100%, {:12}",
                      td_total as f64 / i as f64);
-            println!("- Spawn:               {:3f}%, {:12f}",
+            println!("- Spawn:               {:3}%, {:12}",
                      100f64 * td_spawn as f64 / td_total as f64,
                      td_spawn as f64 / i as f64);
-            println!("- Load request:        {:3f}%, {:12f}",
+            println!("- Load request:        {:3}%, {:12}",
                      100f64 * td_request as f64 / td_total as f64,
                      td_request as f64 / i as f64);
-            println!("- Initialise response: {:3f}%, {:12f}",
+            println!("- Initialise response: {:3}%, {:12}",
                      100f64 * td_response as f64 / td_total as f64,
                      td_response as f64 / i as f64);
-            println!("- Handle:              {:3f}%, {:12f}",
+            println!("- Handle:              {:3}%, {:12}",
                      100f64 * td_handle as f64 / td_total as f64,
                      td_handle as f64 / i as f64);
         }

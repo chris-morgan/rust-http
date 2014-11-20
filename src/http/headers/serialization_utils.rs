@@ -95,7 +95,7 @@ pub trait WriterUtil: Writer {
     fn write_quality(&mut self, quality: Option<f64>) -> IoResult<()> {
         // TODO: remove second and third decimal places if zero, and use a better quality type anyway
         match quality {
-            Some(qvalue) => write!(&mut *self, ";q={:0.3f}", qvalue),
+            Some(qvalue) => write!(&mut *self, ";q={:0.3}", qvalue),
             None => Ok(()),
         }
     }
