@@ -1129,6 +1129,5 @@ headers_mod! {
     27, "Expires",          "expires",          Expires,         expires,          String; // TODO: Should be Tm
     28, "Last-Modified",    "last-modified",    LastModified,    last_modified,    time::Tm;
     
-    // More Headers!
     29, "Access-Control-Allow-Origin", "access-control-allow-origin", AccessControlAllowOrigin, access_control_allow_origin, String;
 }
