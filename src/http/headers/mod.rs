@@ -28,7 +28,6 @@ From https://en.wikipedia.org/wiki/List_of_HTTP_headers:
 
 - Known missing headers:
 
-  - Access-Control-Allow-Origin
   - Content-Disposition
   - Link
   - P3P
@@ -1093,7 +1092,7 @@ headers_mod! {
     #[doc = "Response whatnottery."]
     pub mod response;
 
-    num_headers: 29;
+    num_headers: 30;
 
     // RFC 2616, Section 4.5: General Header Fields
      0, "Cache-Control",     "cache-control",     CacheControl,     cache_control,     String;
@@ -1129,4 +1128,7 @@ headers_mod! {
     26, "Content-Type",     "content-type",     ContentType,     content_type,     headers::content_type::MediaType;
     27, "Expires",          "expires",          Expires,         expires,          String; // TODO: Should be Tm
     28, "Last-Modified",    "last-modified",    LastModified,    last_modified,    time::Tm;
+    
+    // More Headers!
+    29, "Access-Control-Allow-Origin", "access-control-allow-origin", AccessControlAllowOrigin, access_control_allow_origin, String;
 }
