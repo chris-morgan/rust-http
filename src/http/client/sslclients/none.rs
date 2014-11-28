@@ -4,6 +4,7 @@ use std::io::net::ip::SocketAddr;
 use std::io::net::tcp::TcpStream;
 use std::io::{IoResult, IoError, InvalidInput};
 use connecter::Connecter;
+use self::NetworkStream::NormalStream;
 
 /// A TCP stream, plain text and with no SSL support.
 ///

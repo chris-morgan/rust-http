@@ -1,5 +1,6 @@
 //! SSL support provided by OpenSSL.
 
+#[cfg(any(feature = "ssl", feature = "default"))]
 extern crate openssl;
 
 use std::io::net::ip::SocketAddr;
