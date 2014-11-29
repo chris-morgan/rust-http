@@ -13,7 +13,7 @@ use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;
 
 use http::server::{Config, Server, Request, ResponseWriter};
-use http::server::request::{Star, AbsoluteUri, AbsolutePath, Authority};
+use http::server::request::RequestUri::{Star, AbsoluteUri, AbsolutePath, Authority};
 use http::status::{BadRequest, MethodNotAllowed};
 use http::method::{Get, Head, Post, Put, Delete, Trace, Options, Connect, Patch};
 use http::headers::content_type::MediaType;

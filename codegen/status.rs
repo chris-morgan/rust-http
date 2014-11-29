@@ -59,8 +59,8 @@ fn camel_case(msg: &str) -> String {
     let mut capitalise = true;
     for c in msg[].chars() {
         let c = match capitalise {
-            true => c.to_ascii().to_uppercase().to_char(),
-            false => c.to_ascii().to_lowercase().to_char(),
+            true => c.to_ascii().to_uppercase().as_char(),
+            false => c.to_ascii().to_lowercase().as_char(),
         };
         // For a space, capitalise the next char
         capitalise = c == ' ';
@@ -166,7 +166,7 @@ pub mod status {
 use std::fmt;
 use std::ascii::AsciiExt;
 
-use self::Status::*;
+pub use self::Status::*;
 
 /// HTTP status code
 #[deriving(Eq, PartialEq, Clone)]

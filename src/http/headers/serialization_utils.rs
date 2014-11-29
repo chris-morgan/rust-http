@@ -28,9 +28,9 @@ pub fn normalise_header_name(name: &String) -> String {
             true => c.to_ascii().to_uppercase(),
             false => c.to_ascii().to_lowercase(),
         };
-        result.push(c.to_char());
+        result.push(c.as_char());
         // ASCII 45 is '-': in that case, capitalise the next char
-        capitalise = c.to_byte() == 45;
+        capitalise = c.as_byte() == 45;
     }
     result
 }

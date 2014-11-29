@@ -1,10 +1,5 @@
 #![crate_name = "http"]
 
-#![comment = "Rust HTTP server"]
-#![license = "MIT/ASL2"]
-#![crate_type = "dylib"]
-#![crate_type = "rlib"]
-
 #![doc(html_root_url = "http://www.rust-ci.org/chris-morgan/rust-http/doc/")]
 
 #![deny(non_camel_case_types)]

@@ -3,8 +3,8 @@
 use std::io::IoResult;
 use std::ascii::AsciiExt;
 
-use self::AcceptableRanges::{RangeUnits, NoAcceptableRanges};
-use self::RangeUnit::{Bytes, OtherRangeUnit};
+pub use self::AcceptableRanges::{RangeUnits, NoAcceptableRanges};
+pub use self::RangeUnit::{Bytes, OtherRangeUnit};
 
 #[deriving(Clone, PartialEq, Eq)]
 // RFC 2616: range-unit = bytes-unit | other-range-unit
