@@ -20,7 +20,7 @@ name = "http"
 path = "src/http/lib.rs"
 
 [dependencies.openssl]
-git = "https://github.com/sfackler/rust-openssl.git"
+version = "*"
 optional = true
 
 [dependencies.url]
