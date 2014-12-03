@@ -1,6 +1,8 @@
 use url::Url;
-use method::{Method, Options};
+use method::Method;
+use method::Method::Options;
 use status;
+use status::Status::{BadRequest, RequestUriTooLong, HttpVersionNotSupported};
 use std::io::{Stream, IoResult};
 use std::io::net::ip::SocketAddr;
 use std::io::net::tcp::TcpStream;
@@ -10,7 +12,11 @@ use headers;
 use buffer::BufferedStream;
 use common::read_http_version;
 
-use headers::{HeaderLineErr, EndOfFile, EndOfHeaders, MalformedHeaderSyntax, MalformedHeaderValue};
+use headers::HeaderLineErr;
+use headers::HeaderLineErr::{EndOfFile, EndOfHeaders, MalformedHeaderSyntax,
+                             MalformedHeaderValue};
+
+use self::RequestUri::{Star, AbsoluteUri, AbsolutePath, Authority};
 
 // /// Line/header can't be more than 4KB long (note that with the compacting of LWS the actual source
 // /// data could be longer than 4KB)
@@ -38,7 +44,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
             // TODO: this is a very common case, if a connection is kept open but then closed or
             // timed out. We should handle that case specially if we can improve perf—check if the
             // peer is still there and just drop the request if it is not
-            Err(_) => return Err(status::BadRequest),
+            Err(_) => return Err(BadRequest),
         };
 
         // Finished reading the method, including consuming a single SP.
@@ -52,7 +58,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
                     next_byte = b;
                     break;
                 },
-                _ => return Err(status::BadRequest),
+                _ => return Err(BadRequest),
             };
         }
 
@@ -63,7 +69,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
             if next_byte == CR {
                 // For CR, we must have an LF immediately afterwards.
                 if self.stream.read_byte() != Ok(LF) {
-                    return Err(status::BadRequest);
+                    return Err(BadRequest);
                 } else {
                     // Simplify it by just dealing with the LF possibility
                     next_byte = LF;
@@ -74,20 +80,20 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
             }
 
             if raw_request_uri.len() == MAX_REQUEST_URI_LEN {
-                return Err(status::RequestUriTooLong)
+                return Err(RequestUriTooLong)
             }
             raw_request_uri.push(next_byte as char);
 
             next_byte = match self.stream.read_byte() {
                 Ok(b) => b,
-                _ => return Err(status::BadRequest),
+                _ => return Err(BadRequest),
             }
         }
 
         // Now parse it into a RequestUri.
         let request_uri = match RequestUri::from_string(raw_request_uri) {
             Some(r) => r,
-            None => return Err(status::BadRequest),
+            None => return Err(BadRequest),
         };
 
         // At this point, we need to consider what came immediately after the
@@ -109,18 +115,18 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
                 if read_b == LF || self.stream.read_byte() == Ok(LF) {
                     Ok((method, request_uri, vv))  // LF or CR LF: valid
                 } else {
-                    Err(status::BadRequest)  // CR but no LF: not valid
+                    Err(BadRequest)  // CR but no LF: not valid
                 }
             },
-            Err(_) => Err(status::BadRequest),  // invalid: ... not valid ;-)
+            Err(_) => Err(BadRequest),  // invalid: ... not valid ;-)
         }
     }
 
     #[inline]
     fn read_method(&mut self) -> IoResult<Method> {
-        #[path = "../generated/read_method.rs"]
-        mod read_method;
-        read_method::read_method(self.stream)
+        mod dummy { include!(concat!(env!("OUT_DIR"), "/read_method.rs")) }
+
+        dummy::dummy::read_method(self.stream)
     }
 
     /// Read a header (name, value) pair.
@@ -164,7 +170,7 @@ impl<'a, S: Stream> Reader for RequestBuffer<'a, S> {
 
 #[test]
 fn test_read_request_line() {
-    use method::{Get, Options, Connect, ExtensionMethod};
+    use method::Method::{Get, Options, Connect, ExtensionMethod};
     use buffer::BufferedStream;
     use memstream::MemReaderFakeStream;
 
@@ -194,15 +200,15 @@ fn test_read_request_line() {
     // Now for some failing cases.
 
     // method name is not a token
-    tt!("GE,T / HTTP/1.1\r\n" => Err(status::BadRequest));
+    tt!("GE,T / HTTP/1.1\r\n" => Err(BadRequest));
 
     // Request-URI is missing ("HTTP/1.1" isn't a valid Request-URI; I confirmed this by tracing the
     // rule through RFC 2396: the "/" prevents it from being a reg_name authority, and it doesn't
     // satisfy any of the other possibilities for Request-URI either)
-    tt!("GET  HTTP/1.1\r\n" => Err(status::BadRequest));
+    tt!("GET  HTTP/1.1\r\n" => Err(BadRequest));
 
     // Invalid HTTP-Version
-    tt!("GET / HTTX/1.1\r\n" => Err(status::BadRequest));
+    tt!("GET / HTTX/1.1\r\n" => Err(BadRequest));
 }
 
 /// An HTTP request sent to the server.
@@ -329,7 +335,7 @@ impl Request {
         let close_connection = match version {
             (1, 0) => true,
             (1, 1) => false,
-            _ => return (request, Err(status::HttpVersionNotSupported)),
+            _ => return (request, Err(HttpVersionNotSupported)),
         };
 
         loop {
@@ -338,7 +344,7 @@ impl Request {
                 Err(EndOfHeaders) => break,
                 Err(MalformedHeaderSyntax) => {
                     println!("BAD REQUEST: malformed header (TODO: is this right?)");
-                    return (request, Err(status::BadRequest));
+                    return (request, Err(BadRequest));
                 },
                 Err(MalformedHeaderValue) => {
                     println!("Bad header encountered. TODO: handle this better.");
@@ -353,22 +359,22 @@ impl Request {
         // HTTP/1.0 doesn't have Host, but HTTP/1.1 requires it
         if request.version == (1, 1) && request.headers.host.is_none() {
             println!("BAD REQUEST: host is none for HTTP/1.1 request");
-            return (request, Err(status::BadRequest));
+            return (request, Err(BadRequest));
         }
 
         request.close_connection = close_connection;
         match request.headers.connection {
             Some(ref h) => for v in h.iter() {
                 match *v {
-                    headers::connection::Close => {
+                    headers::connection::Connection::Close => {
                         request.close_connection = true;
                         break;
                     },
-                    headers::connection::Token(ref s) if s[] == "keep-alive" => {
+                    headers::connection::Connection::Token(ref s) if s[] == "keep-alive" => {
                         request.close_connection = false;
                         // No break; let it be overridden by close should some weird person do that
                     },
-                    headers::connection::Token(_) => (),
+                    headers::connection::Connection::Token(_) => (),
                 }
             },
             None => (),
@@ -379,7 +385,7 @@ impl Request {
             Some(length) => {
                 match buffer.read_exact(length) {
                     Ok(body) => request.body = body,
-                    Err(_) => return (request, Err(status::BadRequest))
+                    Err(_) => return (request, Err(BadRequest))
                 }
             },
             None => ()

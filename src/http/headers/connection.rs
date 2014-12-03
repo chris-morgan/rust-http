@@ -8,6 +8,8 @@ use std::fmt;
 use std::io::IoResult;
 use headers::serialization_utils::normalise_header_name;
 
+use self::Connection::{Token, Close};
+
 /// A value for the Connection header. Note that should it be a ``Token``, the string is in
 /// normalised header case (e.g. "Keep-Alive").
 #[deriving(Clone, PartialEq, Eq)]

@@ -5,7 +5,7 @@
  *
  * TODO: refactor all this to store things in more usefully categorised places.
  */
-use std::num::{Zero, cast};
+use std::num::{Unsigned, NumCast, Int, cast};
 use std::io::{IoError, IoResult, OtherIoError};
 #[cfg(test)]
 use std::io::MemReader;
@@ -43,13 +43,13 @@ const ASCII_UPPER_F: u8 = b'F';
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_decimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedMul + CheckedAdd>
+pub fn read_decimal<R: Reader, N: Unsigned + NumCast + Int>
                    (reader: &mut R, expected_end: |u8| -> bool)
                    -> IoResult<N> {
     // Here and in `read_hexadecimal` there is the possibility of infinite sequence of zeroes. The
     // spec allows this, but it may not be a good thing to allow. It's not a particularly good
     // attack surface, though, because of the low return.
-    let mut n: N = Zero::zero();
+    let mut n: N = Int::zero();
     let mut got_content = false;
     let ten: N = cast(10u32).unwrap();
     loop {
@@ -58,8 +58,8 @@ pub fn read_decimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedMul +
                 // Written sanely, this is: n * 10 + (b - '0'), but we avoid
                 // (semantically unsound) overflow by using checked operations.
                 // There is no need in the b - '0' part as it is safe.
-                match n.checked_mul(&ten).and_then(
-                        |n| n.checked_add(&cast(b - ASCII_ZERO).unwrap())) {
+                match n.checked_mul(ten).and_then(
+                        |n| n.checked_add(cast(b - ASCII_ZERO).unwrap())) {
                     Some(new_n) => new_n,
                     None => return Err(bad_input()),  // overflow
                 }
@@ -89,31 +89,31 @@ pub fn read_decimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedMul +
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + PartialOrd + CheckedMul + CheckedAdd>
+pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + Int>
                        (reader: &mut R, expected_end: |u8| -> bool)
                        -> IoResult<N> {
-    let mut n: N = Zero::zero();
+    let mut n: N = Int::zero();
     let mut got_content = false;
     let sixteen: N = cast(16u32).unwrap();
     loop {
         n = match reader.read_byte() {
             Ok(b@ASCII_ZERO...ASCII_NINE) => {
-                match n.checked_mul(&sixteen).and_then(
-                        |n| n.checked_add(&cast(b - ASCII_ZERO).unwrap())) {
+                match n.checked_mul(sixteen).and_then(
+                        |n| n.checked_add(cast(b - ASCII_ZERO).unwrap())) {
                     Some(new_n) => new_n,
                     None => return Err(bad_input()),  // overflow
                 }
             },
             Ok(b@ASCII_LOWER_A...ASCII_LOWER_F) => {
-                match n.checked_mul(&sixteen).and_then(
-                        |n| n.checked_add(&cast(b - ASCII_LOWER_A + 10).unwrap())) {
+                match n.checked_mul(sixteen).and_then(
+                        |n| n.checked_add(cast(b - ASCII_LOWER_A + 10).unwrap())) {
                     Some(new_n) => new_n,
                     None => return Err(bad_input()),  // overflow
                 }
             },
             Ok(b@ASCII_UPPER_A...ASCII_UPPER_F) => {
-                match n.checked_mul(&sixteen).and_then(
-                        |n| n.checked_add(&cast(b - ASCII_UPPER_A + 10).unwrap())) {
+                match n.checked_mul(sixteen).and_then(
+                        |n| n.checked_add(cast(b - ASCII_UPPER_A + 10).unwrap())) {
                     Some(new_n) => new_n,
                     None => return Err(bad_input()),  // overflow
                 }

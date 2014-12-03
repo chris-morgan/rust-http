@@ -35,7 +35,7 @@ impl Server for ApacheFakeServer {
             tm_wday: 4, // days since Sunday ~[0-6]
             tm_yday: 0, // days since January 1 ~[0-365]
             tm_isdst: 0, // Daylight Savings Time flag
-            tm_gmtoff: 0, // offset from UTC in seconds
+            tm_utcoff: 0, // offset from UTC in seconds
             tm_nsec: 0, // nanoseconds
         });
         w.headers.etag = Some(headers::etag::EntityTag {

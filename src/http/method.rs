@@ -1,5 +1,8 @@
 use std::fmt;
-use std::from_str::FromStr;
+use std::str::FromStr;
+
+pub use self::Method::{Options, Get, Head, Post, Put, Delete, Trace,
+                       Connect, Patch, ExtensionMethod};
 
 /// HTTP methods, as defined in RFC 2616, §5.1.1.
 ///

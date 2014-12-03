@@ -1,5 +1,9 @@
 //! Values taken from RFC 2616
 
+use std::fmt;
+use std::str::FromStr;
+use std::ascii::AsciiExt;
+
 /// OCTET: any 8-bit sequence of data (typechecking ensures this to be true)
 #[inline]
 pub fn is_octet(_: u8) -> bool { true }
@@ -140,84 +144,97 @@ pub fn is_separator(o: u8) -> bool {
 // IANA is assigned as maintaining the registry for these things:
 // see https://www.iana.org/assignments/http-parameters/http-parameters.xml
 
-mod content_coding {
-    use std::fmt;
-    use std::from_str::FromStr;
+/// Content-coding value tokens
+pub enum ContentCoding {
+    // An encoding format produced by the file compression program "gzip" (GNU zip) as described
+    // in RFC 1952 [25]. This format is a Lempel-Ziv coding (LZ77) with a 32 bit CRC.
+    Gzip,
 
-    /// Content-coding value tokens
-    pub enum ValueToken {
-        // An encoding format produced by the file compression program "gzip" (GNU zip) as described
-        // in RFC 1952 [25]. This format is a Lempel-Ziv coding (LZ77) with a 32 bit CRC.
-        Gzip,
+    // The encoding format produced by the common UNIX file compression program "compress". This
+    // format is an adaptive Lempel-Ziv-Welch coding (LZW).
+    //
+    // Use of program names for the identification of encoding formats is not desirable and is
+    // discouraged for future encodings. Their use here is representative of historical
+    // practice, not good design. For compatibility with previous implementations of HTTP,
+    // applications SHOULD consider "x-gzip" and "x-compress" to be equivalent to "gzip" and
+    // "compress" respectively.
+    Compress,
 
-        // The encoding format produced by the common UNIX file compression program "compress". This
-        // format is an adaptive Lempel-Ziv-Welch coding (LZW).
-        //
-        // Use of program names for the identification of encoding formats is not desirable and is
-        // discouraged for future encodings. Their use here is representative of historical
-        // practice, not good design. For compatibility with previous implementations of HTTP,
-        // applications SHOULD consider "x-gzip" and "x-compress" to be equivalent to "gzip" and
-        // "compress" respectively.
-        Compress,
+    // The "zlib" format defined in RFC 1950 [31] in combination with the "deflate" compression
+    // mechanism described in RFC 1951 [29].
+    Deflate,
 
-        // The "zlib" format defined in RFC 1950 [31] in combination with the "deflate" compression
-        // mechanism described in RFC 1951 [29].
-        Deflate,
+    // The default (identity) encoding; the use of no transformation whatsoever. This
+    // content-coding is used only in the Accept- Encoding header, and SHOULD NOT be used in the
+    // Content-Encoding header.
+    Identity,
 
-        // The default (identity) encoding; the use of no transformation whatsoever. This
-        // content-coding is used only in the Accept- Encoding header, and SHOULD NOT be used in the
-        // Content-Encoding header.
-        Identity,
+    // IANA has also assigned the following currently unsupported content codings:
+    //
+    // - "exi": W3C Efficient XML Interchange
+    // - "pack200-gzip" (Network Transfer Format for Java Archives)
+}
 
-        // IANA has also assigned the following currently unsupported content codings:
-        //
-        // - "exi": W3C Efficient XML Interchange
-        // - "pack200-gzip" (Network Transfer Format for Java Archives)
+impl fmt::Show for ContentCoding {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write(match *self {
+            ContentCoding::Gzip => b"gzip",
+            ContentCoding::Compress => b"compress",
+            ContentCoding::Deflate => b"deflate",
+            ContentCoding::Identity => b"identity",
+        })
     }
-    impl fmt::Show for ValueToken {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write(match *self {
-                Gzip => b"gzip",
-                Compress => b"compress",
-                Deflate => b"deflate",
-                Identity => b"identity",
-            })
-        }
-    }
-    impl FromStr for ValueToken {
-        fn from_str(s: &str) -> Option<ValueToken> {
-            use std::ascii::AsciiExt;
-            match s.to_ascii_lower()[] {
-                "gzip" => Some(Gzip),
-                "compress" => Some(Compress),
-                "deflate" => Some(Deflate),
-                "identity" => Some(Identity),
-                _ => None,
-            }
+}
+
+impl FromStr for ContentCoding {
+    fn from_str(s: &str) -> Option<ContentCoding> {
+        if s.eq_ignore_ascii_case("gzip") {
+            Some(ContentCoding::Gzip)
+        } else if s.eq_ignore_ascii_case("compress") {
+            Some(ContentCoding::Compress)
+        } else if s.eq_ignore_ascii_case("deflate") {
+            Some(ContentCoding::Deflate)
+        } else if s.eq_ignore_ascii_case("identity") {
+            Some(ContentCoding::Identity)
+        } else {
+            None
         }
     }
 }
 
-mod transfer_coding {
-    use std::fmt;
+/// Transfer-coding value tokens
+// Identity is in RFC 2616 but is withdrawn in RFC 2616 errata ID 408
+// http://www.rfc-editor.org/errata_search.php?rfc=2616&eid=408
+pub enum TransferCoding {
+    Chunked,   // RFC 2616, §3.6.1
+    Gzip,      // See above
+    Compress,  // See above
+    Deflate,   // See above
+}
 
-    /// Transfer-coding value tokens
-    // Identity is in RFC 2616 but is withdrawn in RFC 2616 errata ID 408
-    // http://www.rfc-editor.org/errata_search.php?rfc=2616&eid=408
-    pub enum ValueToken {
-        Chunked,   // RFC 2616, §3.6.1
-        Gzip,      // See above
-        Compress,  // See above
-        Deflate,   // See above
+impl fmt::Show for TransferCoding {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write(match *self {
+            TransferCoding::Chunked => b"chunked",
+            TransferCoding::Gzip => b"gzip",
+            TransferCoding::Compress => b"compress",
+            TransferCoding::Deflate => b"deflate",
+        })
     }
-    impl fmt::Show for ValueToken {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            f.write(match *self {
-                Chunked => b"chunked",
-                Gzip => b"gzip",
-                Compress => b"compress",
-                Deflate => b"deflate",
-            })
+}
+
+impl FromStr for TransferCoding {
+    fn from_str(s: &str) -> Option<TransferCoding> {
+        if s.eq_ignore_ascii_case("gzip") {
+            Some(TransferCoding::Gzip)
+        } else if s.eq_ignore_ascii_case("compress") {
+            Some(TransferCoding::Compress)
+        } else if s.eq_ignore_ascii_case("deflate") {
+            Some(TransferCoding::Deflate)
+        } else if s.eq_ignore_ascii_case("chunked") {
+            Some(TransferCoding::Chunked)
+        } else {
+            None
         }
     }
 }

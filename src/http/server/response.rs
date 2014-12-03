@@ -5,7 +5,7 @@ use buffer::BufferedStream;
 use status;
 use headers::response::HeaderCollection;
 use headers::content_type::MediaType;
-use headers::transfer_encoding::Chunked;
+use headers::transfer_encoding::TransferCoding::Chunked;
 
 /*
  * The HTTP version tag which will be used for the response.
@@ -32,7 +32,7 @@ impl<'a> ResponseWriter<'a> {
             writer: writer,
             headers_written: false,
             headers: HeaderCollection::new(),
-            status: status::Ok,
+            status: status::Status::Ok,
         }
     }
 

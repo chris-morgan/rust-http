@@ -1,8 +1,19 @@
 [package]
 name = "http"
 version = "0.1.0-pre"
-authors = [ "Chris Morgan <me@chrismorgan.info>" ]
-build = "sh prebuild.sh"
+authors = ["Chris Morgan <me@chrismorgan.info>"]
+description = "Obsolete HTTP library"
+#documentation = 
+#homepage = 
+repository = "https://github.com/chris-morgan/rust-http"
+readme = "README.rst"
+keywords = ["web", "http", "library"]
+license = "MIT/Apache-2.0"
+build = "codegen/main.rs"
+
+[features]
+default = ["ssl"]
+ssl = ["openssl"]
 
 [lib]
 name = "http"
@@ -10,6 +21,10 @@ path = "src/http/lib.rs"
 
 [dependencies.openssl]
 git = "https://github.com/DiamondLovesYou/rust-openssl.git"
+optional = true
 
 [dependencies.url]
 git = "https://github.com/servo/rust-url"
+
+[dependencies.time]
+git = "https://github.com/rust-lang/time"

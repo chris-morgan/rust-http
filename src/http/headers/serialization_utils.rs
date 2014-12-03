@@ -28,9 +28,9 @@ pub fn normalise_header_name(name: &String) -> String {
             true => c.to_ascii().to_uppercase(),
             false => c.to_ascii().to_lowercase(),
         };
-        result.push(c.to_char());
+        result.push(c.as_char());
         // ASCII 45 is '-': in that case, capitalise the next char
-        capitalise = c.to_byte() == 45;
+        capitalise = c.as_byte() == 45;
     }
     result
 }
@@ -95,7 +95,7 @@ pub trait WriterUtil: Writer {
     fn write_quality(&mut self, quality: Option<f64>) -> IoResult<()> {
         // TODO: remove second and third decimal places if zero, and use a better quality type anyway
         match quality {
-            Some(qvalue) => write!(&mut *self, ";q={:0.3f}", qvalue),
+            Some(qvalue) => write!(&mut *self, ";q={:0.3}", qvalue),
             None => Ok(()),
         }
     }
@@ -116,7 +116,7 @@ impl<W: Writer> WriterUtil for W { }
 /// ~~~ .{rust}
 /// # use http::headers::serialization_utils::comma_join;
 /// assert_eq!(
-///     comma_join([String::from_str("en;q=0.8"), String::from_str("en_AU"), String::from_str("text/html")]),
+///     comma_join(&[String::from_str("en;q=0.8"), String::from_str("en_AU"), String::from_str("text/html")]),
 ///     String::from_str("en;q=0.8, en_AU, text/html")
 /// )
 /// ~~~
@@ -179,20 +179,23 @@ pub fn quoted_string(s: &String) -> String {
 pub fn unquote_string(s: &String) -> Option<String> {
     enum State { Start, Normal, Escaping, End }
 
-    let mut state = Start;
+    let mut state = State::Start;
     let mut output = String::new();
     // Strings with escapes cause overallocation, but it's not worth a second pass to avoid this!
     output.reserve(s.len() - 2);
     let mut iter = s[].chars();
     loop {
         state = match (state, iter.next()) {
-            (Start, Some(c)) if c == '"' => Normal,
-            (Start, Some(_)) => return None,
-            (Normal, Some(c)) if c == '\\' => Escaping,
-            (Normal, Some(c)) if c == '"' => End,
-            (Normal, Some(c)) | (Escaping, Some(c)) => { output.push(c); Normal },
-            (End, Some(_)) => return None,
-            (End, None) => return Some(output),
+            (State::Start, Some(c)) if c == '"' => State::Normal,
+            (State::Start, Some(_)) => return None,
+            (State::Normal, Some(c)) if c == '\\' => State::Escaping,
+            (State::Normal, Some(c)) if c == '"' => State::End,
+            (State::Normal, Some(c)) | (State::Escaping, Some(c)) => {
+                output.push(c);
+                State::Normal
+            },
+            (State::End, Some(_)) => return None,
+            (State::End, None) => return Some(output),
             (_, None) => return None,
         }
     }
@@ -276,12 +279,12 @@ mod test {
 
     #[test]
     fn test_comma_join() {
-        assert_eq!(comma_join([String::new()]), String::new());
-        assert_eq!(comma_join([String::from_str("foo")]), String::from_str("foo"));
-        assert_eq!(comma_join([String::from_str("foo"), String::from_str("bar")]), String::from_str("foo, bar"));
-        assert_eq!(comma_join([String::from_str("foo"), String::from_str("bar"), String::from_str("baz"), String::from_str("quux")]), String::from_str("foo, bar, baz, quux"));
-        assert_eq!(comma_join([String::from_str("\"foo,bar\""), String::from_str("baz")]), String::from_str("\"foo,bar\", baz"));
-        assert_eq!(comma_join([String::from_str(" foo;q=0.8 "), String::from_str("bar/* ")]), String::from_str(" foo;q=0.8 , bar/* "));
+        assert_eq!(comma_join(&[String::new()]), String::new());
+        assert_eq!(comma_join(&[String::from_str("foo")]), String::from_str("foo"));
+        assert_eq!(comma_join(&[String::from_str("foo"), String::from_str("bar")]), String::from_str("foo, bar"));
+        assert_eq!(comma_join(&[String::from_str("foo"), String::from_str("bar"), String::from_str("baz"), String::from_str("quux")]), String::from_str("foo, bar, baz, quux"));
+        assert_eq!(comma_join(&[String::from_str("\"foo,bar\""), String::from_str("baz")]), String::from_str("\"foo,bar\", baz"));
+        assert_eq!(comma_join(&[String::from_str(" foo;q=0.8 "), String::from_str("bar/* ")]), String::from_str(" foo;q=0.8 , bar/* "));
     }
 
     #[test]
@@ -341,14 +344,14 @@ mod test {
 
     #[test]
     fn test_push_parameters() {
-        assert_eq!(push_parameters(String::from_str("foo"), []), String::from_str("foo"));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz"))]), String::from_str("foo;bar=baz"));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz/quux"))]), String::from_str("foo;bar=\"baz/quux\""));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz"))]),
+        assert_eq!(push_parameters(String::from_str("foo"), [][]), String::from_str("foo"));
+        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz"))][]), String::from_str("foo;bar=baz"));
+        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz/quux"))][]), String::from_str("foo;bar=\"baz/quux\""));
+        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz"))][]),
                    String::from_str("foo;bar=baz;quux=fuzz"));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz zee"))]),
+        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz zee"))][]),
                    String::from_str("foo;bar=baz;quux=\"fuzz zee\""));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz/quux")), (String::from_str("fuzz"), String::from_str("zee"))]),
+        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz/quux")), (String::from_str("fuzz"), String::from_str("zee"))][]),
                    String::from_str("foo;bar=\"baz/quux\";fuzz=zee"));
     }
 }
