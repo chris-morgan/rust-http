@@ -188,6 +188,7 @@ pub trait Server: Send + Clone {
 ///
 /// At present, only the IP address and port to bind to are needed, but it's possible that other
 /// options may turn up later.
+#[deriving(Copy)]
 pub struct Config {
 	pub bind_address: SocketAddr,
 }
