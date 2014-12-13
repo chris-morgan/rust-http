@@ -17,7 +17,13 @@ use self::HeaderLineErr::{EndOfFile, EndOfHeaders, MalformedHeaderValue,
                           MalformedHeaderSyntax};
 use self::HeaderValueByteIteratorState::{Normal, GotLF, Finished};
 
-pub enum HeaderLineErr { EndOfFile, EndOfHeaders, MalformedHeaderValue, MalformedHeaderSyntax }
+#[deriving(Copy)]
+pub enum HeaderLineErr {
+    EndOfFile,
+    EndOfHeaders,
+    MalformedHeaderValue,
+    MalformedHeaderSyntax
+}
 
 pub mod test_utils;
 pub mod serialization_utils;
@@ -66,7 +72,7 @@ pub mod transfer_encoding;
 
 pub type DeltaSeconds = u64;
 
-#[deriving(Clone, PartialEq, Eq)]
+#[deriving(Clone, PartialEq, Eq, Copy)]
 pub enum ConsumeCommaLWSResult {
     CommaConsumed,
     EndOfValue,
@@ -1128,6 +1134,6 @@ headers_mod! {
     26, "Content-Type",     "content-type",     ContentType,     content_type,     headers::content_type::MediaType;
     27, "Expires",          "expires",          Expires,         expires,          String; // TODO: Should be Tm
     28, "Last-Modified",    "last-modified",    LastModified,    last_modified,    time::Tm;
-    
+
     29, "Access-Control-Allow-Origin", "access-control-allow-origin", AccessControlAllowOrigin, access_control_allow_origin, String;
 }

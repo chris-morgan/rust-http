@@ -145,6 +145,7 @@ pub fn is_separator(o: u8) -> bool {
 // see https://www.iana.org/assignments/http-parameters/http-parameters.xml
 
 /// Content-coding value tokens
+#[deriving(Copy)]
 pub enum ContentCoding {
     // An encoding format produced by the file compression program "gzip" (GNU zip) as described
     // in RFC 1952 [25]. This format is a Lempel-Ziv coding (LZ77) with a 32 bit CRC.
@@ -205,6 +206,7 @@ impl FromStr for ContentCoding {
 /// Transfer-coding value tokens
 // Identity is in RFC 2616 but is withdrawn in RFC 2616 errata ID 408
 // http://www.rfc-editor.org/errata_search.php?rfc=2616&eid=408
+#[deriving(Copy)]
 pub enum TransferCoding {
     Chunked,   // RFC 2616, §3.6.1
     Gzip,      // See above

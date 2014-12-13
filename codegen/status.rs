@@ -14,11 +14,13 @@ use super::get_writer;
 
 use self::HeadingOrStatus::{Heading, Status};
 
+#[deriving(Copy)]
 enum HeadingOrStatus {
     Heading(&'static str),
     Status(HttpStatus),
 }
 
+#[deriving(Copy)]
 struct HttpStatus {
     code: uint,
     reason: &'static str,
