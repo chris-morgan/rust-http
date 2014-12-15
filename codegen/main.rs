@@ -8,7 +8,7 @@ pub mod status;
 pub mod read_method;
 
 fn main() {
-    spawn(proc() {
+    spawn(move || {
         let output_dir = Path::new(os::getenv("OUT_DIR").unwrap());
         read_method::generate(output_dir).unwrap();
     });

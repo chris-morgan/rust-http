@@ -35,7 +35,7 @@ pub trait Server: Send + Clone {
         };
         debug!("listening");
         let (perf_sender, perf_receiver) = channel();
-        spawn(proc() {
+        spawn(move || {
             perf_dumper(perf_receiver);
         });
         loop {
@@ -54,7 +54,7 @@ pub trait Server: Send + Clone {
             };
             let child_perf_sender = perf_sender.clone();
             let child_self = self.clone();
-            spawn(proc() {
+            spawn(move || {
                 let mut time_start = time_start;
                 let mut stream = BufferedStream::new(stream);
                 debug!("accepted connection");
