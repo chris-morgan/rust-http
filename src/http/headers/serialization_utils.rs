@@ -53,8 +53,10 @@ pub fn comma_split(value: &str) -> Vec<String> {
 }
 
 pub fn comma_split_iter<'a>(value: &'a str)
-        -> ::std::iter::Map<'a, &'a str, &'a str, ::std::str::CharSplits<'a, char>> {
-    value.split(',').map(|w| w.trim_left())
+        -> ::std::iter::Map<&'a str, &'a str, ::std::str::CharSplits<'a, char>, fn(&str) -> &str> {
+    fn trim(w: &str) -> &str {w.trim_left()}
+    
+    value.split(',').map(trim)
 }
 
 pub trait WriterUtil: Writer {
