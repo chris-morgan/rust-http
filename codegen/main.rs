@@ -2,16 +2,17 @@
 
 use std::io::{File, Truncate, Write};
 use std::os;
+use std::thread::Thread;
 
 pub mod branchify;
 pub mod status;
 pub mod read_method;
 
 fn main() {
-    spawn(move || {
+    Thread::spawn(move || {
         let output_dir = Path::new(os::getenv("OUT_DIR").unwrap());
         read_method::generate(output_dir).unwrap();
-    });
+    }).detach();
 
     let output_dir = Path::new(os::getenv("OUT_DIR").unwrap());
     status::generate(output_dir).unwrap();

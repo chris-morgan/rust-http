@@ -67,7 +67,7 @@ macro_rules! branchify(
     (case insensitive, $($key:expr => $value:ident),*) => (
         ::branchify::branchify(&[$(($key, stringify!($value))),*], false)
     );
-)
+);
 
 /// Prints the contents to stdout.
 ///
@@ -97,7 +97,7 @@ pub fn generate_branchified_method(
             ($s:expr) => {
                 try!(write!(writer, "{}{}\n", indentstr, $s))
             }
-        )
+        );
         for &c in branch.matches.iter() {
             let next_prefix = format!("{}{}", prefix, c as char);
             w!(format!("Ok(b'{}') => match {} {{", c as char, read_call));
@@ -122,7 +122,7 @@ pub fn generate_branchified_method(
         ($s:expr) => {
             try!(write!(writer, "{}{}\n", indentstr, $s))
         }
-    )
+    );
 
     w!(format!("let (s, next_byte) = match {} {{", read_call));
     for b in branches.iter() {

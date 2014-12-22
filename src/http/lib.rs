@@ -25,7 +25,7 @@ pub mod server;
 pub mod method;
 pub mod headers;
 pub mod rfc2616;
-include!(concat!(env!("OUT_DIR"), "/status.rs"))  // defines pub mod status
+include!(concat!(env!("OUT_DIR"), "/status.rs"));  // defines pub mod status
 
 /// TODO: submit upstream
 #[cfg(test)]

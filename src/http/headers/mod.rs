@@ -895,7 +895,7 @@ macro_rules! headers_mod {
             use std::io::{BufReader, IoResult};
             use std::ascii::OwnedAsciiExt;
             use time;
-            use collections::tree_map::{TreeMap, Entries};
+            use std::collections::hash_map::{HashMap, Entries};
             use headers;
             use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
 
@@ -910,14 +910,14 @@ macro_rules! headers_mod {
             #[deriving(Clone)]
             pub struct HeaderCollection {
                 $(pub $lower_ident: Option<$htype>,)*
-                pub extensions: TreeMap<String, String>,
+                pub extensions: HashMap<String, String>,
             }
 
             impl HeaderCollection {
                 pub fn new() -> HeaderCollection {
                     HeaderCollection {
                         $($lower_ident: None,)*
-                        extensions: TreeMap::new(),
+                        extensions: HashMap::new(),
                     }
                 }
 

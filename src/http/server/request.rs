@@ -124,7 +124,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
 
     #[inline]
     fn read_method(&mut self) -> IoResult<Method> {
-        mod dummy { include!(concat!(env!("OUT_DIR"), "/read_method.rs")) }
+        mod dummy { include!(concat!(env!("OUT_DIR"), "/read_method.rs")); }
 
         dummy::dummy::read_method(self.stream)
     }
@@ -174,14 +174,14 @@ fn test_read_request_line() {
     use buffer::BufferedStream;
     use memstream::MemReaderFakeStream;
 
-    macro_rules! tt(
+    macro_rules! tt {
         ($value:expr => $expected:expr) => {{
             let expected = $expected;
             let mut stream = BufferedStream::new(
                 MemReaderFakeStream::new($value.bytes().collect::<Vec<_>>()));
             assert_eq!(RequestBuffer::new(&mut stream).read_request_line(), expected);
         }}
-    )
+    }
 
     tt!("GET / HTTP/1.1\n" => Ok((Get, AbsolutePath(String::from_str("/")), (1, 1))));
     tt!("GET / HTTP/1.1\r\n" => Ok((Get, AbsolutePath(String::from_str("/")), (1, 1))));

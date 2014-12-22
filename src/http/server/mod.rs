@@ -1,6 +1,7 @@
 use std::io::{Listener, Acceptor, IoResult};
 use std::io::net::ip::SocketAddr;
 use time::precise_time_ns;
+use std::thread::Thread;
 
 use std::io::net::tcp::TcpListener;
 
@@ -35,9 +36,9 @@ pub trait Server: Send + Clone {
         };
         debug!("listening");
         let (perf_sender, perf_receiver) = channel();
-        spawn(move || {
+        Thread::spawn(move || {
             perf_dumper(perf_receiver);
-        });
+        }).detach();
         loop {
             let time_start = precise_time_ns();
             let stream = match acceptor.accept() {
@@ -54,7 +55,7 @@ pub trait Server: Send + Clone {
             };
             let child_perf_sender = perf_sender.clone();
             let child_self = self.clone();
-            spawn(move || {
+            Thread::spawn(move || {
                 let mut time_start = time_start;
                 let mut stream = BufferedStream::new(stream);
                 debug!("accepted connection");
@@ -116,7 +117,7 @@ pub trait Server: Send + Clone {
                     }
                     first = false;
                 }
-            });
+            }).detach();
         }
     }
 
