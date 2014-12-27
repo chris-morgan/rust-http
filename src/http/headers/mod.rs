@@ -635,7 +635,7 @@ impl HeaderConvertible for String {
 
 impl HeaderConvertible for uint {
     fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<uint> {
-        from_str(reader.collect_to_string()[])
+        reader.collect_to_string()[].parse()
     }
 
     fn http_value(&self) -> String {
