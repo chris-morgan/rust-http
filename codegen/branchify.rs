@@ -3,6 +3,7 @@
 use std::str::Chars;
 use std::vec::Vec;
 use std::io::IoResult;
+use std::ascii::AsciiExt;
 
 #[deriving(Clone)]
 pub struct ParseBranch {
@@ -27,7 +28,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> Vec<ParseBra
     fn go_down_moses(branch: &mut ParseBranch, mut chariter: Chars, result: &str, case_sensitive: bool) {
         match chariter.next() {
             Some(c) => {
-                let first_case = if case_sensitive { c as u8 } else { c.to_ascii().to_uppercase().as_byte() };
+                let first_case = if case_sensitive { c as u8 } else { c.to_ascii_uppercase() as u8 };
                 for next_branch in branch.children.iter_mut() {
                     if next_branch.matches[0] == first_case {
                         go_down_moses(next_branch, chariter, result, case_sensitive);
@@ -37,7 +38,7 @@ pub fn branchify(options: &[(&str, &str)], case_sensitive: bool) -> Vec<ParseBra
                 let mut subbranch = ParseBranch::new();
                 subbranch.matches.push(first_case);
                 if !case_sensitive {
-                    let second_case = c.to_ascii().to_lowercase().as_byte();
+                    let second_case = c.to_ascii_lowercase() as u8;
                     if first_case != second_case {
                         subbranch.matches.push(second_case);
                     }

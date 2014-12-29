@@ -61,8 +61,8 @@ fn camel_case(msg: &str) -> String {
     let mut capitalise = true;
     for c in msg[].chars() {
         let c = match capitalise {
-            true => c.to_ascii().to_uppercase().as_char(),
-            false => c.to_ascii().to_lowercase().as_char(),
+            true => c.to_ascii_uppercase(),
+            false => c.to_ascii_lowercase(),
         };
         // For a space, capitalise the next char
         capitalise = c == ' ';
@@ -224,7 +224,7 @@ impl Status {
 
     /// Get a status from the code and reason
     pub fn from_code_and_reason(status: u16, reason: String) -> Status {
-        let reason_lower = reason[].to_ascii_lower();
+        let reason_lower = reason[].to_ascii_lowercase();
         match (status, reason_lower[]) {
 ".as_bytes()));
     for &entry in entries.iter() {
@@ -232,7 +232,7 @@ impl Status {
             Heading(heading) => try!(write!(out, "\n            // {}\n", heading)),
             Status(status) => try!(write!(out, "            ({}, \"{}\"){} => {},\n",
                                                 status.code,
-                                                status.reason.to_ascii_lower(),
+                                                status.reason.to_ascii_lowercase(),
                                                 status.reason_padding_spaces(),
                                                 status.ident())),
         }
