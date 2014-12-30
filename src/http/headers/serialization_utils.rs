@@ -11,26 +11,22 @@ use rfc2616::is_token;
 /// - Any character immediately following `-` (HYPHEN-MINUS) is capitalised
 /// - All other characters are made lowercase
 ///
-/// This will fail if passed a non-ASCII name.
-///
 /// # Examples
 ///
 /// ~~~ .{rust}
 /// # use http::headers::serialization_utils::normalise_header_name;
-/// assert_eq!(normalise_header_name(&String::from_str("foo-bar")), String::from_str("Foo-Bar"));
-/// assert_eq!(normalise_header_name(&String::from_str("FOO-BAR")), String::from_str("Foo-Bar"));
+/// assert_eq!(normalise_header_name("foo-bar"), String::from_str("Foo-Bar"));
+/// assert_eq!(normalise_header_name("FOO-BAR"), String::from_str("Foo-Bar"));
 /// ~~~
-pub fn normalise_header_name(name: &String) -> String {
+pub fn normalise_header_name(name: &str) -> String {
     let mut result: String = String::with_capacity(name.len());
     let mut capitalise = true;
     for c in name[].chars() {
-        let c = match capitalise {
-            true => c.to_ascii().to_uppercase(),
-            false => c.to_ascii().to_lowercase(),
-        };
-        result.push(c.as_char());
-        // ASCII 45 is '-': in that case, capitalise the next char
-        capitalise = c.as_byte() == 45;
+        result.push(match capitalise {
+            true => c.to_uppercase(),
+            false => c.to_lowercase(),
+        });
+        capitalise = c == '-';
     }
     result
 }
@@ -53,10 +49,10 @@ pub fn comma_split(value: &str) -> Vec<String> {
 }
 
 pub fn comma_split_iter<'a>(value: &'a str)
-        -> ::std::iter::Map<&'a str, &'a str, ::std::str::CharSplits<'a, char>, fn(&str) -> &str> {
+        -> ::std::iter::Map<&'a str, &'a str, ::std::str::Split<'a, char>, fn(&str) -> &str> {
     fn trim(w: &str) -> &str {w.trim_left()}
     
-    value.split(',').map(trim)
+    value.split(',').map(trim as fn(&str) -> &str)
 }
 
 pub trait WriterUtil: Writer {
@@ -235,15 +231,10 @@ mod test {
                 maybe_quoted_string, quoted_string, unquote_string, maybe_unquote_string};
 
     #[test]
-    #[should_fail]
-    fn test_normalise_header_name_fail() {
-        normalise_header_name(&String::from_str("foö-bar"));
-    }
-
-    #[test]
     fn test_normalise_header_name() {
-        assert_eq!(normalise_header_name(&String::from_str("foo-bar")), String::from_str("Foo-Bar"));
-        assert_eq!(normalise_header_name(&String::from_str("FOO-BAR")), String::from_str("Foo-Bar"));
+        assert_eq!(normalise_header_name("foö-bar"), String::from_str("Foö-Bar"));
+        assert_eq!(normalise_header_name("foo-bar"), String::from_str("Foo-Bar"));
+        assert_eq!(normalise_header_name("FOO-BAR"), String::from_str("Foo-Bar"));
     }
 
     #[test]

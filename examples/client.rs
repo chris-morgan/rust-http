@@ -59,5 +59,5 @@ fn make_and_print_request(url: &str) {
         Ok(body) => body,
         Err(err) => panic!("Reading response failed: {}", err),
     };
-    println(str::from_utf8(body[]).expect("Uh oh, response wasn't UTF-8"));
+    println(str::from_utf8(body[]).ok().expect("Uh oh, response wasn't UTF-8"));
 }

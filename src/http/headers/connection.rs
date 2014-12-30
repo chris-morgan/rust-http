@@ -33,7 +33,7 @@ impl super::HeaderConvertible for Connection {
     fn from_stream<R: Reader>(reader: &mut super::HeaderValueByteIterator<R>)
             -> Option<Connection> {
         let s = match reader.read_token() {
-            Some(s) => normalise_header_name(&s),
+            Some(s) => normalise_header_name(s[]),
             None => return None,
         };
         if s[] == "Close" {

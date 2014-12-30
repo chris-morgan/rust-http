@@ -26,7 +26,7 @@ impl super::HeaderConvertible for TransferCoding {
         match reader.read_token() {
             Some(token) => {
                 // XXX is this actually the best way to do this?
-                let token = token[].to_ascii_lower();
+                let token = token.to_ascii_lowercase();
                 if token[] == "chunked" {
                     Some(Chunked)
                 } else {

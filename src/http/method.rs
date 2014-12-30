@@ -1,5 +1,6 @@
 use std::fmt;
 use std::str::FromStr;
+use std::ascii::AsciiExt;
 
 pub use self::Method::{Options, Get, Head, Post, Put, Delete, Trace,
                        Connect, Patch, ExtensionMethod};

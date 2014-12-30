@@ -126,7 +126,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
         }
     }
     let mut iter = HeaderValueByteIterator::new(reader);
-    let header = HeaderEnum::value_from_stream(normalise_header_name(&header_name), &mut iter);
+    let header = HeaderEnum::value_from_stream(normalise_header_name(header_name[]), &mut iter);
     // Ensure that the entire header line is consumed (don't want to mess up next header!)
     for _ in iter { }
     match header {
@@ -546,7 +546,7 @@ pub trait HeaderConvertible: PartialEq + Clone {
      * would be:
      *
      * ```ignore
-     * from_str(reader.collect_to_str())
+     * reader.collect_to_str().parse()
      * ```
      *
      * (This is not provided as a default implementation as owing to present upstream limitations
@@ -635,7 +635,7 @@ impl HeaderConvertible for String {
 
 impl HeaderConvertible for uint {
     fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<uint> {
-        from_str(reader.collect_to_string()[])
+        reader.collect_to_string().parse()
     }
 
     fn http_value(&self) -> String {
@@ -1030,7 +1030,7 @@ macro_rules! headers_mod {
 
                 fn value_from_stream<R: Reader>(name: String, value: &mut HeaderValueByteIterator<R>)
                         -> Option<Header> {
-                    match name.clone().into_ascii_lower()[] {
+                    match name.clone().into_ascii_lowercase()[] {
                         $($input_name => match HeaderConvertible::from_stream(value) {
                             Some(v) => Some($caps_ident(v)),
                             None => None,

@@ -3,6 +3,7 @@
 use std::str::Chars;
 use std::vec::Vec;
 use std::io::IoResult;
+use std::iter::repeat;
 use std::ascii::AsciiExt;
 
 #[deriving(Clone)]
@@ -93,7 +94,7 @@ pub fn generate_branchified_method(
 
     fn r(writer: &mut Writer, branch: &ParseBranch, prefix: &str, indent: uint, read_call: &str,
             end: &str, max_len: &str, valid: &str, unknown: &str) -> IoResult<()> {
-        let indentstr = " ".repeat(indent * 4);
+        let indentstr = repeat(' ').take(indent * 4).collect::<String>();
         macro_rules! w (
             ($s:expr) => {
                 try!(write!(writer, "{}{}\n", indentstr, $s))
@@ -118,7 +119,7 @@ pub fn generate_branchified_method(
         }
         Ok(())
     }
-    let indentstr = " ".repeat(indent * 4);
+    let indentstr = repeat(' ').take(indent * 4).collect::<String>();
     macro_rules! w (
         ($s:expr) => {
             try!(write!(writer, "{}{}\n", indentstr, $s))

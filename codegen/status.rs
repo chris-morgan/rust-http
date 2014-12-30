@@ -10,6 +10,7 @@
 use std::collections::HashSet;
 use std::ascii::AsciiExt;
 use std::io::IoResult;
+use std::iter::repeat;
 use super::get_writer;
 
 use self::HeadingOrStatus::{Heading, Status};
@@ -49,7 +50,7 @@ impl HttpStatus {
     }
 
     fn reason_padding_spaces(&self) -> String {
-        " ".repeat(unsafe { longest_reason } - self.reason.len())
+        repeat(' ').take(unsafe { longest_reason } - self.reason.len()).collect()
     }
 }
 

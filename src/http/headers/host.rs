@@ -34,7 +34,7 @@ impl super::HeaderConvertible for Host {
         Some(Host {
             name: String::from_str(hi.next().unwrap()),
             port: match hi.next() {
-                Some(name) => from_str::<u16>(name),
+                Some(name) => name.parse(),
                 None => None,
             },
         })

@@ -27,7 +27,7 @@ impl super::HeaderConvertible for AcceptableRanges {
         loop {
             match reader.read_token() {
                 Some(token) => {
-                    let token = token[].to_ascii_lower();
+                    let token = token.to_ascii_lowercase();
                     match token[] {
                         "bytes" => range_units.push(Bytes),
                         "none" if range_units.len() == 0 => return Some(NoAcceptableRanges),
