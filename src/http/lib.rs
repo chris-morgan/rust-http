@@ -11,6 +11,7 @@
 #![feature(macro_rules)]
 #![feature(phase)]
 #![feature(globs)]
+#![feature(old_orphan_check)]
 
 #[phase(plugin, link)] extern crate log;
 extern crate url;

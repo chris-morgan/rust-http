@@ -3,7 +3,7 @@ use headers::serialization_utils::{push_parameters, WriterUtil};
 use std::io::IoResult;
 use std::fmt;
 
-#[deriving(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct MediaType {
     pub type_: String,
     pub subtype: String,
@@ -32,7 +32,7 @@ impl fmt::Show for MediaType {
         //s.push_parameters(self.parameters);
         //s
         let s = format!("{}/{}", self.type_, self.subtype);
-        f.write(push_parameters(s, self.parameters[]).as_bytes())
+        f.write_str(push_parameters(s, self.parameters[])[])
     }
 }
 

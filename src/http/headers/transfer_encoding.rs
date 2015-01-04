@@ -12,7 +12,7 @@ pub use self::TransferCoding::{Chunked, TransferExtension};
 ///
 /// transfer-coding         = "chunked" | transfer-extension
 /// transfer-extension      = token *( ";" parameter )
-#[deriving(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum TransferCoding {
     Chunked,
     TransferExtension(String, Vec<(String, String)>),

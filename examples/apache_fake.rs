@@ -13,7 +13,7 @@ use std::io::Writer;
 use http::server::{Config, Server, Request, ResponseWriter};
 use http::headers;
 
-#[deriving(Clone)]
+#[derive(Clone)]
 struct ApacheFakeServer;
 
 impl Server for ApacheFakeServer {

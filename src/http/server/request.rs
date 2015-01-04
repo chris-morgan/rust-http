@@ -243,7 +243,7 @@ pub struct Request {
 }
 
 /// The URI (Request-URI in RFC 2616) as specified in the Status-Line of an HTTP request
-#[deriving(PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub enum RequestUri {
     /// 'The asterisk "*" means that the request does not apply to a particular resource, but to the
     /// server itself, and is only allowed when the method used does not necessarily apply to a
@@ -297,10 +297,10 @@ impl RequestUri {
 impl fmt::Show for RequestUri {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Star => f.write(b"*"),
+            Star => f.write_str("*"),
             AbsoluteUri(ref url) => url.fmt(f),
-            AbsolutePath(ref str) => f.write(str.as_bytes()),
-            Authority(ref str) => f.write(str.as_bytes()),
+            AbsolutePath(ref s) => f.write_str(s[]),
+            Authority(ref s) => f.write_str(s[]),
         }
     }
 }

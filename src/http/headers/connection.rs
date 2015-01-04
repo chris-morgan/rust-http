@@ -12,7 +12,7 @@ use self::Connection::{Token, Close};
 
 /// A value for the Connection header. Note that should it be a ``Token``, the string is in
 /// normalised header case (e.g. "Keep-Alive").
-#[deriving(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Connection {
     Token(String),
     Close,
@@ -20,9 +20,9 @@ pub enum Connection {
 
 impl fmt::Show for Connection {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write(match *self {
-            Token(ref s) => s.as_bytes(),
-            Close => b"close",
+        f.write_str(match *self {
+            Token(ref s) => s[],
+            Close => "close",
         })
     }
 }

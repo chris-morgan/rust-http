@@ -15,13 +15,13 @@ use super::get_writer;
 
 use self::HeadingOrStatus::{Heading, Status};
 
-#[deriving(Copy)]
+#[derive(Copy)]
 enum HeadingOrStatus {
     Heading(&'static str),
     Status(HttpStatus),
 }
 
-#[deriving(Copy)]
+#[derive(Copy)]
 struct HttpStatus {
     code: uint,
     reason: &'static str,
@@ -168,11 +168,12 @@ pub fn generate(output_dir: Path) -> IoResult<()> {
 pub mod status {
 use std::fmt;
 use std::ascii::AsciiExt;
+use std::num::{ToPrimitive, FromPrimitive};
 
 pub use self::Status::*;
 
 /// HTTP status code
-#[deriving(Eq, PartialEq, Clone)]
+#[derive(Eq, PartialEq, Clone)]
 pub enum Status {
 ".as_bytes()));
     for &entry in entries.iter() {

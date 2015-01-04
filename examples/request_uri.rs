@@ -18,7 +18,7 @@ use http::status::{BadRequest, MethodNotAllowed};
 use http::method::{Get, Head, Post, Put, Delete, Trace, Options, Connect, Patch};
 use http::headers::content_type::MediaType;
 
-#[deriving(Clone)]
+#[derive(Clone)]
 struct RequestUriServer;
 
 impl Server for RequestUriServer {

@@ -17,7 +17,7 @@ use self::HeaderLineErr::{EndOfFile, EndOfHeaders, MalformedHeaderValue,
                           MalformedHeaderSyntax};
 use self::HeaderValueByteIteratorState::{Normal, GotLF, Finished};
 
-#[deriving(Copy)]
+#[derive(Copy)]
 pub enum HeaderLineErr {
     EndOfFile,
     EndOfHeaders,
@@ -72,7 +72,7 @@ pub mod transfer_encoding;
 
 pub type DeltaSeconds = u64;
 
-#[deriving(Clone, PartialEq, Eq, Copy)]
+#[derive(Clone, PartialEq, Eq, Copy)]
 pub enum ConsumeCommaLWSResult {
     CommaConsumed,
     EndOfValue,
@@ -139,7 +139,7 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
     }
 }
 
-#[deriving(PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 enum HeaderValueByteIteratorState {
     Normal,  // Anything other than the rest.
     GotLF,  // Last character was LF (could be end of header or, if followed by SP or HT, LWS)
@@ -895,7 +895,7 @@ macro_rules! headers_mod {
             use std::io::{BufReader, IoResult};
             use std::ascii::OwnedAsciiExt;
             use time;
-            use std::collections::hash_map::{HashMap, Entries};
+            use std::collections::hash_map::{HashMap, Iter};
             use headers;
             use headers::{HeaderEnum, HeaderConvertible, HeaderValueByteIterator};
 
@@ -907,7 +907,7 @@ macro_rules! headers_mod {
                 ExtensionHeader(String, String),
             }
 
-            #[deriving(Clone)]
+            #[derive(Clone)]
             pub struct HeaderCollection {
                 $(pub $lower_ident: Option<$htype>,)*
                 pub extensions: HashMap<String, String>,
@@ -965,7 +965,7 @@ macro_rules! headers_mod {
             pub struct HeaderCollectionIterator<'a> {
                 pos: uint,
                 coll: &'a HeaderCollection,
-                ext_iter: Option<Entries<'a, String, String>>
+                ext_iter: Option<Iter<'a, String, String>>
             }
 
             impl<'a> Iterator<Header> for HeaderCollectionIterator<'a> {

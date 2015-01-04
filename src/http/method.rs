@@ -8,7 +8,7 @@ pub use self::Method::{Options, Get, Head, Post, Put, Delete, Trace,
 /// HTTP methods, as defined in RFC 2616, §5.1.1.
 ///
 /// Method names are case-sensitive.
-#[deriving(PartialEq, Eq, Clone, Hash)]
+#[derive(PartialEq, Eq, Clone, Hash)]
 pub enum Method {
     Options,
     Get,
@@ -51,17 +51,17 @@ impl FromStr for Method {
 
 impl fmt::Show for Method {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write(match *self {
-            Options                => b"OPTIONS",
-            Get                    => b"GET",
-            Head                   => b"HEAD",
-            Post                   => b"POST",
-            Put                    => b"PUT",
-            Delete                 => b"DELETE",
-            Trace                  => b"TRACE",
-            Connect                => b"CONNECT",
-            Patch                  => b"PATCH",
-            ExtensionMethod(ref s) => s.as_bytes(),
+        f.write_str(match *self {
+            Options                => "OPTIONS",
+            Get                    => "GET",
+            Head                   => "HEAD",
+            Post                   => "POST",
+            Put                    => "PUT",
+            Delete                 => "DELETE",
+            Trace                  => "TRACE",
+            Connect                => "CONNECT",
+            Patch                  => "PATCH",
+            ExtensionMethod(ref s) => s[],
         })
     }
 }
