@@ -145,7 +145,7 @@ pub fn is_separator(o: u8) -> bool {
 // see https://www.iana.org/assignments/http-parameters/http-parameters.xml
 
 /// Content-coding value tokens
-#[deriving(Copy)]
+#[derive(Copy)]
 pub enum ContentCoding {
     // An encoding format produced by the file compression program "gzip" (GNU zip) as described
     // in RFC 1952 [25]. This format is a Lempel-Ziv coding (LZ77) with a 32 bit CRC.
@@ -178,11 +178,11 @@ pub enum ContentCoding {
 
 impl fmt::Show for ContentCoding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write(match *self {
-            ContentCoding::Gzip => b"gzip",
-            ContentCoding::Compress => b"compress",
-            ContentCoding::Deflate => b"deflate",
-            ContentCoding::Identity => b"identity",
+        f.write_str(match *self {
+            ContentCoding::Gzip => "gzip",
+            ContentCoding::Compress => "compress",
+            ContentCoding::Deflate => "deflate",
+            ContentCoding::Identity => "identity",
         })
     }
 }
@@ -206,7 +206,7 @@ impl FromStr for ContentCoding {
 /// Transfer-coding value tokens
 // Identity is in RFC 2616 but is withdrawn in RFC 2616 errata ID 408
 // http://www.rfc-editor.org/errata_search.php?rfc=2616&eid=408
-#[deriving(Copy)]
+#[derive(Copy)]
 pub enum TransferCoding {
     Chunked,   // RFC 2616, §3.6.1
     Gzip,      // See above
@@ -216,11 +216,11 @@ pub enum TransferCoding {
 
 impl fmt::Show for TransferCoding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write(match *self {
-            TransferCoding::Chunked => b"chunked",
-            TransferCoding::Gzip => b"gzip",
-            TransferCoding::Compress => b"compress",
-            TransferCoding::Deflate => b"deflate",
+        f.write_str(match *self {
+            TransferCoding::Chunked => "chunked",
+            TransferCoding::Gzip => "gzip",
+            TransferCoding::Compress => "compress",
+            TransferCoding::Deflate => "deflate",
         })
     }
 }

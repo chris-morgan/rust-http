@@ -2,6 +2,7 @@ use std::io::{Listener, Acceptor, IoResult};
 use std::io::net::ip::SocketAddr;
 use time::precise_time_ns;
 use std::thread::Thread;
+use std::sync::mpsc::{channel, Receiver};
 
 use std::io::net::tcp::TcpListener;
 
@@ -110,7 +111,7 @@ pub trait Server: Send + Clone {
                         Ok(_) => (),
                     }
                     let time_finished = precise_time_ns();
-                    child_perf_sender.send((time_start, time_spawned, time_request_made, time_response_made, time_finished));
+                    child_perf_sender.send((time_start, time_spawned, time_request_made, time_response_made, time_finished)).unwrap();
 
                     if close_connection {
                         break;
@@ -189,7 +190,7 @@ pub trait Server: Send + Clone {
 ///
 /// At present, only the IP address and port to bind to are needed, but it's possible that other
 /// options may turn up later.
-#[deriving(Copy)]
+#[derive(Copy)]
 pub struct Config {
 	pub bind_address: SocketAddr,
 }
@@ -206,7 +207,7 @@ fn perf_dumper(perf_receiver: Receiver<(u64, u64, u64, u64, u64)>) {
     let mut td_total = 0u64;
     let mut i = 0u64;
     loop {
-        let data = perf_receiver.recv();
+        let data = perf_receiver.recv().unwrap();
         let (start, spawned, request_made, response_made, finished) = data;
         td_spawn += spawned - start;
         td_request += request_made - spawned;

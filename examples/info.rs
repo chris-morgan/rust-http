@@ -13,7 +13,7 @@ use http::server::{Config, Server, Request, ResponseWriter};
 use http::headers::HeaderEnum;
 use http::headers::content_type::MediaType;
 
-#[deriving(Clone)]
+#[derive(Clone)]
 struct InfoServer;
 
 impl Server for InfoServer {

@@ -11,7 +11,7 @@ use std::io::Writer;
 use http::server::{Config, Server, Request, ResponseWriter};
 use http::headers::content_type::MediaType;
 
-#[deriving(Clone)]
+#[derive(Clone)]
 struct HelloWorldServer;
 
 impl Server for HelloWorldServer {

@@ -6,7 +6,7 @@ use std::io::IoResult;
 use std::iter::repeat;
 use std::ascii::AsciiExt;
 
-#[deriving(Clone)]
+#[derive(Clone)]
 pub struct ParseBranch {
     matches: Vec<u8>,
     result: Option<String>,

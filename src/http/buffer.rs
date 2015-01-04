@@ -60,7 +60,7 @@ impl<T: Reader> BufferedStream<T> {
     fn fill_buffer(&mut self) -> IoResult<()> {
         assert_eq!(self.read_pos, self.read_max);
         self.read_pos = 0;
-        match self.wrapped.read(self.read_buffer[mut]) {
+        match self.wrapped.read(self.read_buffer.as_mut_slice()) {
             Ok(i) => {
                 self.read_max = i;
                 Ok(())

@@ -2,7 +2,7 @@ use headers::serialization_utils::{push_quoted_string, quoted_string, WriterUtil
 use std::io::IoResult;
 use std::fmt;
 
-#[deriving(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct EntityTag {
     pub weak: bool,
     pub opaque_tag: String,
@@ -25,9 +25,9 @@ pub fn strong_etag(opaque_tag: String) -> EntityTag {
 impl fmt::Show for EntityTag {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.weak {
-            f.write(push_quoted_string(String::from_str("W/"), &self.opaque_tag).as_bytes())
+            f.write_str(push_quoted_string(String::from_str("W/"), &self.opaque_tag)[])
         } else {
-            f.write(quoted_string(&self.opaque_tag).as_bytes())
+            f.write_str(quoted_string(&self.opaque_tag)[])
         }
     }
 }

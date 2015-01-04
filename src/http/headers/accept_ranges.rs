@@ -6,14 +6,14 @@ use std::ascii::AsciiExt;
 pub use self::AcceptableRanges::{RangeUnits, NoAcceptableRanges};
 pub use self::RangeUnit::{Bytes, OtherRangeUnit};
 
-#[deriving(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 // RFC 2616: range-unit = bytes-unit | other-range-unit
 pub enum RangeUnit {
     Bytes,                 // bytes-unit       = "bytes"
     OtherRangeUnit(String),  // other-range-unit = token
 }
 
-#[deriving(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 // RFC 2616: acceptable-ranges = 1#range-unit | "none"
 pub enum AcceptableRanges {
     RangeUnits(Vec<RangeUnit>),
