@@ -5,7 +5,7 @@
  *
  * TODO: refactor all this to store things in more usefully categorised places.
  */
-use std::num::{Unsigned, NumCast, Int, cast};
+use std::num::{UnsignedInt, NumCast, Int, cast};
 use std::io::{IoError, IoResult, OtherIoError};
 #[cfg(test)]
 use std::io::MemReader;
@@ -43,7 +43,7 @@ const ASCII_UPPER_F: u8 = b'F';
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_decimal<R: Reader, N: Unsigned + NumCast + Int>
+pub fn read_decimal<R: Reader, N: UnsignedInt + NumCast + Int>
                    (reader: &mut R, expected_end: |u8| -> bool)
                    -> IoResult<N> {
     // Here and in `read_hexadecimal` there is the possibility of infinite sequence of zeroes. The
@@ -89,7 +89,7 @@ pub fn read_decimal<R: Reader, N: Unsigned + NumCast + Int>
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_hexadecimal<R: Reader, N: Unsigned + NumCast + Int>
+pub fn read_hexadecimal<R: Reader, N: UnsignedInt + NumCast + Int>
                        (reader: &mut R, expected_end: |u8| -> bool)
                        -> IoResult<N> {
     let mut n: N = Int::zero();
