@@ -457,7 +457,9 @@ impl<'a, R: Reader> HeaderValueByteIterator<'a, R> {
     }
 }
 
-impl<'a, R: Reader> Iterator<u8> for HeaderValueByteIterator<'a, R> {
+impl<'a, R: Reader> Iterator for HeaderValueByteIterator<'a, R> {
+    type Item = u8;
+
     fn next(&mut self) -> Option<u8> {
         if self.state == Finished {
             return None;
@@ -968,7 +970,9 @@ macro_rules! headers_mod {
                 ext_iter: Option<Iter<'a, String, String>>
             }
 
-            impl<'a> Iterator<Header> for HeaderCollectionIterator<'a> {
+            impl<'a> Iterator for HeaderCollectionIterator<'a> {
+                type Item = Header;
+
                 fn next(&mut self) -> Option<Header> {
                     loop {
                         self.pos += 1;
