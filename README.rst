@@ -80,11 +80,11 @@ Compile the examples::
 
 Run one of the servers::
 
-   target/test/apache_fake
+   cargo run --example apache_fake
 
 To run the client example, start one of the servers and run::
 
-   target/test/client http://127.0.0.1:8001/
+   cargo run --example client http://127.0.0.1:8001/
 
 At present, all of the example servers serve to http://127.0.0.1:8001/.
 
