@@ -17,7 +17,7 @@ fn main() {
     let args = os::args();
     match args.len() {
         0 => unreachable!(),
-        2 => make_and_print_request(args[1][]),
+        2 => make_and_print_request(&args[1][]),
         _ => {
             println!("Usage: {} URL", args[0]);
             return;
@@ -58,5 +58,5 @@ fn make_and_print_request(url: &str) {
         Ok(body) => body,
         Err(err) => panic!("Reading response failed: {}", err),
     };
-    println(str::from_utf8(body[]).ok().expect("Uh oh, response wasn't UTF-8"));
+    println(str::from_utf8(&body[]).ok().expect("Uh oh, response wasn't UTF-8"));
 }

@@ -32,7 +32,7 @@ impl fmt::Show for MediaType {
         //s.push_parameters(self.parameters);
         //s
         let s = format!("{}/{}", self.type_, self.subtype);
-        f.write_str(push_parameters(s, self.parameters[])[])
+        f.write_str(&push_parameters(s, &self.parameters[])[])
     }
 }
 
@@ -67,7 +67,7 @@ impl super::HeaderConvertible for MediaType {
         try!(writer.write_token(&self.type_));
         try!(writer.write(b"/"));
         try!(writer.write_token(&self.subtype));
-        writer.write_parameters(self.parameters[])
+        writer.write_parameters(&self.parameters[])
     }
 
     fn http_value(&self) -> String {

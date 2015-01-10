@@ -111,7 +111,7 @@ impl<T: Reader> Reader for BufferedStream<T> {
             try!(self.fill_buffer());
         }
         let size = min(self.read_max - self.read_pos, buf.len());
-        slice::bytes::copy_memory(buf, self.read_buffer[self.read_pos..self.read_pos + size]);
+        slice::bytes::copy_memory(buf, &self.read_buffer[self.read_pos..self.read_pos + size]);
         self.read_pos += size;
         Ok(size)
     }
@@ -127,7 +127,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
                 try!(self.wrapped.write(s.as_bytes()));
             }
             if self.write_len > 0 {
-                try!(self.wrapped.write(self.write_buffer[..self.write_len]));
+                try!(self.wrapped.write(&self.write_buffer[..self.write_len]));
                 self.write_len = 0;
             }
             try!(self.wrapped.write(buf));
@@ -146,10 +146,10 @@ impl<T: Writer> Writer for BufferedStream<T> {
                 if self.writing_chunked_body {
                     let s = format!("{}\r\n", radix(self.write_len, 16));
                     try!(self.wrapped.write(s.as_bytes()));
-                    try!(self.wrapped.write(self.write_buffer[]));
+                    try!(self.wrapped.write(&self.write_buffer[]));
                     try!(self.wrapped.write(b"\r\n"));
                 } else {
-                    try!(self.wrapped.write(self.write_buffer[]));
+                    try!(self.wrapped.write(&self.write_buffer[]));
                 }
                 self.write_len = 0;
             }
@@ -163,7 +163,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
                 let s = format!("{}\r\n", radix(self.write_len, 16));
                 try!(self.wrapped.write(s.as_bytes()));
             }
-            try!(self.wrapped.write(self.write_buffer[..self.write_len]));
+            try!(self.wrapped.write(&self.write_buffer[..self.write_len]));
             if self.writing_chunked_body {
                 try!(self.wrapped.write(b"\r\n"));
             }

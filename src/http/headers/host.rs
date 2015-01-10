@@ -20,7 +20,7 @@ impl fmt::Show for Host {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.port {
             Some(port) => write!(f, "{}:{}", self.name, port),
-            None => f.write_str(self.name[]),
+            None => f.write_str(&self.name[]),
         }
     }
 }

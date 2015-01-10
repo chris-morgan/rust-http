@@ -75,12 +75,12 @@ mod test {
     #[test]
     fn test_mem_writer_fake_stream() {
         let mut writer = MemWriterFakeStream::new();
-        assert_eq!(writer.get_ref(),            [][]);
+        assert_eq!(writer.get_ref(),            []);
         assert_eq!(writer.write(&[0]),          Ok(()));
-        assert_eq!(writer.get_ref(),            [0][]);
+        assert_eq!(writer.get_ref(),            [0]);
         assert_eq!(writer.write(&[1, 2, 3]),    Ok(()));
         assert_eq!(writer.write(&[4, 5, 6, 7]), Ok(()));
-        assert_eq!(writer.get_ref(),            [0, 1, 2, 3, 4, 5, 6, 7][]);
+        assert_eq!(writer.get_ref(),            [0, 1, 2, 3, 4, 5, 6, 7]);
     }
 
     #[test]
@@ -98,7 +98,7 @@ mod test {
         assert_eq!(reader.tell(),              Ok(5));
         assert_eq!(buf,                        vec![1, 2, 3, 4]);
         assert_eq!(reader.read(buf.as_mut_slice()),      Ok(3));
-        assert_eq!(buf[0..3],                  [5, 6, 7][]);
+        assert_eq!(&buf[0..3],                  [5, 6, 7]);
         assert_eq!(reader.read(buf.as_mut_slice()).ok(), None);
     }
 }

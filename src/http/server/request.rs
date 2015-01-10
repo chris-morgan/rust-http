@@ -277,13 +277,13 @@ pub enum RequestUri {
 impl RequestUri {
     /// Interpret a RFC2616 Request-URI
     fn from_string(request_uri: String) -> Option<RequestUri> {
-        if request_uri == String::from_str("*") {
+        if &request_uri[] == "*" {
             Some(Star)
         } else if request_uri.as_bytes()[0] as char == '/' {
             Some(AbsolutePath(request_uri))
-        } else if request_uri[].contains("/") {
+        } else if request_uri.contains("/") {
             // An authority can't have a slash in it
-            match Url::parse(request_uri[]) {
+            match Url::parse(&request_uri[]) {
                 Ok(url) => Some(AbsoluteUri(url)),
                 Err(_) => None,
             }
@@ -299,8 +299,8 @@ impl fmt::Show for RequestUri {
         match *self {
             Star => f.write_str("*"),
             AbsoluteUri(ref url) => url.fmt(f),
-            AbsolutePath(ref s) => f.write_str(s[]),
-            Authority(ref s) => f.write_str(s[]),
+            AbsolutePath(ref s) => f.write_str(&s[]),
+            Authority(ref s) => f.write_str(&s[]),
         }
     }
 }
@@ -370,7 +370,7 @@ impl Request {
                         request.close_connection = true;
                         break;
                     },
-                    headers::connection::Connection::Token(ref s) if s[] == "keep-alive" => {
+                    headers::connection::Connection::Token(ref s) if &s[] == "keep-alive" => {
                         request.close_connection = false;
                         // No break; let it be overridden by close should some weird person do that
                     },
