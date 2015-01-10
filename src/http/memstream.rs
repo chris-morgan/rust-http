@@ -17,12 +17,12 @@ impl MemWriterFakeStream {
 
 impl Writer for MemWriterFakeStream {
     fn write(&mut self, buf: &[u8]) -> IoResult<()> {
-        let &MemWriterFakeStream(ref mut s) = self;
+        let &mut MemWriterFakeStream(ref mut s) = self;
         s.write(buf)
     }
 
     fn flush(&mut self) -> IoResult<()> {
-        let &MemWriterFakeStream(ref mut s) = self;
+        let &mut MemWriterFakeStream(ref mut s) = self;
         s.flush()
     }
 }
@@ -42,7 +42,7 @@ impl MemReaderFakeStream {
 
 impl Reader for MemReaderFakeStream {
     fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> {
-        let &MemReaderFakeStream(ref mut s) = self;
+        let &mut MemReaderFakeStream(ref mut s) = self;
         s.read(buf)
     }
 }
@@ -54,7 +54,7 @@ impl Seek for MemReaderFakeStream {
     }
 
     fn seek(&mut self, pos: i64, style: SeekStyle) -> IoResult<()> {
-        let &MemReaderFakeStream(ref mut s) = self;
+        let &mut MemReaderFakeStream(ref mut s) = self;
         s.seek(pos, style)
     }
 }
