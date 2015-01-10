@@ -3,6 +3,7 @@
 
 #![crate_name = "info"]
 
+#![allow(unstable)]
 extern crate time;
 extern crate http;
 

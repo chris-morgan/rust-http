@@ -1,5 +1,6 @@
 #![crate_name = "client"]
 
+#![allow(unstable)]
 #![feature(slicing_syntax)]
 
 extern crate http;

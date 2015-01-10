@@ -3,6 +3,7 @@
 //! Apache is doing a lot more than this does.
 
 #![crate_name = "apache_fake"]
+#![allow(unstable)]
 
 extern crate time;
 extern crate http;

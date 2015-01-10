@@ -5,6 +5,7 @@
 //! the correct values depend on the method.
 
 #![crate_name = "request_uri"]
+#![allow(unstable)]
 
 extern crate time;
 extern crate http;

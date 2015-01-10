@@ -1,6 +1,7 @@
 //! A very simple HTTP server which responds to only one connection with the plain text "Hello, World!".
 
 #![crate_name = "one_time_server"]
+#![allow(unstable)]
 
 extern crate time;
 extern crate http;

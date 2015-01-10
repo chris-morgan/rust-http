@@ -4,6 +4,7 @@
 
 #![deny(non_camel_case_types)]
 //#[deny(missing_doc)];
+#![allow(unstable)]
 
 #[macro_use] extern crate log;
 extern crate url;
