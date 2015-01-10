@@ -167,7 +167,7 @@ pub fn read_http_version<R: Reader, F: FnMut(u8) -> bool>
 
 // I couldn't think what to call it. Ah well. It's just trivial syntax sugar, anyway.
 macro_rules! test_reads {
-    ($func:ident $($value:expr => $expected:expr),*) => {{
+    ($func:ident, $($value:expr => $expected:expr),*) => {{
         $(
             assert_eq!(
                 concat_idents!(read_, $func)(&mut MemReader::new($value.bytes().collect::<Vec<_>>()),
@@ -179,7 +179,7 @@ macro_rules! test_reads {
 
 #[test]
 fn test_read_http_version() {
-    test_reads!(http_version
+    test_reads!(http_version,
                 "HTTP/25.17\0" => Some((25, 17)),
                 "http/1.0\0" => Some((1, 0)),
                 "http 1.0\0" => None,
@@ -190,7 +190,7 @@ fn test_read_http_version() {
 
 #[test]
 fn test_read_decimal() {
-    test_reads!(decimal
+    test_reads!(decimal,
                 "0\0" => Some(0u),
                 "0\0" => Some(0u8),
                 "0\0" => Some(0u64),
@@ -217,7 +217,7 @@ fn test_read_decimal() {
 
 #[test]
 fn test_read_hexadecimal() {
-    test_reads!(hexadecimal
+    test_reads!(hexadecimal,
                 "0\0" => Some(0u),
                 "0\0" => Some(0u8),
                 "0\0" => Some(0u64),
