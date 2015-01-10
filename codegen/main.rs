@@ -19,7 +19,7 @@ fn main() {
 pub fn get_writer(mut output_dir: Path, filename: &str) -> Box<Writer + 'static> {
     output_dir.push(filename);
     match File::open_mode(&output_dir, Truncate, Write) {
-        Ok(writer) => box writer as Box<Writer>,
+        Ok(writer) => Box::new(writer),
         Err(e) => panic!("Unable to write file: {}", e.desc),
     }
 }
