@@ -53,7 +53,7 @@ impl<T: Reader> BufferedStream<T> {
             (0, _) => panic!("poke called when buffer is full"),
             (_, _) => self.read_pos -= 1,
         }
-        self.read_buffer[mut][self.read_pos] = byte;
+        self.read_buffer[self.read_pos] = byte;
     }
 
     #[inline]
