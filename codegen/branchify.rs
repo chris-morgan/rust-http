@@ -1,4 +1,4 @@
-#![macro_escape]
+#![macro_use]
 
 use std::str::Chars;
 use std::vec::Vec;
