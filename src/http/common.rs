@@ -191,7 +191,7 @@ fn test_read_http_version() {
 #[test]
 fn test_read_decimal() {
     test_reads!(decimal,
-                "0\0" => Some(0u),
+                "0\0" => Some(0us),
                 "0\0" => Some(0u8),
                 "0\0" => Some(0u64),
                 "9\0" => Some(9u8),
@@ -218,7 +218,7 @@ fn test_read_decimal() {
 #[test]
 fn test_read_hexadecimal() {
     test_reads!(hexadecimal,
-                "0\0" => Some(0u),
+                "0\0" => Some(0us),
                 "0\0" => Some(0u8),
                 "0\0" => Some(0u64),
                 "f\0" => Some(0xfu8),

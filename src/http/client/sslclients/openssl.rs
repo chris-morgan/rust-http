@@ -35,7 +35,7 @@ impl Connecter for NetworkStream {
 }
 
 impl Reader for NetworkStream {
-    fn read(&mut self, buf: &mut [u8]) -> IoResult<uint> {
+    fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> {
         match *self {
             NormalStream(ref mut ns) => ns.read(buf),
             SslProtectedStream(ref mut ns) => ns.read(buf),

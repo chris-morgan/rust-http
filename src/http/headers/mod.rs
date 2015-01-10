@@ -635,8 +635,8 @@ impl HeaderConvertible for String {
     }
 }
 
-impl HeaderConvertible for uint {
-    fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<uint> {
+impl HeaderConvertible for usize {
+    fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<usize> {
         reader.collect_to_string().parse()
     }
 
@@ -782,23 +782,23 @@ mod test {
     }
 
     #[test]
-    fn test_from_stream_uint() {
-        assert_eq!(from_stream_with_str::<uint>("foo bar"), None);
-        assert_eq!(from_stream_with_str::<uint>("-1"), None);
-        assert_eq!(from_stream_with_str("0"), Some(0u));
-        assert_eq!(from_stream_with_str("123456789"), Some(123456789u));
+    fn test_from_stream_usize() {
+        assert_eq!(from_stream_with_str::<usize>("foo bar"), None);
+        assert_eq!(from_stream_with_str::<usize>("-1"), None);
+        assert_eq!(from_stream_with_str("0"), Some(0us));
+        assert_eq!(from_stream_with_str("123456789"), Some(123456789us));
     }
 
     #[test]
-    fn test_http_value_uint() {
-        assert_eq!(0u.http_value(), String::from_str("0"));
-        assert_eq!(123456789u.http_value(), String::from_str("123456789"));
+    fn test_http_value_usize() {
+        assert_eq!(0us.http_value(), String::from_str("0"));
+        assert_eq!(123456789us.http_value(), String::from_str("123456789"));
     }
 
     #[test]
-    fn test_to_stream_uint() {
-        assert_eq!(to_stream_into_str(&0u), String::from_str("0"));
-        assert_eq!(to_stream_into_str(&123456789u), String::from_str("123456789"));
+    fn test_to_stream_usize() {
+        assert_eq!(to_stream_into_str(&0us), String::from_str("0"));
+        assert_eq!(to_stream_into_str(&123456789us), String::from_str("123456789"));
     }
 
     fn sample_tm() -> Tm {
@@ -965,7 +965,7 @@ macro_rules! headers_mod {
             }
 
             pub struct HeaderCollectionIterator<'a> {
-                pos: uint,
+                pos: usize,
                 coll: &'a HeaderCollection,
                 ext_iter: Option<Iter<'a, String, String>>
             }
@@ -1078,7 +1078,7 @@ headers_mod! {
     19, "If-None-Match",       "if-none-match",       IfNoneMatch,        if_none_match,       String,
     20, "If-Range",            "if-range",            IfRange,            if_range,            String,
     21, "If-Unmodified-Since", "if-unmodified-since", IfUnmodifiedSince,  if_unmodified_since, time::Tm,
-    22, "Max-Forwards",        "max-forwards",        MaxForwards,        max_forwards,        uint,
+    22, "Max-Forwards",        "max-forwards",        MaxForwards,        max_forwards,        usize,
     23, "Proxy-Authorization", "proxy-authorization", ProxyAuthorization, proxy_authorization, String,
     24, "Range",               "range",               Range,              range,               String,
     25, "Referer",             "referer",             Referer,            referer,             String,
@@ -1089,7 +1089,7 @@ headers_mod! {
     28, "Allow",            "allow",            Allow,           allow,            Vec<::method::Method>,
     29, "Content-Encoding", "content-encoding", ContentEncoding, content_encoding, String,
     30, "Content-Language", "content-language", ContentLanguage, content_language, String,
-    31, "Content-Length",   "content-length",   ContentLength,   content_length,   uint,
+    31, "Content-Length",   "content-length",   ContentLength,   content_length,   usize,
     32, "Content-Location", "content-location", ContentLocation, content_location, String,
     33, "Content-MD5",      "content-md5",      ContentMd5,      content_md5,      String,
     34, "Content-Range",    "content-range",    ContentRange,    content_range,    String,
@@ -1131,7 +1131,7 @@ headers_mod! {
     19, "Allow",            "allow",            Allow,           allow,            Vec<::method::Method>,
     20, "Content-Encoding", "content-encoding", ContentEncoding, content_encoding, String,
     21, "Content-Language", "content-language", ContentLanguage, content_language, String,
-    22, "Content-Length",   "content-length",   ContentLength,   content_length,   uint,
+    22, "Content-Length",   "content-length",   ContentLength,   content_length,   usize,
     23, "Content-Location", "content-location", ContentLocation, content_location, String,
     24, "Content-MD5",      "content-md5",      ContentMd5,      content_md5,      String,
     25, "Content-Range",    "content-range",    ContentRange,    content_range,    String,

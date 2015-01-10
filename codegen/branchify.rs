@@ -85,14 +85,14 @@ macro_rules! branchify(
 pub fn generate_branchified_method(
         writer: &mut Writer,
         branches: Vec<ParseBranch>,
-        indent: uint,
+        indent: usize,
         read_call: &str,
         end: &str,
         max_len: &str,
         valid: &str,
         unknown: &str) -> IoResult<()> {
 
-    fn r(writer: &mut Writer, branch: &ParseBranch, prefix: &str, indent: uint, read_call: &str,
+    fn r(writer: &mut Writer, branch: &ParseBranch, prefix: &str, indent: usize, read_call: &str,
             end: &str, max_len: &str, valid: &str, unknown: &str) -> IoResult<()> {
         let indentstr = repeat(' ').take(indent * 4).collect::<String>();
         macro_rules! w (

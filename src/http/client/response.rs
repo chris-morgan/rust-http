@@ -17,7 +17,7 @@ pub struct ResponseReader<S> {
     pub request: RequestWriter<S>,
 
     /// The HTTP version number; typically `(1, 1)` or, less commonly, `(1, 0)`.
-    pub version: (uint, uint),
+    pub version: (usize, usize),
 
     /// The HTTP status indicated in the response.
     pub status: Status,
@@ -129,7 +129,7 @@ impl<S: Stream> ResponseReader<S> {
 }
 
 impl<S: Stream> Reader for ResponseReader<S> {
-    fn read(&mut self, buf: &mut [u8]) -> IoResult<uint> {
+    fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> {
         self.stream.read(buf)
     }
 }

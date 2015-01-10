@@ -23,18 +23,18 @@ enum HeadingOrStatus {
 
 #[derive(Copy)]
 struct HttpStatus {
-    code: uint,
+    code: usize,
     reason: &'static str,
     comment: Option<&'static str>,
 }
 
 /// Status with comment
-fn status_c(code: uint, reason: &'static str, comment: &'static str) -> HeadingOrStatus {
+fn status_c(code: usize, reason: &'static str, comment: &'static str) -> HeadingOrStatus {
     Status(HttpStatus { code: code, reason: reason, comment: Some(comment) })
 }
 
 /// Status without comment
-fn status_n(code: uint, reason: &'static str) -> HeadingOrStatus {
+fn status_n(code: usize, reason: &'static str) -> HeadingOrStatus {
     Status(HttpStatus { code: code, reason: reason, comment: None })
 }
 
@@ -74,8 +74,8 @@ fn camel_case(msg: &str) -> String {
     result
 }
 
-static mut longest_ident: uint = 0;
-static mut longest_reason: uint = 0;
+static mut longest_ident: usize = 0;
+static mut longest_reason: usize = 0;
 
 pub fn generate(output_dir: Path) -> IoResult<()> {
     let mut out = get_writer(output_dir, "status.rs");

@@ -28,7 +28,7 @@ impl Writer for MemWriterFakeStream {
 }
 
 impl Reader for MemWriterFakeStream {
-    fn read(&mut self, _buf: &mut [u8]) -> IoResult<uint> {
+    fn read(&mut self, _buf: &mut [u8]) -> IoResult<usize> {
         panic!("Uh oh, you didn't aught to call MemWriterFakeStream.read()!")
     }
 }
@@ -41,7 +41,7 @@ impl MemReaderFakeStream {
 }
 
 impl Reader for MemReaderFakeStream {
-    fn read(&mut self, buf: &mut [u8]) -> IoResult<uint> {
+    fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> {
         let &MemReaderFakeStream(ref mut s) = self;
         s.read(buf)
     }

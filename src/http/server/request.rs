@@ -20,10 +20,10 @@ use self::RequestUri::{Star, AbsoluteUri, AbsolutePath, Authority};
 
 // /// Line/header can't be more than 4KB long (note that with the compacting of LWS the actual source
 // /// data could be longer than 4KB)
-// const MAX_LINE_LEN: uint = 0x1000;
+// const MAX_LINE_LEN: usize = 0x1000;
 
-const MAX_REQUEST_URI_LEN: uint = 1024;
-pub const MAX_METHOD_LEN: uint = 64;
+const MAX_REQUEST_URI_LEN: usize = 1024;
+pub const MAX_METHOD_LEN: usize = 64;
 
 pub struct RequestBuffer<'a, S: 'a> {
     /// The socket connection to read from
@@ -37,7 +37,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
         }
     }
 
-    pub fn read_request_line(&mut self) -> Result<(Method, RequestUri, (uint, uint)),
+    pub fn read_request_line(&mut self) -> Result<(Method, RequestUri, (usize, usize)),
                                                   status::Status> {
         let method = match self.read_method() {
             Ok(m) => m,
@@ -163,7 +163,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
 }
 
 impl<'a, S: Stream> Reader for RequestBuffer<'a, S> {
-    fn read(&mut self, buf: &mut [u8]) -> IoResult<uint> {
+    fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> {
         self.stream.read(buf)
     }
 }
@@ -239,7 +239,7 @@ pub struct Request {
     pub close_connection: bool,
 
     /// The HTTP version number; typically `(1, 1)` or, less commonly, `(1, 0)`.
-    pub version: (uint, uint)
+    pub version: (usize, usize)
 }
 
 /// The URI (Request-URI in RFC 2616) as specified in the Status-Line of an HTTP request
@@ -408,7 +408,7 @@ pub struct Request {
     url: ~Url,
 
     // The HTTP protocol version used; typically (1, 1)
-    protocol: (uint, uint),
+    protocol: (usize, usize),
 
     // Request headers, all nicely and correctly parsed.
     headers: ~Headers,
