@@ -12,7 +12,7 @@ fn main() {
     Thread::spawn(move || {
         let output_dir = Path::new(os::getenv("OUT_DIR").unwrap());
         read_method::generate(output_dir).unwrap();
-    }).detach();
+    });
 
     let output_dir = Path::new(os::getenv("OUT_DIR").unwrap());
     status::generate(output_dir).unwrap();

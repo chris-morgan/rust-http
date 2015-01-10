@@ -39,7 +39,7 @@ pub trait Server: Send + Clone {
         let (perf_sender, perf_receiver) = channel();
         Thread::spawn(move || {
             perf_dumper(perf_receiver);
-        }).detach();
+        });
         loop {
             let time_start = precise_time_ns();
             let stream = match acceptor.accept() {
@@ -118,7 +118,7 @@ pub trait Server: Send + Clone {
                     }
                     first = false;
                 }
-            }).detach();
+            });
         }
     }
 
