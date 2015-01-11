@@ -7,7 +7,7 @@
 
 #![allow(unknown_features)]
 #![feature(slicing_syntax)]
-#![feature(old_orphan_check)]
+//#![feature(old_orphan_check)]
 
 #[macro_use] extern crate log;
 extern crate url;
