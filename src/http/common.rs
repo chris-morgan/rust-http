@@ -43,8 +43,8 @@ const ASCII_UPPER_F: u8 = b'F';
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_decimal<R: Reader, N: UnsignedInt + NumCast + Int>
-                   (reader: &mut R, expected_end: |u8| -> bool)
+pub fn read_decimal<R: Reader, N: UnsignedInt + NumCast + Int, F: FnMut(u8) -> bool>
+                   (reader: &mut R, expected_end: &mut F)
                    -> IoResult<N> {
     // Here and in `read_hexadecimal` there is the possibility of infinite sequence of zeroes. The
     // spec allows this, but it may not be a good thing to allow. It's not a particularly good
@@ -64,8 +64,7 @@ pub fn read_decimal<R: Reader, N: UnsignedInt + NumCast + Int>
                     None => return Err(bad_input()),  // overflow
                 }
             },
-            Ok(b) if got_content && expected_end(b) => return Ok(n),
-            Ok(_) => return Err(bad_input()),  // not a valid number
+            Ok(b) => return if got_content && expected_end(b) { Ok(n) } else { Err(bad_input()) },  // not a valid number
             Err(err) => return Err(err),  // I/O error
         };
         got_content = true;
@@ -89,8 +88,8 @@ pub fn read_decimal<R: Reader, N: UnsignedInt + NumCast + Int>
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_hexadecimal<R: Reader, N: UnsignedInt + NumCast + Int>
-                       (reader: &mut R, expected_end: |u8| -> bool)
+pub fn read_hexadecimal<R: Reader, N: UnsignedInt + NumCast + Int, F: FnMut(u8) -> bool>
+                       (reader: &mut R, expected_end: &mut F)
                        -> IoResult<N> {
     let mut n: N = Int::zero();
     let mut got_content = false;
@@ -118,8 +117,7 @@ pub fn read_hexadecimal<R: Reader, N: UnsignedInt + NumCast + Int>
                     None => return Err(bad_input()),  // overflow
                 }
             },
-            Ok(b) if got_content && expected_end(b) => return Ok(n),
-            Ok(_) => return Err(bad_input()),  // not a valid number
+            Ok(b) => return if got_content && expected_end(b) { Ok(n) } else { Err(bad_input()) },  // not a valid number
             Err(err) => return Err(err),  // I/O error
         };
         got_content = true;
@@ -142,9 +140,9 @@ pub fn read_hexadecimal<R: Reader, N: UnsignedInt + NumCast + Int>
  * - A `Some`, if all goes well.
  */
 #[inline]
-pub fn read_http_version<R: Reader>
-                        (reader: &mut R, expected_end: |u8| -> bool)
-                        -> IoResult<(uint, uint)> {
+pub fn read_http_version<R: Reader, F: FnMut(u8) -> bool>
+                        (reader: &mut R, expected_end: &mut F)
+                        -> IoResult<(usize, usize)> {
     // I'd read into a [0u8, ..5], but that buffer is not guaranteed to be
     // filled, so I must read it byte by byte to guarantee correctness.
     // (Sure, no sane person/library would send the first packet with "HTT"
@@ -162,7 +160,7 @@ pub fn read_http_version<R: Reader>
         return Err(bad_input());
     }
 
-    let major = try!(read_decimal(reader, |b| b == b'.'));
+    let major = try!(read_decimal(reader, &mut |b| b == b'.'));
     let minor = try!(read_decimal(reader, expected_end));
     Ok((major, minor))
 }
@@ -173,7 +171,7 @@ macro_rules! test_reads {
         $(
             assert_eq!(
                 concat_idents!(read_, $func)(&mut MemReader::new($value.bytes().collect::<Vec<_>>()),
-                                             |b| b == 0).ok(),
+                                             &mut |b| b == 0).ok(),
                 $expected);
         )*
     }}

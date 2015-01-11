@@ -110,7 +110,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
         let mut read_b = 0;
 
         // FIXME: we still have one inconsistency here: this isn't trimming *SP.
-        match read_http_version(self.stream, |b| { read_b = b; b == CR || b == LF }) {
+        match read_http_version(self.stream, &mut |b| { read_b = b; b == CR || b == LF }) {
             Ok(vv) => {
                 if read_b == LF || self.stream.read_byte() == Ok(LF) {
                     Ok((method, request_uri, vv))  // LF or CR LF: valid

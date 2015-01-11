@@ -42,7 +42,7 @@ impl<S: Stream> ResponseReader<S> {
         //let mut b = [0u8, ..4096];
         //let len = stream.read(b);
         //println!("{}", ::std::str::from_bytes(b[..len.unwrap()]));
-        let http_version = match read_http_version(&mut stream, |b| b == SP) {
+        let http_version = match read_http_version(&mut stream, &mut |b| b == SP) {
             Ok(nums) => nums,
             Err(_) => return Err((request, bad_response_err())),
         };
