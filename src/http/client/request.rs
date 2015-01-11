@@ -237,7 +237,7 @@ impl<S: Connecter + Reader + Writer = super::NetworkStream> RequestWriter<S> {
             None => ("", "")
         };
         try!(write!(self.stream.as_mut().unwrap() as &mut Writer,
-            "{} {}{}{} HTTP/1.0\r\n",
+            "{:?} {}{}{} HTTP/1.0\r\n",
             self.method, self.url.serialize_path().unwrap(), question_mark, query));
 
         try!(self.headers.write_all(self.stream.as_mut().unwrap()));

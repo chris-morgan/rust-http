@@ -72,7 +72,7 @@ fn lift_ssl_error(ssl: SslError) -> IoError {
         OpenSslErrors(errs) => IoError {
             kind: OtherIoError,
             desc: "Error in OpenSSL",
-            detail: Some(format!("{}", errs))
+            detail: Some(format!("{:?}", errs))
         }
     }
 }

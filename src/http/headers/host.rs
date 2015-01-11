@@ -41,6 +41,6 @@ impl super::HeaderConvertible for Host {
     }
 
     fn http_value(&self) -> String {
-        format!("{}", self)
+        format!("{:?}", self)
     }
 }

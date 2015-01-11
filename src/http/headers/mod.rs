@@ -666,7 +666,7 @@ impl HeaderConvertible for Method {
     }
 
     fn http_value(&self) -> String {
-        format!("{}", self)
+        format!("{:?}", self)
     }
 }
 
