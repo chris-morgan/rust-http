@@ -1,4 +1,4 @@
-#![feature(macro_rules, slicing_syntax)]
+#![feature(slicing_syntax, box_syntax, int_uint)]
 
 use std::io::{File, Truncate, Write};
 use std::os;
