@@ -7,11 +7,9 @@
 
 #![allow(unknown_features)]
 #![feature(slicing_syntax)]
-#![feature(phase)]
-#![feature(globs)]
 #![feature(old_orphan_check)]
 
-#[phase(plugin, link)] extern crate log;
+#[macro_use] extern crate log;
 extern crate url;
 extern crate time;
 extern crate collections;
