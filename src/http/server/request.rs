@@ -169,6 +169,23 @@ impl<'a, S: Stream> Reader for RequestBuffer<'a, S> {
 }
 
 #[test]
+fn test_request_uri_from_string() {
+    assert_eq!(RequestUri::from_string("*".to_string()), Some(RequestUri::Star));
+    assert_eq!(RequestUri::from_string("/abc".to_string()), Some(RequestUri::AbsolutePath("/abc".to_string())));
+    let url = "http://example.com/abc";
+    match RequestUri::from_string(url.to_string()) {
+	Some(RequestUri::AbsoluteUri(url)) => {
+	    assert_eq!(url.domain(), Some("example.com"));
+	    assert_eq!(url.path(), Some(&["abc".to_string()][]));
+	},
+	_ => panic!("Parse failed for {}", url),
+    };
+    assert_eq!(RequestUri::from_string("".to_string()), None);
+    assert_eq!(RequestUri::from_string(" ".to_string()), Some(Authority(" ".to_string())));
+    Url::parse("").unwrap_err();    // Url::parse() should return error for empty string
+}
+
+#[test]
 fn test_read_request_line() {
     use method::Method::{Get, Options, Connect, ExtensionMethod};
     use buffer::BufferedStream;
@@ -277,7 +294,9 @@ pub enum RequestUri {
 impl RequestUri {
     /// Interpret a RFC2616 Request-URI
     fn from_string(request_uri: String) -> Option<RequestUri> {
-        if &request_uri[] == "*" {
+	if request_uri.is_empty() {
+	    None
+	} else if &request_uri[] == "*" {
             Some(Star)
         } else if request_uri.as_bytes()[0] as char == '/' {
             Some(AbsolutePath(request_uri))
