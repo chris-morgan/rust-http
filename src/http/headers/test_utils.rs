@@ -29,9 +29,9 @@ pub fn assert_invalid<T: HeaderConvertible + fmt::Show>(string: &str) {
 pub fn assert_conversion_correct<T: HeaderConvertible + fmt::Show>(string: &'static str, value: T) {
     assert_eq!(from_stream_with_str(string), Some(value.clone()));
     let s = to_stream_into_str(&value);
-    assert_eq!(s[], string);
+    assert_eq!(&s[], string);
     let s = value.http_value();
-    assert_eq!(s[], string);
+    assert_eq!(&s[], string);
 }
 
 // Verify that from_stream interprets the given valid header value correctly.

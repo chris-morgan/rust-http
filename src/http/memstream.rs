@@ -17,18 +17,18 @@ impl MemWriterFakeStream {
 
 impl Writer for MemWriterFakeStream {
     fn write(&mut self, buf: &[u8]) -> IoResult<()> {
-        let &MemWriterFakeStream(ref mut s) = self;
+        let &mut MemWriterFakeStream(ref mut s) = self;
         s.write(buf)
     }
 
     fn flush(&mut self) -> IoResult<()> {
-        let &MemWriterFakeStream(ref mut s) = self;
+        let &mut MemWriterFakeStream(ref mut s) = self;
         s.flush()
     }
 }
 
 impl Reader for MemWriterFakeStream {
-    fn read(&mut self, _buf: &mut [u8]) -> IoResult<uint> {
+    fn read(&mut self, _buf: &mut [u8]) -> IoResult<usize> {
         panic!("Uh oh, you didn't aught to call MemWriterFakeStream.read()!")
     }
 }
@@ -41,8 +41,8 @@ impl MemReaderFakeStream {
 }
 
 impl Reader for MemReaderFakeStream {
-    fn read(&mut self, buf: &mut [u8]) -> IoResult<uint> {
-        let &MemReaderFakeStream(ref mut s) = self;
+    fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> {
+        let &mut MemReaderFakeStream(ref mut s) = self;
         s.read(buf)
     }
 }
@@ -54,7 +54,7 @@ impl Seek for MemReaderFakeStream {
     }
 
     fn seek(&mut self, pos: i64, style: SeekStyle) -> IoResult<()> {
-        let &MemReaderFakeStream(ref mut s) = self;
+        let &mut MemReaderFakeStream(ref mut s) = self;
         s.seek(pos, style)
     }
 }
@@ -75,12 +75,12 @@ mod test {
     #[test]
     fn test_mem_writer_fake_stream() {
         let mut writer = MemWriterFakeStream::new();
-        assert_eq!(writer.get_ref(),            [][]);
+        assert_eq!(writer.get_ref(),            []);
         assert_eq!(writer.write(&[0]),          Ok(()));
-        assert_eq!(writer.get_ref(),            [0][]);
+        assert_eq!(writer.get_ref(),            [0]);
         assert_eq!(writer.write(&[1, 2, 3]),    Ok(()));
         assert_eq!(writer.write(&[4, 5, 6, 7]), Ok(()));
-        assert_eq!(writer.get_ref(),            [0, 1, 2, 3, 4, 5, 6, 7][]);
+        assert_eq!(writer.get_ref(),            [0, 1, 2, 3, 4, 5, 6, 7]);
     }
 
     #[test]
@@ -98,7 +98,7 @@ mod test {
         assert_eq!(reader.tell(),              Ok(5));
         assert_eq!(buf,                        vec![1, 2, 3, 4]);
         assert_eq!(reader.read(buf.as_mut_slice()),      Ok(3));
-        assert_eq!(buf[0..3],                  [5, 6, 7][]);
+        assert_eq!(&buf[0..3],                  [5, 6, 7]);
         assert_eq!(reader.read(buf.as_mut_slice()).ok(), None);
     }
 }

@@ -4,17 +4,9 @@
 
 #![deny(non_camel_case_types)]
 //#[deny(missing_doc)];
+#![allow(unstable)]
 
-#![allow(unknown_features)]
-#![feature(slicing_syntax)]
-#![feature(default_type_params)]
-#![feature(macro_rules)]
-#![feature(phase)]
-#![feature(globs)]
-#![feature(associated_types)]
-#![feature(old_orphan_check)]
-
-#[phase(plugin, link)] extern crate log;
+#[macro_use] extern crate log;
 extern crate url;
 extern crate time;
 extern crate collections;

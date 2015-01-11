@@ -21,7 +21,7 @@ pub enum Connection {
 impl fmt::Show for Connection {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match *self {
-            Token(ref s) => s[],
+            Token(ref s) => &s[],
             Close => "close",
         })
     }
@@ -33,10 +33,10 @@ impl super::HeaderConvertible for Connection {
     fn from_stream<R: Reader>(reader: &mut super::HeaderValueByteIterator<R>)
             -> Option<Connection> {
         let s = match reader.read_token() {
-            Some(s) => normalise_header_name(s[]),
+            Some(s) => normalise_header_name(&s[]),
             None => return None,
         };
-        if s[] == "Close" {
+        if &s[] == "Close" {
             Some(Close)
         } else {
             Some(Token(s))

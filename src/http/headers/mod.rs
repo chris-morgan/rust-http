@@ -126,13 +126,13 @@ pub fn header_enum_from_stream<R: Reader, E: HeaderEnum>(reader: &mut R)
         }
     }
     let mut iter = HeaderValueByteIterator::new(reader);
-    let header = HeaderEnum::value_from_stream(normalise_header_name(header_name[]), &mut iter);
+    let header = HeaderEnum::value_from_stream(normalise_header_name(&header_name[]), &mut iter);
     // Ensure that the entire header line is consumed (don't want to mess up next header!)
     for _ in iter { }
     match header {
         Some(h) => (Ok(h), iter.next_byte),
         None => {
-            debug!("malformed header value for {}", header_name[]);
+            debug!("malformed header value for {}", &header_name[]);
             // Alas, I can't tell you what the value actually was... TODO: improve that situation
             (Err(MalformedHeaderValue), iter.next_byte)
         },
@@ -613,7 +613,7 @@ impl<T: CommaListHeaderConvertible> HeaderConvertible for Vec<T> {
             if i != 0 {
                 out.push_str(", ");
             }
-            out.push_str(item.http_value()[])
+            out.push_str(&item.http_value()[])
         }
         out
     }
@@ -635,8 +635,8 @@ impl HeaderConvertible for String {
     }
 }
 
-impl HeaderConvertible for uint {
-    fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<uint> {
+impl HeaderConvertible for usize {
+    fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<usize> {
         reader.collect_to_string().parse()
     }
 
@@ -647,7 +647,7 @@ impl HeaderConvertible for uint {
 
 impl HeaderConvertible for Url {
     fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<Url> {
-        Url::parse(reader.collect_to_string()[]).ok()
+        Url::parse(&reader.collect_to_string()[]).ok()
     }
 
     fn http_value(&self) -> String {
@@ -660,13 +660,13 @@ impl CommaListHeaderConvertible for Method {}
 impl HeaderConvertible for Method {
     fn from_stream<R: Reader>(reader: &mut HeaderValueByteIterator<R>) -> Option<Method> {
         match reader.read_token() {
-            Some(s) => Method::from_str_or_new(s[]),
+            Some(s) => Method::from_str_or_new(&s[]),
             None => None,
         }
     }
 
     fn http_value(&self) -> String {
-        format!("{}", self)
+        format!("{:?}", self)
     }
 }
 
@@ -733,17 +733,17 @@ impl HeaderConvertible for Tm {
         let value = reader.collect_to_string();
 
         // XXX: %Z actually ignores any timezone other than UTC. Probably not a good idea?
-        match strptime(value[], "%a, %d %b %Y %T %Z") {  // RFC 822, updated by RFC 1123
+        match strptime(&value[], "%a, %d %b %Y %T %Z") {  // RFC 822, updated by RFC 1123
             Ok(time) => return Some(time),
             Err(_) => ()
         }
 
-        match strptime(value[], "%A, %d-%b-%y %T %Z") {  // RFC 850, obsoleted by RFC 1036
+        match strptime(&value[], "%A, %d-%b-%y %T %Z") {  // RFC 850, obsoleted by RFC 1036
             Ok(time) => return Some(time),
             Err(_) => ()
         }
 
-        match strptime(value[], "%c") {  // ANSI C's asctime() format
+        match strptime(&value[], "%c") {  // ANSI C's asctime() format
             Ok(time) => Some(time),
             Err(_) => None
         }
@@ -782,23 +782,23 @@ mod test {
     }
 
     #[test]
-    fn test_from_stream_uint() {
-        assert_eq!(from_stream_with_str::<uint>("foo bar"), None);
-        assert_eq!(from_stream_with_str::<uint>("-1"), None);
-        assert_eq!(from_stream_with_str("0"), Some(0u));
-        assert_eq!(from_stream_with_str("123456789"), Some(123456789u));
+    fn test_from_stream_usize() {
+        assert_eq!(from_stream_with_str::<usize>("foo bar"), None);
+        assert_eq!(from_stream_with_str::<usize>("-1"), None);
+        assert_eq!(from_stream_with_str("0"), Some(0us));
+        assert_eq!(from_stream_with_str("123456789"), Some(123456789us));
     }
 
     #[test]
-    fn test_http_value_uint() {
-        assert_eq!(0u.http_value(), String::from_str("0"));
-        assert_eq!(123456789u.http_value(), String::from_str("123456789"));
+    fn test_http_value_usize() {
+        assert_eq!(0us.http_value(), String::from_str("0"));
+        assert_eq!(123456789us.http_value(), String::from_str("123456789"));
     }
 
     #[test]
-    fn test_to_stream_uint() {
-        assert_eq!(to_stream_into_str(&0u), String::from_str("0"));
-        assert_eq!(to_stream_into_str(&123456789u), String::from_str("123456789"));
+    fn test_to_stream_usize() {
+        assert_eq!(to_stream_into_str(&0us), String::from_str("0"));
+        assert_eq!(to_stream_into_str(&123456789us), String::from_str("123456789"));
     }
 
     fn sample_tm() -> Tm {
@@ -879,14 +879,14 @@ macro_rules! headers_mod {
         // Not using this because of a "local ambiguity" bug
         //$($attrs:attr)*
         pub mod $mod_name:ident;
-        num_headers: $num_headers:pat;
+        num_headers: $num_headers:expr;
         $(
             $num_id:pat,
             $output_name:expr,
             $input_name:pat,
             $caps_ident:ident,
             $lower_ident:ident,
-            $htype:ty;
+            $htype:ty,
         )*
     } => {
         pub mod $mod_name {
@@ -965,7 +965,7 @@ macro_rules! headers_mod {
             }
 
             pub struct HeaderCollectionIterator<'a> {
-                pos: uint,
+                pos: usize,
                 coll: &'a HeaderCollection,
                 ext_iter: Option<Iter<'a, String, String>>
             }
@@ -1034,7 +1034,7 @@ macro_rules! headers_mod {
 
                 fn value_from_stream<R: Reader>(name: String, value: &mut HeaderValueByteIterator<R>)
                         -> Option<Header> {
-                    match name.clone().into_ascii_lowercase()[] {
+                    match &name.clone().into_ascii_lowercase()[] {
                         $($input_name => match HeaderConvertible::from_stream(value) {
                             Some(v) => Some($caps_ident(v)),
                             None => None,
@@ -1054,48 +1054,48 @@ headers_mod! {
     num_headers: 38;
 
     // RFC 2616, Section 4.5: General Header Fields
-     0, "Cache-Control",     "cache-control",     CacheControl,     cache_control,     String;
-     1, "Connection",        "connection",        Connection,       connection,        Vec<headers::connection::Connection>;
-     2, "Date",              "date",              Date,             date,              time::Tm;
-     3, "Pragma",            "pragma",            Pragma,           pragma,            String;
-     4, "Trailer",           "trailer",           Trailer,          trailer,           String;
-     5, "Transfer-Encoding", "transfer-encoding", TransferEncoding, transfer_encoding, Vec<headers::transfer_encoding::TransferCoding>;
-     6, "Upgrade",           "upgrade",           Upgrade,          upgrade,           String;
-     7, "Via",               "via",               Via,              via,               String;
-     8, "Warning",           "warning",           Warning,          warning,           String;
+     0, "Cache-Control",     "cache-control",     CacheControl,     cache_control,     String,
+     1, "Connection",        "connection",        Connection,       connection,        Vec<headers::connection::Connection>,
+     2, "Date",              "date",              Date,             date,              time::Tm,
+     3, "Pragma",            "pragma",            Pragma,           pragma,            String,
+     4, "Trailer",           "trailer",           Trailer,          trailer,           String,
+     5, "Transfer-Encoding", "transfer-encoding", TransferEncoding, transfer_encoding, Vec<headers::transfer_encoding::TransferCoding>,
+     6, "Upgrade",           "upgrade",           Upgrade,          upgrade,           String,
+     7, "Via",               "via",               Via,              via,               String,
+     8, "Warning",           "warning",           Warning,          warning,           String,
 
     // RFC 2616, Section 5.3: Request Header Fields
-     9, "Accept",              "accept",              Accept,             accept,              String;
-    10, "Accept-Charset",      "accept-charset",      AcceptCharset,      accept_charset,      String;
-    11, "Accept-Encoding",     "accept-encoding",     AcceptEncoding,     accept_encoding,     String;
-    12, "Accept-Language",     "accept-language",     AcceptLanguage,     accept_language,     String;
-    13, "Authorization",       "authorization",       Authorization,      authorization,       String;
-    14, "Expect",              "expect",              Expect,             expect,              String;
-    15, "From",                "from",                From,               from,                String;
-    16, "Host",                "host",                Host,               host,                headers::host::Host;
-    17, "If-Match",            "if-match",            IfMatch,            if_match,            String;
-    18, "If-Modified-Since",   "if-modified-since",   IfModifiedSince,    if_modified_since,   time::Tm;
-    19, "If-None-Match",       "if-none-match",       IfNoneMatch,        if_none_match,       String;
-    20, "If-Range",            "if-range",            IfRange,            if_range,            String;
-    21, "If-Unmodified-Since", "if-unmodified-since", IfUnmodifiedSince,  if_unmodified_since, time::Tm;
-    22, "Max-Forwards",        "max-forwards",        MaxForwards,        max_forwards,        uint;
-    23, "Proxy-Authorization", "proxy-authorization", ProxyAuthorization, proxy_authorization, String;
-    24, "Range",               "range",               Range,              range,               String;
-    25, "Referer",             "referer",             Referer,            referer,             String;
-    26, "TE",                  "te",                  Te,                 te,                  String;
-    27, "User-Agent",          "user-agent",          UserAgent,          user_agent,          String;
+     9, "Accept",              "accept",              Accept,             accept,              String,
+    10, "Accept-Charset",      "accept-charset",      AcceptCharset,      accept_charset,      String,
+    11, "Accept-Encoding",     "accept-encoding",     AcceptEncoding,     accept_encoding,     String,
+    12, "Accept-Language",     "accept-language",     AcceptLanguage,     accept_language,     String,
+    13, "Authorization",       "authorization",       Authorization,      authorization,       String,
+    14, "Expect",              "expect",              Expect,             expect,              String,
+    15, "From",                "from",                From,               from,                String,
+    16, "Host",                "host",                Host,               host,                headers::host::Host,
+    17, "If-Match",            "if-match",            IfMatch,            if_match,            String,
+    18, "If-Modified-Since",   "if-modified-since",   IfModifiedSince,    if_modified_since,   time::Tm,
+    19, "If-None-Match",       "if-none-match",       IfNoneMatch,        if_none_match,       String,
+    20, "If-Range",            "if-range",            IfRange,            if_range,            String,
+    21, "If-Unmodified-Since", "if-unmodified-since", IfUnmodifiedSince,  if_unmodified_since, time::Tm,
+    22, "Max-Forwards",        "max-forwards",        MaxForwards,        max_forwards,        usize,
+    23, "Proxy-Authorization", "proxy-authorization", ProxyAuthorization, proxy_authorization, String,
+    24, "Range",               "range",               Range,              range,               String,
+    25, "Referer",             "referer",             Referer,            referer,             String,
+    26, "TE",                  "te",                  Te,                 te,                  String,
+    27, "User-Agent",          "user-agent",          UserAgent,          user_agent,          String,
 
     // RFC 2616, Section 7.1: Entity Header Fields
-    28, "Allow",            "allow",            Allow,           allow,            Vec<::method::Method>;
-    29, "Content-Encoding", "content-encoding", ContentEncoding, content_encoding, String;
-    30, "Content-Language", "content-language", ContentLanguage, content_language, String;
-    31, "Content-Length",   "content-length",   ContentLength,   content_length,   uint;
-    32, "Content-Location", "content-location", ContentLocation, content_location, String;
-    33, "Content-MD5",      "content-md5",      ContentMd5,      content_md5,      String;
-    34, "Content-Range",    "content-range",    ContentRange,    content_range,    String;
-    35, "Content-Type",     "content-type",     ContentType,     content_type,     headers::content_type::MediaType;
-    36, "Expires",          "expires",          Expires,         expires,          time::Tm;
-    37, "Last-Modified",    "last-modified",    LastModified,    last_modified,    time::Tm;
+    28, "Allow",            "allow",            Allow,           allow,            Vec<::method::Method>,
+    29, "Content-Encoding", "content-encoding", ContentEncoding, content_encoding, String,
+    30, "Content-Language", "content-language", ContentLanguage, content_language, String,
+    31, "Content-Length",   "content-length",   ContentLength,   content_length,   usize,
+    32, "Content-Location", "content-location", ContentLocation, content_location, String,
+    33, "Content-MD5",      "content-md5",      ContentMd5,      content_md5,      String,
+    34, "Content-Range",    "content-range",    ContentRange,    content_range,    String,
+    35, "Content-Type",     "content-type",     ContentType,     content_type,     headers::content_type::MediaType,
+    36, "Expires",          "expires",          Expires,         expires,          time::Tm,
+    37, "Last-Modified",    "last-modified",    LastModified,    last_modified,    time::Tm,
 }
 
 headers_mod! {
@@ -1105,39 +1105,39 @@ headers_mod! {
     num_headers: 30;
 
     // RFC 2616, Section 4.5: General Header Fields
-     0, "Cache-Control",     "cache-control",     CacheControl,     cache_control,     String;
-     1, "Connection",        "connection",        Connection,       connection,        Vec<headers::connection::Connection>;
-     2, "Date",              "date",              Date,             date,              time::Tm;
-     3, "Pragma",            "pragma",            Pragma,           pragma,            String;
-     4, "Trailer",           "trailer",           Trailer,          trailer,           String;
-     5, "Transfer-Encoding", "transfer-encoding", TransferEncoding, transfer_encoding, Vec<headers::transfer_encoding::TransferCoding>;
-     6, "Upgrade",           "upgrade",           Upgrade,          upgrade,           String;
-     7, "Via",               "via",               Via,              via,               String;
-     8, "Warning",           "warning",           Warning,          warning,           String;
+     0, "Cache-Control",     "cache-control",     CacheControl,     cache_control,     String,
+     1, "Connection",        "connection",        Connection,       connection,        Vec<headers::connection::Connection>,
+     2, "Date",              "date",              Date,             date,              time::Tm,
+     3, "Pragma",            "pragma",            Pragma,           pragma,            String,
+     4, "Trailer",           "trailer",           Trailer,          trailer,           String,
+     5, "Transfer-Encoding", "transfer-encoding", TransferEncoding, transfer_encoding, Vec<headers::transfer_encoding::TransferCoding>,
+     6, "Upgrade",           "upgrade",           Upgrade,          upgrade,           String,
+     7, "Via",               "via",               Via,              via,               String,
+     8, "Warning",           "warning",           Warning,          warning,           String,
 
     // RFC 2616, Section 6.2: Response Header Fields
-     9, "Accept-Patch",       "accept-patch",       AcceptPatch,       accept_patch,       String;
-    10, "Accept-Ranges",      "accept-ranges",      AcceptRanges,      accept_ranges,      headers::accept_ranges::AcceptableRanges;
-    11, "Age",                "age",                Age,               age,                String;
-    12, "ETag",               "etag",               ETag,              etag,               headers::etag::EntityTag;
-    13, "Location",           "location",           Location,          location,           ::url::Url;
-    14, "Proxy-Authenticate", "proxy-authenticate", ProxyAuthenticate, proxy_authenticate, String;
-    15, "Retry-After",        "retry-after",        RetryAfter,        retry_after,        String;
-    16, "Server",             "server",             Server,            server,             String;
-    17, "Vary",               "vary",               Vary,              vary,               String;
-    18, "WWW-Authenticate",   "www-authenticate",   WwwAuthenticate,   www_authenticate,   String;
+     9, "Accept-Patch",       "accept-patch",       AcceptPatch,       accept_patch,       String,
+    10, "Accept-Ranges",      "accept-ranges",      AcceptRanges,      accept_ranges,      headers::accept_ranges::AcceptableRanges,
+    11, "Age",                "age",                Age,               age,                String,
+    12, "ETag",               "etag",               ETag,              etag,               headers::etag::EntityTag,
+    13, "Location",           "location",           Location,          location,           ::url::Url,
+    14, "Proxy-Authenticate", "proxy-authenticate", ProxyAuthenticate, proxy_authenticate, String,
+    15, "Retry-After",        "retry-after",        RetryAfter,        retry_after,        String,
+    16, "Server",             "server",             Server,            server,             String,
+    17, "Vary",               "vary",               Vary,              vary,               String,
+    18, "WWW-Authenticate",   "www-authenticate",   WwwAuthenticate,   www_authenticate,   String,
 
     // RFC 2616, Section 7.1: Entity Header Fields
-    19, "Allow",            "allow",            Allow,           allow,            Vec<::method::Method>;
-    20, "Content-Encoding", "content-encoding", ContentEncoding, content_encoding, String;
-    21, "Content-Language", "content-language", ContentLanguage, content_language, String;
-    22, "Content-Length",   "content-length",   ContentLength,   content_length,   uint;
-    23, "Content-Location", "content-location", ContentLocation, content_location, String;
-    24, "Content-MD5",      "content-md5",      ContentMd5,      content_md5,      String;
-    25, "Content-Range",    "content-range",    ContentRange,    content_range,    String;
-    26, "Content-Type",     "content-type",     ContentType,     content_type,     headers::content_type::MediaType;
-    27, "Expires",          "expires",          Expires,         expires,          String; // TODO: Should be Tm
-    28, "Last-Modified",    "last-modified",    LastModified,    last_modified,    time::Tm;
+    19, "Allow",            "allow",            Allow,           allow,            Vec<::method::Method>,
+    20, "Content-Encoding", "content-encoding", ContentEncoding, content_encoding, String,
+    21, "Content-Language", "content-language", ContentLanguage, content_language, String,
+    22, "Content-Length",   "content-length",   ContentLength,   content_length,   usize,
+    23, "Content-Location", "content-location", ContentLocation, content_location, String,
+    24, "Content-MD5",      "content-md5",      ContentMd5,      content_md5,      String,
+    25, "Content-Range",    "content-range",    ContentRange,    content_range,    String,
+    26, "Content-Type",     "content-type",     ContentType,     content_type,     headers::content_type::MediaType,
+    27, "Expires",          "expires",          Expires,         expires,          String, // TODO: Should be Tm
+    28, "Last-Modified",    "last-modified",    LastModified,    last_modified,    time::Tm,
 
-    29, "Access-Control-Allow-Origin", "access-control-allow-origin", AccessControlAllowOrigin, access_control_allow_origin, String;
+    29, "Access-Control-Allow-Origin", "access-control-allow-origin", AccessControlAllowOrigin, access_control_allow_origin, String,
 }

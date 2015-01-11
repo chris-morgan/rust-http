@@ -21,7 +21,7 @@ use rfc2616::is_token;
 pub fn normalise_header_name(name: &str) -> String {
     let mut result: String = String::with_capacity(name.len());
     let mut capitalise = true;
-    for c in name[].chars() {
+    for c in name.chars() {
         result.push(match capitalise {
             true => c.to_uppercase(),
             false => c.to_lowercase(),
@@ -85,7 +85,7 @@ pub trait WriterUtil: Writer {
     fn write_parameters(&mut self, parameters: &[(String, String)]) -> IoResult<()> {
         for &(ref k, ref v) in parameters.iter() {
             try!(self.write(b";"));
-            try!(self.write_parameter(k[], v));
+            try!(self.write_parameter(&k[], v));
         }
         Ok(())
     }
@@ -123,13 +123,13 @@ pub fn comma_join(values: &[String]) -> String {
     let mut out = String::new();
     let mut iter = values.iter();
     match iter.next() {
-        Some(s) => out.push_str(s[]),
+        Some(s) => out.push_str(&s[]),
         None => return out
     }
 
     for value in iter {
         out.push_str(", ");
-        out.push_str(value[]);
+        out.push_str(&value[]);
     }
     out
 }
@@ -137,7 +137,7 @@ pub fn comma_join(values: &[String]) -> String {
 /// Push a ( token | quoted-string ) onto a string and return it again
 pub fn push_maybe_quoted_string(mut s: String, t: &String) -> String {
     if is_token(t) {
-        s.push_str(t[]);
+        s.push_str(&t[]);
         s
     } else {
         push_quoted_string(s, t)
@@ -158,7 +158,7 @@ pub fn push_quoted_string(mut s: String, t: &String) -> String {
     let i = s.len();
     s.reserve(t.len() + i + 2);
     s.push('"');
-    for c in t[].chars() {
+    for c in t.chars() {
         if c == '\\' || c == '"' {
             s.push('\\');
         }
@@ -181,7 +181,7 @@ pub fn unquote_string(s: &String) -> Option<String> {
     let mut output = String::new();
     // Strings with escapes cause overallocation, but it's not worth a second pass to avoid this!
     output.reserve(s.len() - 2);
-    let mut iter = s[].chars();
+    let mut iter = s.chars();
     loop {
         state = match (state, iter.next()) {
             (State::Start, Some(c)) if c == '"' => State::Normal,
@@ -210,7 +210,7 @@ pub fn maybe_unquote_string(s: &String) -> Option<String> {
 
 // Takes and emits the String instead of the &mut str for a simpler, fluid interface
 pub fn push_parameter(mut s: String, k: &String, v: &String) -> String {
-    s.push_str(k[]);
+    s.push_str(&k[]);
     s.push('=');
     push_maybe_quoted_string(s, v)
 }
@@ -337,14 +337,14 @@ mod test {
 
     #[test]
     fn test_push_parameters() {
-        assert_eq!(push_parameters(String::from_str("foo"), [][]), String::from_str("foo"));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz"))][]), String::from_str("foo;bar=baz"));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz/quux"))][]), String::from_str("foo;bar=\"baz/quux\""));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz"))][]),
+        assert_eq!(push_parameters(String::from_str("foo"), &[][]), String::from_str("foo"));
+        assert_eq!(push_parameters(String::from_str("foo"), &[(String::from_str("bar"), String::from_str("baz"))][]), String::from_str("foo;bar=baz"));
+        assert_eq!(push_parameters(String::from_str("foo"), &[(String::from_str("bar"), String::from_str("baz/quux"))][]), String::from_str("foo;bar=\"baz/quux\""));
+        assert_eq!(push_parameters(String::from_str("foo"), &[(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz"))][]),
                    String::from_str("foo;bar=baz;quux=fuzz"));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz zee"))][]),
+        assert_eq!(push_parameters(String::from_str("foo"), &[(String::from_str("bar"), String::from_str("baz")), (String::from_str("quux"), String::from_str("fuzz zee"))][]),
                    String::from_str("foo;bar=baz;quux=\"fuzz zee\""));
-        assert_eq!(push_parameters(String::from_str("foo"), [(String::from_str("bar"), String::from_str("baz/quux")), (String::from_str("fuzz"), String::from_str("zee"))][]),
+        assert_eq!(push_parameters(String::from_str("foo"), &[(String::from_str("bar"), String::from_str("baz/quux")), (String::from_str("fuzz"), String::from_str("zee"))][]),
                    String::from_str("foo;bar=\"baz/quux\";fuzz=zee"));
     }
 }

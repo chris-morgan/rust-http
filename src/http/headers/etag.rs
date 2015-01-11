@@ -25,9 +25,9 @@ pub fn strong_etag(opaque_tag: String) -> EntityTag {
 impl fmt::Show for EntityTag {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.weak {
-            f.write_str(push_quoted_string(String::from_str("W/"), &self.opaque_tag)[])
+            f.write_str(&push_quoted_string(String::from_str("W/"), &self.opaque_tag)[])
         } else {
-            f.write_str(quoted_string(&self.opaque_tag)[])
+            f.write_str(&quoted_string(&self.opaque_tag)[])
         }
     }
 }
@@ -66,7 +66,7 @@ impl super::HeaderConvertible for EntityTag {
     }
 
     fn http_value(&self) -> String {
-        format!("{}", self)
+        format!("{:?}", self)
     }
 }
 

@@ -1,6 +1,6 @@
 #![crate_name = "client"]
 
-#![allow(unknown_features)]
+#![allow(unstable)]
 #![feature(slicing_syntax)]
 
 extern crate http;
@@ -14,11 +14,11 @@ use std::io::println;
 use url::Url;
 
 fn main() {
-    format!("{}", Get);
+    format!("{:?}", Get);
     let args = os::args();
     match args.len() {
         0 => unreachable!(),
-        2 => make_and_print_request(args[1][]),
+        2 => make_and_print_request(&args[1][]),
         _ => {
             println!("Usage: {} URL", args[0]);
             return;
@@ -34,8 +34,8 @@ fn make_and_print_request(url: &str) {
     println!("[33;1m=======[0m");
     println!("");
     println!("[1mURL:[0m {}", request.url);
-    println!("[1mRemote address:[0m {}", request.remote_addr);
-    println!("[1mMethod:[0m {}", request.method);
+    println!("[1mRemote address:[0m {:?}", request.remote_addr);
+    println!("[1mMethod:[0m {:?}", request.method);
     println!("[1mHeaders:[0m");
     for header in request.headers.iter() {
         println!(" - {}: {}", header.header_name(), header.header_value());
@@ -49,7 +49,7 @@ fn make_and_print_request(url: &str) {
         Ok(response) => response,
         Err(_request) => panic!("This example can progress no further with no response :-("),
     };
-    println!("[1mStatus:[0m {}", response.status);
+    println!("[1mStatus:[0m {:?}", response.status);
     println!("[1mHeaders:[0m");
     for header in response.headers.iter() {
         println!(" - {}: {}", header.header_name(), header.header_value());
@@ -59,5 +59,5 @@ fn make_and_print_request(url: &str) {
         Ok(body) => body,
         Err(err) => panic!("Reading response failed: {}", err),
     };
-    println(str::from_utf8(body[]).ok().expect("Uh oh, response wasn't UTF-8"));
+    println(str::from_utf8(&body[]).ok().expect("Uh oh, response wasn't UTF-8"));
 }

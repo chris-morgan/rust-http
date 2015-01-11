@@ -20,7 +20,7 @@ impl fmt::Show for Host {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.port {
             Some(port) => write!(f, "{}:{}", self.name, port),
-            None => f.write_str(self.name[]),
+            None => f.write_str(&self.name[]),
         }
     }
 }
@@ -30,7 +30,7 @@ impl super::HeaderConvertible for Host {
         let s = reader.collect_to_string();
         // TODO: this doesn't support IPv6 address access (e.g. "[::1]")
         // Do this properly with correct authority parsing.
-        let mut hi = s[].splitn(1, ':');
+        let mut hi = s.splitn(1, ':');
         Some(Host {
             name: String::from_str(hi.next().unwrap()),
             port: match hi.next() {
@@ -41,6 +41,6 @@ impl super::HeaderConvertible for Host {
     }
 
     fn http_value(&self) -> String {
-        format!("{}", self)
+        format!("{:?}", self)
     }
 }

@@ -7,19 +7,19 @@ use std::fmt::radix;
 use std::ptr;
 
 // 64KB chunks (moderately arbitrary)
-const READ_BUF_SIZE: uint = 0x10000;
-const WRITE_BUF_SIZE: uint = 0x10000;
+const READ_BUF_SIZE: usize = 0x10000;
+const WRITE_BUF_SIZE: usize = 0x10000;
 // TODO: consider removing constants and giving a buffer size in the constructor
 
 pub struct BufferedStream<T> {
     pub wrapped: T,
     pub read_buffer: Vec<u8>,
     // The current position in the buffer
-    pub read_pos: uint,
+    pub read_pos: usize,
     // The last valid position in the reader
-    pub read_max: uint,
+    pub read_max: usize,
     pub write_buffer: Vec<u8>,
-    pub write_len: uint,
+    pub write_len: usize,
 
     pub writing_chunked_body: bool,
 }
@@ -33,10 +33,10 @@ impl<T: Stream> BufferedStream<T> {
         BufferedStream {
             wrapped: stream,
             read_buffer: read_buffer,
-            read_pos: 0u,
-            read_max: 0u,
+            read_pos: 0us,
+            read_max: 0us,
             write_buffer: write_buffer,
-            write_len: 0u,
+            write_len: 0us,
             writing_chunked_body: false,
         }
     }
@@ -53,7 +53,7 @@ impl<T: Reader> BufferedStream<T> {
             (0, _) => panic!("poke called when buffer is full"),
             (_, _) => self.read_pos -= 1,
         }
-        self.read_buffer[mut][self.read_pos] = byte;
+        self.read_buffer[self.read_pos] = byte;
     }
 
     #[inline]
@@ -105,13 +105,13 @@ impl<T: Reader> Reader for BufferedStream<T> {
     ///
     /// At present, this makes no attempt to fill its buffer proactively, instead waiting until you
     /// ask.
-    fn read(&mut self, buf: &mut [u8]) -> IoResult<uint> {
+    fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> {
         if self.read_pos == self.read_max {
             // Fill the buffer, giving up if we've run out of buffered content
             try!(self.fill_buffer());
         }
         let size = min(self.read_max - self.read_pos, buf.len());
-        slice::bytes::copy_memory(buf, self.read_buffer[self.read_pos..self.read_pos + size]);
+        slice::bytes::copy_memory(buf, &self.read_buffer[self.read_pos..self.read_pos + size]);
         self.read_pos += size;
         Ok(size)
     }
@@ -127,7 +127,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
                 try!(self.wrapped.write(s.as_bytes()));
             }
             if self.write_len > 0 {
-                try!(self.wrapped.write(self.write_buffer[..self.write_len]));
+                try!(self.wrapped.write(&self.write_buffer[..self.write_len]));
                 self.write_len = 0;
             }
             try!(self.wrapped.write(buf));
@@ -137,7 +137,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
             }
         } else {
             unsafe {
-                ptr::copy_memory(self.write_buffer.as_mut_ptr().offset(self.write_len as int),
+                ptr::copy_memory(self.write_buffer.as_mut_ptr().offset(self.write_len as isize),
                     buf.as_ptr(), buf.len());
             }
 
@@ -146,10 +146,10 @@ impl<T: Writer> Writer for BufferedStream<T> {
                 if self.writing_chunked_body {
                     let s = format!("{}\r\n", radix(self.write_len, 16));
                     try!(self.wrapped.write(s.as_bytes()));
-                    try!(self.wrapped.write(self.write_buffer[]));
+                    try!(self.wrapped.write(&self.write_buffer[]));
                     try!(self.wrapped.write(b"\r\n"));
                 } else {
-                    try!(self.wrapped.write(self.write_buffer[]));
+                    try!(self.wrapped.write(&self.write_buffer[]));
                 }
                 self.write_len = 0;
             }
@@ -163,7 +163,7 @@ impl<T: Writer> Writer for BufferedStream<T> {
                 let s = format!("{}\r\n", radix(self.write_len, 16));
                 try!(self.wrapped.write(s.as_bytes()));
             }
-            try!(self.wrapped.write(self.write_buffer[..self.write_len]));
+            try!(self.wrapped.write(&self.write_buffer[..self.write_len]));
             if self.writing_chunked_body {
                 try!(self.wrapped.write(b"\r\n"));
             }

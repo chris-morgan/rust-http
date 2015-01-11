@@ -20,10 +20,10 @@ use self::RequestUri::{Star, AbsoluteUri, AbsolutePath, Authority};
 
 // /// Line/header can't be more than 4KB long (note that with the compacting of LWS the actual source
 // /// data could be longer than 4KB)
-// const MAX_LINE_LEN: uint = 0x1000;
+// const MAX_LINE_LEN: usize = 0x1000;
 
-const MAX_REQUEST_URI_LEN: uint = 1024;
-pub const MAX_METHOD_LEN: uint = 64;
+const MAX_REQUEST_URI_LEN: usize = 1024;
+pub const MAX_METHOD_LEN: usize = 64;
 
 pub struct RequestBuffer<'a, S: 'a> {
     /// The socket connection to read from
@@ -37,7 +37,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
         }
     }
 
-    pub fn read_request_line(&mut self) -> Result<(Method, RequestUri, (uint, uint)),
+    pub fn read_request_line(&mut self) -> Result<(Method, RequestUri, (usize, usize)),
                                                   status::Status> {
         let method = match self.read_method() {
             Ok(m) => m,
@@ -110,7 +110,7 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
         let mut read_b = 0;
 
         // FIXME: we still have one inconsistency here: this isn't trimming *SP.
-        match read_http_version(self.stream, |b| { read_b = b; b == CR || b == LF }) {
+        match read_http_version(self.stream, &mut |b| { read_b = b; b == CR || b == LF }) {
             Ok(vv) => {
                 if read_b == LF || self.stream.read_byte() == Ok(LF) {
                     Ok((method, request_uri, vv))  // LF or CR LF: valid
@@ -163,9 +163,26 @@ impl<'a, S: Stream> RequestBuffer<'a, S> {
 }
 
 impl<'a, S: Stream> Reader for RequestBuffer<'a, S> {
-    fn read(&mut self, buf: &mut [u8]) -> IoResult<uint> {
+    fn read(&mut self, buf: &mut [u8]) -> IoResult<usize> {
         self.stream.read(buf)
     }
+}
+
+#[test]
+fn test_request_uri_from_string() {
+    assert_eq!(RequestUri::from_string("*".to_string()), Some(RequestUri::Star));
+    assert_eq!(RequestUri::from_string("/abc".to_string()), Some(RequestUri::AbsolutePath("/abc".to_string())));
+    let url = "http://example.com/abc";
+    match RequestUri::from_string(url.to_string()) {
+	Some(RequestUri::AbsoluteUri(url)) => {
+	    assert_eq!(url.domain(), Some("example.com"));
+	    assert_eq!(url.path(), Some(&["abc".to_string()][]));
+	},
+	_ => panic!("Parse failed for {}", url),
+    };
+    assert_eq!(RequestUri::from_string("".to_string()), None);
+    assert_eq!(RequestUri::from_string(" ".to_string()), Some(Authority(" ".to_string())));
+    Url::parse("").unwrap_err();    // Url::parse() should return error for empty string
 }
 
 #[test]
@@ -239,7 +256,7 @@ pub struct Request {
     pub close_connection: bool,
 
     /// The HTTP version number; typically `(1, 1)` or, less commonly, `(1, 0)`.
-    pub version: (uint, uint)
+    pub version: (usize, usize)
 }
 
 /// The URI (Request-URI in RFC 2616) as specified in the Status-Line of an HTTP request
@@ -277,13 +294,15 @@ pub enum RequestUri {
 impl RequestUri {
     /// Interpret a RFC2616 Request-URI
     fn from_string(request_uri: String) -> Option<RequestUri> {
-        if request_uri == String::from_str("*") {
+	if request_uri.is_empty() {
+	    None
+	} else if &request_uri[] == "*" {
             Some(Star)
         } else if request_uri.as_bytes()[0] as char == '/' {
             Some(AbsolutePath(request_uri))
-        } else if request_uri[].contains("/") {
+        } else if request_uri.contains("/") {
             // An authority can't have a slash in it
-            match Url::parse(request_uri[]) {
+            match Url::parse(&request_uri[]) {
                 Ok(url) => Some(AbsoluteUri(url)),
                 Err(_) => None,
             }
@@ -299,8 +318,8 @@ impl fmt::Show for RequestUri {
         match *self {
             Star => f.write_str("*"),
             AbsoluteUri(ref url) => url.fmt(f),
-            AbsolutePath(ref s) => f.write_str(s[]),
-            Authority(ref s) => f.write_str(s[]),
+            AbsolutePath(ref s) => f.write_str(&s[]),
+            Authority(ref s) => f.write_str(&s[]),
         }
     }
 }
@@ -370,7 +389,7 @@ impl Request {
                         request.close_connection = true;
                         break;
                     },
-                    headers::connection::Connection::Token(ref s) if s[] == "keep-alive" => {
+                    headers::connection::Connection::Token(ref s) if &s[] == "keep-alive" => {
                         request.close_connection = false;
                         // No break; let it be overridden by close should some weird person do that
                     },
@@ -408,7 +427,7 @@ pub struct Request {
     url: ~Url,
 
     // The HTTP protocol version used; typically (1, 1)
-    protocol: (uint, uint),
+    protocol: (usize, usize),
 
     // Request headers, all nicely and correctly parsed.
     headers: ~Headers,

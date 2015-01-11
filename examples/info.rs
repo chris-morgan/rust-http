@@ -3,6 +3,7 @@
 
 #![crate_name = "info"]
 
+#![allow(unstable)]
 extern crate time;
 extern crate http;
 
@@ -33,10 +34,10 @@ impl Server for InfoServer {
 
         w.write(b"<h1>Request</h1>").unwrap();
         let s = format!("<dl>
-            <dt>Method</dt><dd>{}</dd>
-            <dt>Host</dt><dd>{}</dd>
-            <dt>Request URI</dt><dd>{}</dd>
-            <dt>HTTP version</dt><dd>{}</dd>
+            <dt>Method</dt><dd>{:?}</dd>
+            <dt>Host</dt><dd>{:?}</dd>
+            <dt>Request URI</dt><dd>{:?}</dd>
+            <dt>HTTP version</dt><dd>{:?}</dd>
             <dt>Close connection</dt><dd>{}</dd></dl>",
             r.method,
             r.headers.host,
@@ -58,7 +59,7 @@ impl Server for InfoServer {
         w.write(b"</pre>").unwrap();
 
         w.write(b"<h1>Response</h1>").unwrap();
-        let s = format!("<dl><dt>Status</dt><dd>{}</dd></dl>", w.status);
+        let s = format!("<dl><dt>Status</dt><dd>{:?}</dd></dl>", w.status);
         w.write(s.as_bytes()).unwrap();
         w.write(b"<h2>Headers</h2>").unwrap();
         w.write(b"<table><thead><tr><th>Name</th><th>Value</th></thead><tbody>").unwrap();

@@ -1,4 +1,4 @@
-#![macro_escape]
+#![macro_use]
 
 use std::str::Chars;
 use std::vec::Vec;
@@ -85,14 +85,14 @@ macro_rules! branchify(
 pub fn generate_branchified_method(
         writer: &mut Writer,
         branches: Vec<ParseBranch>,
-        indent: uint,
+        indent: usize,
         read_call: &str,
         end: &str,
         max_len: &str,
         valid: &str,
         unknown: &str) -> IoResult<()> {
 
-    fn r(writer: &mut Writer, branch: &ParseBranch, prefix: &str, indent: uint, read_call: &str,
+    fn r(writer: &mut Writer, branch: &ParseBranch, prefix: &str, indent: usize, read_call: &str,
             end: &str, max_len: &str, valid: &str, unknown: &str) -> IoResult<()> {
         let indentstr = repeat(' ').take(indent * 4).collect::<String>();
         macro_rules! w (
@@ -104,13 +104,13 @@ pub fn generate_branchified_method(
             let next_prefix = format!("{}{}", prefix, c as char);
             w!(format!("Ok(b'{}') => match {} {{", c as char, read_call));
             for b in branch.children.iter() {
-                try!(r(writer, b, next_prefix[], indent + 1, read_call, end, max_len, valid, unknown));
+                try!(r(writer, b, &next_prefix[], indent + 1, read_call, end, max_len, valid, unknown));
             }
             match branch.result {
                 Some(ref result) =>
                     w!(format!("    Ok(b' ') => return Ok({}),", *result)),
                 None => w!(format!("    Ok(b' ') => return Ok({}),",
-                                  unknown.replace("{}", format!("String::from_str(\"{}\")", next_prefix)[]))),
+                                  unknown.replace("{}", &format!("String::from_str(\"{}\")", next_prefix)[]))),
             }
             w!(format!("    Ok(b) if {} => (\"{}\", b),", valid, next_prefix));
             w!("    Ok(_) => return Err(::std::io::IoError { kind: ::std::io::OtherIoError, desc: \"bad value\", detail: None }),");

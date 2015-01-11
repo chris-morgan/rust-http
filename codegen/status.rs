@@ -23,18 +23,18 @@ enum HeadingOrStatus {
 
 #[derive(Copy)]
 struct HttpStatus {
-    code: uint,
+    code: usize,
     reason: &'static str,
     comment: Option<&'static str>,
 }
 
 /// Status with comment
-fn status_c(code: uint, reason: &'static str, comment: &'static str) -> HeadingOrStatus {
+fn status_c(code: usize, reason: &'static str, comment: &'static str) -> HeadingOrStatus {
     Status(HttpStatus { code: code, reason: reason, comment: Some(comment) })
 }
 
 /// Status without comment
-fn status_n(code: uint, reason: &'static str) -> HeadingOrStatus {
+fn status_n(code: usize, reason: &'static str) -> HeadingOrStatus {
     Status(HttpStatus { code: code, reason: reason, comment: None })
 }
 
@@ -45,7 +45,7 @@ impl HttpStatus {
 
     fn padded_ident(&self) -> String {
         let mut s = self.ident();
-        s.push_str(self.reason_padding_spaces()[]);
+        s.push_str(&self.reason_padding_spaces()[]);
         s
     }
 
@@ -60,7 +60,7 @@ fn camel_case(msg: &str) -> String {
     let msg = msg.replace("-", " ").replace("'", "");
     let mut result = String::with_capacity(msg.len());
     let mut capitalise = true;
-    for c in msg[].chars() {
+    for c in msg.chars() {
         let c = match capitalise {
             true => c.to_ascii_uppercase(),
             false => c.to_ascii_lowercase(),
@@ -74,8 +74,8 @@ fn camel_case(msg: &str) -> String {
     result
 }
 
-static mut longest_ident: uint = 0;
-static mut longest_reason: uint = 0;
+static mut longest_ident: usize = 0;
+static mut longest_reason: usize = 0;
 
 pub fn generate(output_dir: Path) -> IoResult<()> {
     let mut out = get_writer(output_dir, "status.rs");
@@ -226,8 +226,8 @@ impl Status {
 
     /// Get a status from the code and reason
     pub fn from_code_and_reason(status: u16, reason: String) -> Status {
-        let reason_lower = reason[].to_ascii_lowercase();
-        match (status, reason_lower[]) {
+        let reason_lower = reason.to_ascii_lowercase();
+        match (status, &reason_lower[]) {
 ".as_bytes()));
     for &entry in entries.iter() {
         match entry {
