@@ -1,4 +1,4 @@
-#![feature(macro_rules, slicing_syntax)]
+#![feature(slicing_syntax, box_syntax, int_uint)]
 
 use std::io::{File, Truncate, Write};
 use std::os;
@@ -12,7 +12,7 @@ fn main() {
     Thread::spawn(move || {
         let output_dir = Path::new(os::getenv("OUT_DIR").unwrap());
         read_method::generate(output_dir).unwrap();
-    }).detach();
+    });
 
     let output_dir = Path::new(os::getenv("OUT_DIR").unwrap());
     status::generate(output_dir).unwrap();

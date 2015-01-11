@@ -45,7 +45,7 @@ impl HttpStatus {
 
     fn padded_ident(&self) -> String {
         let mut s = self.ident();
-        s.push_str(self.reason_padding_spaces()[]);
+        s.push_str(self.reason_padding_spaces().as_slice());
         s
     }
 

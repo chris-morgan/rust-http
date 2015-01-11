@@ -43,8 +43,8 @@ const ASCII_UPPER_F: u8 = b'F';
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_decimal<R: Reader, N: UnsignedInt + NumCast + Int>
-                   (reader: &mut R, expected_end: |u8| -> bool)
+pub fn read_decimal<R: Reader, N: UnsignedInt + NumCast + Int, F: FnMut(u8) -> bool>
+                   (reader: &mut R, mut expected_end: F)
                    -> IoResult<N> {
     // Here and in `read_hexadecimal` there is the possibility of infinite sequence of zeroes. The
     // spec allows this, but it may not be a good thing to allow. It's not a particularly good
@@ -89,8 +89,8 @@ pub fn read_decimal<R: Reader, N: UnsignedInt + NumCast + Int>
  *
  * Should everything work as designed (i.e. none of these conditions occur) a `Some` is returned.
  */
-pub fn read_hexadecimal<R: Reader, N: UnsignedInt + NumCast + Int>
-                       (reader: &mut R, expected_end: |u8| -> bool)
+pub fn read_hexadecimal<R: Reader, N: UnsignedInt + NumCast + Int, F: FnMut(u8) -> bool>
+                       (reader: &mut R, mut expected_end: F)
                        -> IoResult<N> {
     let mut n: N = Int::zero();
     let mut got_content = false;
@@ -142,8 +142,8 @@ pub fn read_hexadecimal<R: Reader, N: UnsignedInt + NumCast + Int>
  * - A `Some`, if all goes well.
  */
 #[inline]
-pub fn read_http_version<R: Reader>
-                        (reader: &mut R, expected_end: |u8| -> bool)
+pub fn read_http_version<R: Reader, F: FnMut(u8) -> bool>
+                        (reader: &mut R, mut expected_end: F)
                         -> IoResult<(uint, uint)> {
     // I'd read into a [0u8, ..5], but that buffer is not guaranteed to be
     // filled, so I must read it byte by byte to guarantee correctness.
@@ -169,7 +169,7 @@ pub fn read_http_version<R: Reader>
 
 // I couldn't think what to call it. Ah well. It's just trivial syntax sugar, anyway.
 macro_rules! test_reads {
-    ($func:ident $($value:expr => $expected:expr),*) => {{
+    ($func:ident, $($value:expr => $expected:expr),*) => {{
         $(
             assert_eq!(
                 concat_idents!(read_, $func)(&mut MemReader::new($value.bytes().collect::<Vec<_>>()),
@@ -181,7 +181,7 @@ macro_rules! test_reads {
 
 #[test]
 fn test_read_http_version() {
-    test_reads!(http_version
+    test_reads!(http_version,
                 "HTTP/25.17\0" => Some((25, 17)),
                 "http/1.0\0" => Some((1, 0)),
                 "http 1.0\0" => None,
@@ -192,7 +192,7 @@ fn test_read_http_version() {
 
 #[test]
 fn test_read_decimal() {
-    test_reads!(decimal
+    test_reads!(decimal,
                 "0\0" => Some(0u),
                 "0\0" => Some(0u8),
                 "0\0" => Some(0u64),
@@ -219,7 +219,7 @@ fn test_read_decimal() {
 
 #[test]
 fn test_read_hexadecimal() {
-    test_reads!(hexadecimal
+    test_reads!(hexadecimal,
                 "0\0" => Some(0u),
                 "0\0" => Some(0u8),
                 "0\0" => Some(0u64),
