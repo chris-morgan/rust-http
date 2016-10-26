@@ -11,5 +11,5 @@ http://chrismorgan.info/blog/introducing-teepee.html.
 **YOU SHOULD NOT USE THIS LIBRARY AT ALL.**
 If you want to use HTTP, I recommend you use Hyper_ for the moment.
 
-.. _Teepee: http://teepee.rs/
+.. _Teepee: https://github.com/teepee/teepee
 .. _Hyper: https://github.com/hyperium/hyper
